@@ -1,0 +1,227 @@
+= BluPont
+Rishiyur S. Nikhil, Bluespec, Inc. (c) 2021
+:revnumber: v1.0
+:revdate: 2021-07-08
+:sectnums:
+:toc:
+:toclevels: 5
+:toc: left
+:toc-title: Contents
+:description: Infrastructure for host+FPGA apps, and an example test app.
+:keywords: AWS, F1, Shell, Instance AFI, AMI, DCP, Design Checkpoint, Custom Logic
+:imagesdir: Figures
+:data-uri:
+
+// ================================================================
+// SECTION
+== BluPont Overview
+
+BluPont provides infrastructure for apps that run jointly on a
+standard host computer and an attached FPGA board.
+
+On the hardware side, BluPont defines a Bluespec BSV interface for
+your app hardware.  This interface several ports:
+
+* An AXI4 M port (manager/master) through which the host communicates with your hardware.
+* An AXI4-Lite M port (manager/master) through which the host communicates with your hardware.
+* From one to four An AXI4 S ports (subordinate/slave) through which
+    your hardware connects to DDR4 memories.
+* Some other miscellanous ports for virtual LEDs, DIP switches, DDR4 "`ready`" signals, etc.
+
+On the host side, BluPont defines a C API through which your host-side
+application communicates with the hardware, using thwe AXI4 M and
+AXI4-Lite M ports described above.
+
+These APIs are patterned after the "`shell`" in Amazon AWS F1 SDK (`aws-fpga`).
+
+These APIs are in the `APIs` directory.
+
+_Naming note: "`Blue`" from Bluespec. "`Pont`" is "`bridge`" in French
+(Latin pontem; Spanish puente, Italian ponte)._
+
+// ================================================================
+// SECTION
+== BluPont Implementation: Bluesim and Verilog simulation
+
+The `Platform_Sim/` directory provides an implementation of the
+BluPont infrastructure for simulation.
+
+* The host side and hardware side run as two processes on a standard computer.
+* The hardware side runs in simulation, Bluesim or Verilator
+    simulation (it can be ported easily to other Verilog simulators).
+* The BluPont host-hardware communication is emulated over TCP/IP.
+* The BluPont DDR4 memory interfaces are connected to memory models.
+
+// ================================================================
+// SECTION
+== BluPont Implementation: Amazon AWS F1
+
+The `Platform_AWSF1/` directory provides an implementation of the
+BluPont infrastructure for an Amazon AWS F1 instance (i.e., a server
+in the cloud with an FPGA board attached with a PCIe bus).
+
+* The host side runs as a regular program on the Amazon AWS F1
+    instance, and links to facilities in `aws-fpga` SDK provided by
+    AWS.
+    
+* The hardware side plugs into the so-called "`shell`" in the
+    `aws-fpga` HDK provided by AWS.  The shell connects the
+    host-communication interfaces to the PCIe bus, and the DDR4
+    interfaces to DDR4s on the FPGA board.
+
+// ================================================================
+// SECTION
+== BluPont Implementation: Xilinx VCU118 board
+
+*_(This section to be written.  Code is still under development as of
+July 8, 2021.  It is expected to be available in the next few weeks)_*
+
+The `Platform_VCU118/` directory provides an implementation of the
+BluPont infrastructure for a standard Debian/Ubuntu computer with a
+Xilinx VCU118 FPGA board attached with a PCIe bus.
+
+* The host side runs as a regular program on the Debian/Ubunto host.
+    
+* The hardware side runs on the FPGA board.
+
+// ================================================================
+// SECTION
+== BluPont Test Application
+
+The `TestApp/` directory provides a small and simple test application.
+When you create a new application, you could use this as a starting
+template and modify it for purpose (see next section for more details).
+
+The `Host_Side/` directory contains the host side application code,
+which invokes the host side C API.
+
+The `HW_Side/` directory contains the hardware side application code,
+i.e., a top-level `mkBluPont_HW_Side` module in the
+`BluPont_HW_Side.bsv` file, with the standard interface
+`BluPont_HW_Side_IFC` defined in the `APIs/` directory.
+
+_What the app does:_
+
+The hardware side simply connects the host AXI4 and AXI4-Lite
+interfaces to the AXI4 DDR4 interfaces, using a crossbar switch and
+suitable adapters.
+
+The host side simply writes random data to
+hardware-side DDR4s, and reads them back to verify the data.  Writes
+and reads are performed over both the host AXI4 and AXI4 Lite
+interfaces, including writing through one and reading through the
+other.  The AXI4 interface is also exercised with large writes and
+reads, to exercise the AXI4 burst capability.
+
+// ----------------------------------------------------------------
+// SUBSECTION
+=== Building and running with Bluesim simulation:
+
+* Do `make exe` in `Host_Side/builds/Sim` to make an executable.
+* Do `make all` in `HW_Side/builds/Bluesim` to make an executable.
+* Start the hardware side executable in one process (e.g., in one terminal window)
+    It will await a TCP connection on a TCP port, and then execute the hardware.
+* Start the host side executable in another process (e.g., in another terminal window)
+    It will connect using TCP to the hardware side and then execute the app.
+
+// ----------------------------------------------------------------
+// SUBSECTION
+=== Building and running with Verilator simulation:
+
+* Do `make exe` in `Host_Side/builds/Sim` to make an executable.
+* Do `make all` in `HW_Side/builds/Verilator` to make an executable.
+* Start the hardware side executable in one process (e.g., in one terminal window)
+    It will await a TCP connection on a TCP port, and then execute the hardware.
+* Start the host side executable in another process (e.g., in another terminal window)
+    It will connect using TCP to the hardware side and then execute the app.
+
+// ----------------------------------------------------------------
+// SUBSECTION
+=== Building and running on Amazon AWS F1:
+
+* Do `make exe` in `Host_Side/builds/F1` to make an executable.
+    ** Note: this needs the AWS F1 `aws-fpga` SDK to be installed and ready.
+
+* Do `make compile` in `HW_Side/builds/F1` to generate all the RTL in
+    the `HW_Side/builds/F1/Verilog_RTL` directory.  Run that RTL
+    through the standard Amazon AWS F1 HDK flow: build DCP (Design
+    Checkpoint), create AFI (Amazon F1 Instance).  We have
+    successfully built and run it with AWS' "`clock recipe A1`" (250
+    MHz).
+
+* On an Amazon AWS F1 instance, use AWS' fpga management tools to load
+    the AFI into the FPGA (your app's hardware side).
+
+* On the Amazon AWS F1 instance, run the host side executable.
+
+// ----------------------------------------------------------------
+// SUBSECTION
+=== Building and running on Xilinx VCU118:
+
+*_(This section to be written.  Code is still under development as of
+July 8, 2021.  It is expected to be available in the next few weeks)_*
+
+// ================================================================
+// SECTION
+== Porting your application to use BluPont
+
+The `TestApp/` directory provides a small and simple test application.
+When you create a new application, you could use this as a starting
+template and modify it for purpose (see next section for more details).
+
+1. If desired, populate the `TestApp/Host_Side/` directory with your
+    host-side sources (e.g., C files).  In Steps 3 and 4 you will edit
+    Makefiles to make a local copy of sources anyway, so you can copy
+    them from their original locations, if desired.
++
+    Your source files should invoke the C API described in
+    `APIs/BluPont_Host_Side_API.h`
+
+2. If desired, populate the `TestApp/HW_Side/` directory with your
+    hardware-side sources (e.g., BSV files).  In Steps 3 and 4 you
+    will edit Makefiles to make a local copy of sources anyway, so you
+    can copy them from their original locations, if desired.
++
+    Your source files should have a top-level module called
+    `mkBluPontHost_Side` with the interface `BluPont_Host_Side_IFC`
+    specfied in the file `APIs/BluPont_Host_Side_IFC.bsv`.
+
+3. Each of the `TestApp/HW_Side/builds/*/Copy_Sources.mk` files shows
+    commands to copy the TestApp's hardware-side source files into a
+    local directory for a hardware-side build (Bluesim, Verilator or
+    F1).  Edit `Copy_Sources.mk` to copy all your app's hardware-side
+    sources, then `make`.
+
+4. Each of the `TestApp/Host_Side/builds/*/Copy_Sources.mk` files
+    shows commands to copy the TestApp's hosgt-side source files into
+    a local directory for a host-side build (Sim or F1).  Edit
+    `Copy_Sources.mk` to copy all your app's host-side sources, then
+    `make`.
+
+// ================================================================
+== Future Evolution (expected; not scheduled yet)
+
+* Port BluPont to more platforms (more FPGA boards).  Note the
+    host-FPGA communication does not have to be over PCIe; it could
+    run over other transports such as Ethernet, USB, JTAG, ... (albeit
+    with slower performance).  Indeed `Platform_Sim` described above
+    uses TCP/IP as a transport.
+
+The `TestApp` has components useful for other functions, which we may
+add as time and energy permits:
+
+* Measure BluPont performance: latencies and bandwidths for host-FPGA
+    communication, for DUT-Memory access, etc.
+
+* "`Unloading`" DDR4 after some DUT has run in BluPont, e.g.,
+    application performance counters stored in DDR4 (for platforms
+    where DDR4 contents are preserved across bitfile reloads).  This
+    merely needs alternate C code on the host side.
+
+* "`Preloading`" DDR4 before some DUT has run in BluPont, e.g., a
+    section of DDR4 used by the DUT as a ROM, or as initialized memory
+    (for platforms where DDR4 contents are preserved across bitfile
+    reloads).  This merely needs alternate C code on the
+    host side.
+
+// ================================================================
