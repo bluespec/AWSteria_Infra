@@ -165,7 +165,7 @@ module cl_dram_dma #(parameter NUM_DDR=4)
    // Ready signals from DDRs
    logic [2:0] ddr4_A_B_D_ready;    // from sh_ddr, for DDR A, B, D
    logic       ddr4_C_ready_q;      // from cl_ports, for DDR C
-   logic [3:0] ddr4s_ready;
+   logic [3:0] ddr4_A_B_C_D_ready;
 
    always_ff @(posedge clk_main_a0 or negedge sync_rst_n)
      if (! sync_rst_n)
@@ -177,7 +177,7 @@ module cl_dram_dma #(parameter NUM_DDR=4)
 	  ddr4_C_ready_q <= sh_cl_ddr_is_ready;
        end
 
-   assign ddr4s_ready = {ddr4_A_B_D_ready[2], ddr4_C_ready_q, ddr4_A_B_D_ready[1:0]};
+   assign ddr4_A_B_C_D_ready = {ddr4_A_B_D_ready[2], ddr4_C_ready_q, ddr4_A_B_D_ready[1:0]};
 
    // Vector-of-buses view of DDR4 A, B, D AXI4 ports, as expected by sh_ddr
    logic [15:0]  v_ddr4_axi4_awid    [2:0];
@@ -409,7 +409,7 @@ module cl_dram_dma #(parameter NUM_DDR=4)
       // ----------------------------------------------------------------
       // DDR A, B, D ready signals
 
-      .sh_cl_ddr_is_ready(ddr4s_ready),
+      .sh_cl_ddr_is_ready(ddr4_A_B_D_ready),
 
       // ----------------------------------------------------------------
       // DDR A, B, D stats connected to local ddr4 stats bus
@@ -722,7 +722,7 @@ module cl_dram_dma #(parameter NUM_DDR=4)
 		      .ddr4_D_M_rlast    (v_ddr4_axi4_rlast [2]),
 		      .ddr4_D_M_rready   (v_ddr4_axi4_rready [2]),
 
-		      .m_ddr4s_ready_ddr4s_ready (ddr4s_ready),
+		      .m_ddr4s_ready_ddr4s_ready (ddr4_A_B_C_D_ready),
 
 		      .m_glcount0_glcount0 (sh_cl_glcount0),
 		      .m_glcount1_glcount1 (sh_cl_glcount1),
