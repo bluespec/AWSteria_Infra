@@ -56,7 +56,6 @@ typedef AXI4_Lite_Slave_IFC #(32, 32, 0)  AXI4L_32_32_0_S_IFC;
 // For four DDR4 connections
 typedef AXI4_Master_IFC #(16, 64, 512, 0)  AXI4_16_64_512_0_M_IFC;
 
-
 // ****************************************************************
 // Module: synthesized instance of AXI4L_S to AXI4_M adapter
 
@@ -130,11 +129,11 @@ module mkBluPont_HW_Side (BluPont_HW_Side_IFC #(AXI4_16_64_512_0_S_IFC,
    AXI4_16_64_512_0_Fabric_2_2_IFC  fabric <- mkAXI4_16_64_512_0_Fabric_2_2;
 
    // Regs for control/status signals
-   Reg #(Bit #(4))  rg_ddr4s_ready <- mkReg (0);
-   Reg #(Bit #(64)) rg_glcount0    <- mkReg (0);
-   Reg #(Bit #(64)) rg_glcount1    <- mkReg (0);
-   Reg #(Bit #(16)) rg_vdip        <- mkReg (0);
-   Reg #(Bit #(16)) rg_vled        <- mkReg (0);
+   Reg #(Bit #(N_DDR4s)) rg_ddr4s_ready <- mkReg (0);
+   Reg #(Bit #(64))      rg_glcount0    <- mkReg (0);
+   Reg #(Bit #(64))      rg_glcount1    <- mkReg (0);
+   Reg #(Bit #(16))      rg_vdip        <- mkReg (0);
+   Reg #(Bit #(16))      rg_vled        <- mkReg (0);
 
    Reg #(Bool) rg_shutdown_received <- mkReg (False);    // For simulation shutdown
 
@@ -165,13 +164,22 @@ module mkBluPont_HW_Side (BluPont_HW_Side_IFC #(AXI4_16_64_512_0_S_IFC,
 
    // Facing DDR4
    interface AXI4_Master_IFC ddr4_A_M = fabric.v_to_slaves [0];
+
+`ifdef INCLUDE_DDR4_B
    interface AXI4_Master_IFC ddr4_B_M = fabric.v_to_slaves [1];
+`endif
+
+`ifdef INCLUDE_DDR4_C
    interface AXI4_Master_IFC ddr4_C_M = dummy_ddr4_master;
+`endif
+
+`ifdef INCLUDE_DDR4_D
    interface AXI4_Master_IFC ddr4_D_M = dummy_ddr4_master;
+`endif
 
    // DDR4 ready signals
    // The BluPont environment invokes this to signal that DDR4s are ready for access
-   method Action m_ddr4s_ready (Bit #(4) ddr4s_ready);
+   method Action m_ddr4s_ready (Bit #(N_DDR4s) ddr4s_ready);
       rg_ddr4s_ready <= ddr4s_ready;
    endmethod
 

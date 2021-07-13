@@ -9,7 +9,21 @@ package BluPont_HW_Side_IFC;
 // The BSV app's top-level should be a 'mkBluPont_HW_Side' module
 // presenting this interface.
 
-// ================================================================
+// ****************************************************************
+// Number of DDR4s supported
+// Options: A, AB, ABC, ABCD
+
+`ifdef INCLUDE_DDR4_D
+typedef 4  N_DDR4s;
+`elsif INCLUDE_DDR4_C
+typedef 3  N_DDR4s;
+`elsif INCLUDE_DDR4_B
+typedef 2  N_DDR4s;
+`else
+typedef 1  N_DDR4s;
+`endif
+
+// ****************************************************************
 // The top-level interface for the BSV design inside BluPont
 
 interface BluPont_HW_Side_IFC #(type host_AXI4_S_IFC,     // facing host
@@ -23,6 +37,8 @@ interface BluPont_HW_Side_IFC #(type host_AXI4_S_IFC,     // facing host
    interface host_AXI4L_S_IFC  host_AXI4L_S;
 
    // Facing DDR4
+   // Note: This could have been: interface Vector #(N_DDR4s, ddr4_AXI4_M_IFC) ddr4_Ms
+   //       but has to fit inside Verilog wrappers that don't do vectors of interfaces.
    interface ddr4_AXI4_M_IFC  ddr4_A_M;
 
 `ifdef INCLUDE_DDR4_B
@@ -40,7 +56,7 @@ interface BluPont_HW_Side_IFC #(type host_AXI4_S_IFC,     // facing host
    // DDR4 ready signals
    // The BluPont environment invokes this to signal that DDR4s are ready for access
    (* always_ready, always_enabled *)
-   method Action m_ddr4s_ready (Bit #(4) ddr4s_ready);
+   method Action m_ddr4s_ready (Bit #(N_DDR4s) ddr4s_ready);
 
    // ================
    // Convenience interfaces from other FPGA resources

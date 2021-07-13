@@ -17,7 +17,7 @@ rsync_srcs: all_srcs  Verilog_RTL  rsync_BSV_lib_RTL  rsync_sv_toplevel
 	@echo "INFO: Copying BSV sources"
 	$(RSYNC)  ../../BluPont_HW_Side.bsv                                                   all_srcs/
 	$(RSYNC)  $(BLUPONT_REPO)/APIs/*.bsv                                                  all_srcs/
-	@echo "INFO: Copying addlitional BSV sources from $(FLUTE_REPO)"
+	@echo "INFO: Copying additional BSV sources from $(FLUTE_REPO)"
 	$(RSYNC)  $(FLUTE_REPO)/src_Testbench/Fabrics/AXI4/AXI4_Types.bsv                     all_srcs/
 	$(RSYNC)  $(FLUTE_REPO)/src_Testbench/Fabrics/AXI4/AXI4_Fabric.bsv                    all_srcs/
 	$(RSYNC)  $(FLUTE_REPO)/src_Testbench/Fabrics/AXI4/AXI4_Deburster.bsv                 all_srcs/
@@ -43,7 +43,7 @@ rsync_sv_toplevel: $(DESIGN_RTL)
 
 # ================================================================
 # These files are boilerplate, from the 'bsc' libraries, that are
-# used by the BSV module hierarchy under BluPont_HW_Side.bsv.
+# used by the BSV module hierarchy inside BluPont_HW_Side.bsv.
 # Edit this section to use any additional library files your app needs.
 
 .PHONY: rsync_BSV_lib_RTL
