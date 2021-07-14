@@ -12,7 +12,7 @@ ifndef SDK_DIR
   $(error ERROR: please define SDK_DIR (path to aws-fpga repo))
 endif
 
-EXE = exe_Host_Side_F1
+EXE = exe_Host_Side_AWSF1
 
 .PHONY: help
 help:
@@ -31,7 +31,7 @@ include Copy_Sources.mk
 
 INCLUDES = -I$(SDK_DIR)/userspace/include
 
-CFLAGS += -DIN_F1
+CFLAGS += -D IN_AWSF1
 CFLAGS += -I tmpdir  $(INCLUDES)
 CFLAGS += -std=gnu11 -g -Wall -Werror
 

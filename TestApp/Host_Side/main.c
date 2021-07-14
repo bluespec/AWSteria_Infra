@@ -25,6 +25,19 @@
 #include "BluPont_Host_Side_API.h"
 
 // ================================================================
+// On AWS F1, FPGA Developer AMI (CentOS 7), gcc  does not seem to
+// define getentropy(), so we define it here.
+
+#if IN_AWSF1
+#include <sys/syscall.h>
+
+int getentropy (void *buf, size_t buflen) {
+    unsigned int flags = 0;
+    return syscall (SYS_getrandom, buf, buflen, flags);
+}
+#endif
+
+// ================================================================
 
 int verbosity = 0;
 
@@ -261,9 +274,14 @@ int main (int argc, char *argv [])
 	size_t len = (BUFSIZE -j);
 	if (len > 256) len = 256;
 
-	rc = getentropy (& (wbuf [j]), len);
-	if (rc != 0) goto ret_err;
+	int n = getentropy (& (wbuf [j]), len);
+	if (n != len) {
+	    fprintf (stdout, "    getentropy(buf, %0ld) failed; => %0d\n", len, n);
+	    rc = 1;
+	    goto ret_err;
+	}
     }
+    fprintf (stdout, "    filled wbuf with random data\n");
 
     // ----------------------------------------------------------------
     // Tests
@@ -344,7 +362,7 @@ int main (int argc, char *argv [])
     // Final test stats
 
     fprintf (stdout, "\n");
-    fprintf (stdout, "----------------\n");
+    fprintf (stdout, "END OF TESTS; TEST STATS ----------------\n");
     fprintf (stdout, "n_burst_reads  = %0ld, burst_read_bytes  = %0ld\n",
 	     n_burst_reads, burst_read_bytes);
 
@@ -353,6 +371,7 @@ int main (int argc, char *argv [])
 
     fprintf (stdout, "n_peeks = %0ld\n", n_peeks);
     fprintf (stdout, "n_pokes = %0ld\n", n_pokes);
+    fprintf (stdout, "----------------\n");
 
     // ----------------------------------------------------------------
     // Shutdown FPGA PCIe or simulation libraries

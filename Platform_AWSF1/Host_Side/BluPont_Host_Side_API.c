@@ -29,15 +29,6 @@
 #include "fpga_dma.h"
 #include "utils/lcd.h"
 
-#include <sys/syscall.h>
-
-/*
-static inline ssize_t getentropy (void *buf, size_t buflen) {
-    unsigned int flags = 0;
-    return syscall (SYS_getrandom, buf, buflen, flags);
-}
-*/
-
 // ----------------
 // Project includes
 
