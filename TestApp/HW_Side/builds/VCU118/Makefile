@@ -16,8 +16,8 @@ help:
 	@echo "    make clean         Remove build_dir (for intermediate files)."
 	@echo "    make full_clean    Restore to pristine state."
 	@echo ""
-	@echo "  The RTL in Verilog_RTL/ can then be copied to an AWS F1"
-	@echo "  'custom logic' build directory to build a DCP (design checkpoint), AFI, etc."
+	@echo "  The RTL in Verilog_RTL/ can then be copied to a Garnet example build dir."
+	@echo "  Current DDR4 compiler flag: $(INCLUDE_DDRS)"
 
 #================================================================
 # This include-file creates populates directory 'all_srcs/'
@@ -35,9 +35,10 @@ TOPMODULE = mkBluPont_HW_Side
 # ================================================================
 # bsc compilation flags
 
-BSC_COMPILATION_FLAGS += -D INCLUDE_DDR4_B
+# Depending on platform, can also add DDR4 C and D
+INCLUDE_DDRS += -D INCLUDE_DDR4_B
 
-BSC_COMPILATION_FLAGS += \
+BSC_COMPILATION_FLAGS += $(INCLUDE_DDRS) \
 	-keep-fires -aggressive-conditions -no-warn-action-shadowing \
 	-no-show-timestamps -check-assert \
 	-suppress-warnings G0020    \

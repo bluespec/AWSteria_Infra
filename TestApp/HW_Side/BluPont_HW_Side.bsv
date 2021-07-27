@@ -6,11 +6,11 @@ package BluPont_HW_Side;
 // ================================================================
 // This package contains the BluPont_HW_Side module.
 
-// In this implementation:
-// it contains an AXI4 fabric (64b addrs, 512b data):
-//    S 0: connects to host AXI4
-//    S 1: connects to host AXI4-Lite (via an AXI4-Lite-to-AXI4 adapter)
-//    M 0,1,2,3: Connects to DDR4s 0,1,2,3 (A,B,C,D)
+// It instantiates a BluPont_HW_Side_Depth1 module and connects the 3
+// AXI4 interfaces and one AXI4 Lite interfaces to it after passing
+// them through clock-domain-crossings.
+
+// The inner module runs at slower clock (1/2, 13, 1/4, ... speed)
 
 // ================================================================
 // BSV library imports
@@ -18,6 +18,7 @@ package BluPont_HW_Side;
 import FIFOF       :: *;
 import GetPut      :: *;
 import Connectable :: *;
+import Clocks      :: *;
 
 // ----------------
 // BSV additional libs
@@ -32,10 +33,12 @@ import GetPut_Aux :: *;
 import AXI4_Types           :: *;
 import AXI4_Fabric          :: *;
 import AXI4_Lite_Types      :: *;
+import AXI_SyncBuffer       :: *;
 
 import AXI4L_S_to_AXI4_M_Adapter :: *;
 
-import BluPont_HW_Side_IFC :: *;
+import BluPont_HW_Side_IFC    :: *;
+import BluPont_HW_Side_Depth1 :: *;
 
 // ================================================================
 
@@ -57,101 +60,180 @@ typedef AXI4_Lite_Slave_IFC #(32, 32, 0)  AXI4L_32_32_0_S_IFC;
 typedef AXI4_Master_IFC #(16, 64, 512, 0)  AXI4_16_64_512_0_M_IFC;
 
 // ****************************************************************
-// Module: synthesized instance of AXI4L_S to AXI4_M adapter
-
-(* synthesize *)
-module mkAXI4L_S_to_AXI4_M_Adapter_synth (AXI4L_S_to_AXI4_M_Adapter_IFC #(// AXI4L_S
-									  32,    // wd_addr
-									  32,    // wd_data
-									  0,     // wd_user
-									  // AXI4L_M
-									  16,    // wd_id
-									  64,    // wd_addr
-									  512,   // wd_data
-									  0));   // wd_user
-   let ifc <- mkAXI4L_S_to_AXI4_M_Adapter;
-   return ifc;
-endmodule
-
-// ****************************************************************
-// Module: synthesized instance of AXI4 fabric connecting the host
-// AXI4 and AXI4-Lite to the AXI4 DDRs
-
-// ----------------
-// Address-Decode function to route requests to appropriate server
-//     DDR4 A addr (server 0): base addr 0x_0_0000_0000
-//     DDR4 B addr (server 1): base addr 0x_4_0000_0000
-//     DDR4 C addr (server 2): base addr 0x_8_0000_0000
-//     DDR4 D addr (server 3): base addr 0x_C_0000_0000
-
-function Tuple2 #(Bool, Bit #(1))  fn_addr_to_ddr4_num (Bit #(64) addr);
-   let      msbs       = addr [63:35];
-   Bit #(1) server_num = addr [34:34];
-   Bool     valid      = (msbs == 0);
-   return tuple2 (valid, server_num);
-endfunction
-
-// ----------------
-// The fabric
-
-typedef AXI4_Fabric_IFC #(2,      // num_masters
-			  2,      // num_servers
-			  16,     // wd_id
-			  64,     // wd_addr
-			  512,    // wd_data
-			  0)
-        AXI4_16_64_512_0_Fabric_2_2_IFC;
-
-(* synthesize *)
-module mkAXI4_16_64_512_0_Fabric_2_2 (AXI4_16_64_512_0_Fabric_2_2_IFC);
-   let fabric <- mkAXI4_Fabric (fn_addr_to_ddr4_num);
-   return fabric;
-endmodule
-
-// ****************************************************************
 // Module: synthesized instance of BluPont HW-side top-level (the DUT)
 
 (* synthesize *)
 module mkBluPont_HW_Side (BluPont_HW_Side_IFC #(AXI4_16_64_512_0_S_IFC,
 						AXI4L_32_32_0_S_IFC,
 						AXI4_16_64_512_0_M_IFC));
-   // AXI4-Lite to AXI4 adapter
-   AXI4L_S_to_AXI4_M_Adapter_IFC #(32,    // wd_addr_AXI4L_S
-				   32,    // wd_data_AXI4L_S
-				   0,     // wd_user_AXI4L_S
-				   16,      // wd_id_AXI4_M
-				   64,    // wd_addr_AXI4_M
-				   512,   // wd_data_AXI4_M
-				   0)     // wd_user_AXI4_M)
-       adapter_AXI4L_S_to_AXI4_M <- mkAXI4L_S_to_AXI4_M_Adapter_synth;
 
-   // AXI4 Fabric
-   AXI4_16_64_512_0_Fabric_2_2_IFC  fabric <- mkAXI4_16_64_512_0_Fabric_2_2;
+   // Expose current clock/reset and derive slow versions
+   Clock fast_CLK  <- exposeCurrentClock;
+   Reset fast_RSTN <- exposeCurrentReset;
 
-   // Regs for control/status signals
-   Reg #(Bit #(N_DDR4s)) rg_ddr4s_ready <- mkReg (0);
-   Reg #(Bit #(64))      rg_glcount0    <- mkReg (0);
-   Reg #(Bit #(64))      rg_glcount1    <- mkReg (0);
-   Reg #(Bit #(16))      rg_vdip        <- mkReg (0);
-   Reg #(Bit #(16))      rg_vled        <- mkReg (0);
+   ClockDividerIfc clock_divider <- mkClockDivider (2);    // 250 MHz => 125 MHz
 
-   Reg #(Bool) rg_shutdown_received <- mkReg (False);    // For simulation shutdown
+   Clock slow_CLK  = clock_divider.slowClock;
+   Reset slow_RSTN <- mkAsyncResetFromCR (5, slow_CLK);
+
+   Integer depth = 2;    // of SyncFIFOs
+
+   // ----------------
+   // Instantiate the next layer, using the slower clock
+
+   BluPont_HW_Side_IFC #(AXI4_16_64_512_0_S_IFC,
+			 AXI4L_32_32_0_S_IFC,
+			 AXI4_16_64_512_0_M_IFC)
+   hw_side_depth1 <- mkBluPont_HW_Side_Depth1 (clocked_by slow_CLK,
+					       reset_by   slow_RSTN);
+
+   // ----------------
+   // host AXI4 S clock crossing
+
+   AXI4_Slave_Xactor_IFC  #(16, 64, 512, 0) host_AXI4_S_xactor <- mkAXI4_Slave_Xactor;
+
+   AXI_SyncBuffer_IFC #(AXI4_Wr_Addr #(16, 64,      0),    // wd_id, wd_addr,          wd_user
+			AXI4_Wr_Data #(        512, 0),    //                 wd_data, wd_user
+			AXI4_Wr_Resp #(16,          0),    // wd_id,                   wd_user
+			AXI4_Rd_Addr #(16, 64,      0),    // wd_id, wd_addr,          wd_user
+			AXI4_Rd_Data #(16,     512, 0))    // wd_id,          wd_data, wd_user
+   host_AXI4_S_SyncBuffer <- mkAXI_SyncBuffer (depth,
+					       fast_CLK, fast_RSTN,
+					       slow_CLK, slow_RSTN);
+
+   AXI4_Master_Xactor_IFC #(16, 64, 512, 0) host_AXI4_M_xactor <- mkAXI4_Master_Xactor (clocked_by slow_CLK,
+										       reset_by   slow_RSTN);
+
+   mkConnection (host_AXI4_S_xactor.o_wr_addr, host_AXI4_S_SyncBuffer.from_M.i_aw);
+   mkConnection (host_AXI4_S_xactor.o_wr_data, host_AXI4_S_SyncBuffer.from_M.i_w);
+   mkConnection (host_AXI4_S_xactor.i_wr_resp, host_AXI4_S_SyncBuffer.from_M.o_b);
+   mkConnection (host_AXI4_S_xactor.o_rd_addr, host_AXI4_S_SyncBuffer.from_M.i_ar);
+   mkConnection (host_AXI4_S_xactor.i_rd_data, host_AXI4_S_SyncBuffer.from_M.o_r);
+
+   mkConnection (host_AXI4_S_SyncBuffer.to_S.o_aw, host_AXI4_M_xactor.i_wr_addr);
+   mkConnection (host_AXI4_S_SyncBuffer.to_S.o_w,  host_AXI4_M_xactor.i_wr_data);
+   mkConnection (host_AXI4_S_SyncBuffer.to_S.i_b,  host_AXI4_M_xactor.o_wr_resp);
+   mkConnection (host_AXI4_S_SyncBuffer.to_S.o_ar, host_AXI4_M_xactor.i_rd_addr);
+   mkConnection (host_AXI4_S_SyncBuffer.to_S.i_r,  host_AXI4_M_xactor.o_rd_data);
+
+   mkConnection (host_AXI4_M_xactor.axi_side, hw_side_depth1.host_AXI4_S);
+
+   // ----------------
+   // host AXI4L S clock crossing
+
+   AXI4_Lite_Slave_Xactor_IFC  #(32, 32, 0) host_AXI4L_S_xactor <- mkAXI4_Lite_Slave_Xactor;
+
+   AXI_SyncBuffer_IFC #(AXI4_Lite_Wr_Addr #(32,     0),    // wd_addr,          wd_user
+			AXI4_Lite_Wr_Data #(    32   ),    //          wd_data
+			AXI4_Lite_Wr_Resp #(        0),    //                   wd_user
+			AXI4_Lite_Rd_Addr #(32,     0),    // wd_addr,          wd_user
+			AXI4_Lite_Rd_Data #(    32, 0))    //          wd_data, wd_user
+   host_AXI4L_S_SyncBuffer <- mkAXI_SyncBuffer (depth,
+						fast_CLK, fast_RSTN,
+						slow_CLK, slow_RSTN);
+   
+   AXI4_Lite_Master_Xactor_IFC #(32, 32, 0) host_AXI4L_M_xactor <- mkAXI4_Lite_Master_Xactor (clocked_by slow_CLK,
+											      reset_by   slow_RSTN);
+
+   mkConnection (host_AXI4L_S_xactor.o_wr_addr, host_AXI4L_S_SyncBuffer.from_M.i_aw);
+   mkConnection (host_AXI4L_S_xactor.o_wr_data, host_AXI4L_S_SyncBuffer.from_M.i_w);
+   mkConnection (host_AXI4L_S_xactor.i_wr_resp, host_AXI4L_S_SyncBuffer.from_M.o_b);
+   mkConnection (host_AXI4L_S_xactor.o_rd_addr, host_AXI4L_S_SyncBuffer.from_M.i_ar);
+   mkConnection (host_AXI4L_S_xactor.i_rd_data, host_AXI4L_S_SyncBuffer.from_M.o_r);
+
+   mkConnection (host_AXI4L_S_SyncBuffer.to_S.o_aw, host_AXI4L_M_xactor.i_wr_addr);
+   mkConnection (host_AXI4L_S_SyncBuffer.to_S.o_w,  host_AXI4L_M_xactor.i_wr_data);
+   mkConnection (host_AXI4L_S_SyncBuffer.to_S.i_b,  host_AXI4L_M_xactor.o_wr_resp);
+   mkConnection (host_AXI4L_S_SyncBuffer.to_S.o_ar, host_AXI4L_M_xactor.i_rd_addr);
+   mkConnection (host_AXI4L_S_SyncBuffer.to_S.i_r,  host_AXI4L_M_xactor.o_rd_data);
+
+   mkConnection (host_AXI4L_M_xactor.axi_side, hw_side_depth1.host_AXI4L_S);
+
+   // ----------------
+   // ddr4 A M clock crossing
+
+   AXI4_Slave_Xactor_IFC  #(16, 64, 512, 0) ddr4_A_AXI4_S_xactor <- mkAXI4_Slave_Xactor (clocked_by slow_CLK,
+											 reset_by   slow_RSTN);
+
+   AXI_SyncBuffer_IFC #(AXI4_Wr_Addr #(16, 64,      0),    // wd_id, wd_addr,          wd_user
+			AXI4_Wr_Data #(        512, 0),    //                 wd_data, wd_user
+			AXI4_Wr_Resp #(16,          0),    // wd_id,                   wd_user
+			AXI4_Rd_Addr #(16, 64,      0),    // wd_id, wd_addr,          wd_user
+			AXI4_Rd_Data #(16,     512, 0))    // wd_id,          wd_data, wd_user
+   ddr4_A_SyncBuffer <- mkAXI_SyncBuffer (depth,
+						 slow_CLK, slow_RSTN,
+						 fast_CLK, fast_RSTN);
+   
+   AXI4_Master_Xactor_IFC #(16, 64, 512, 0) ddr4_A_AXI4_M_xactor <- mkAXI4_Master_Xactor;
+
+   mkConnection (hw_side_depth1.ddr4_A_M, ddr4_A_AXI4_S_xactor.axi_side);
+
+   mkConnection (ddr4_A_AXI4_S_xactor.o_wr_addr, ddr4_A_SyncBuffer.from_M.i_aw);
+   mkConnection (ddr4_A_AXI4_S_xactor.o_wr_data, ddr4_A_SyncBuffer.from_M.i_w);
+   mkConnection (ddr4_A_AXI4_S_xactor.i_wr_resp, ddr4_A_SyncBuffer.from_M.o_b);
+   mkConnection (ddr4_A_AXI4_S_xactor.o_rd_addr, ddr4_A_SyncBuffer.from_M.i_ar);
+   mkConnection (ddr4_A_AXI4_S_xactor.i_rd_data, ddr4_A_SyncBuffer.from_M.o_r);
+
+   mkConnection (ddr4_A_SyncBuffer.to_S.o_aw, ddr4_A_AXI4_M_xactor.i_wr_addr);
+   mkConnection (ddr4_A_SyncBuffer.to_S.o_w,  ddr4_A_AXI4_M_xactor.i_wr_data);
+   mkConnection (ddr4_A_SyncBuffer.to_S.i_b,  ddr4_A_AXI4_M_xactor.o_wr_resp);
+   mkConnection (ddr4_A_SyncBuffer.to_S.o_ar, ddr4_A_AXI4_M_xactor.i_rd_addr);
+   mkConnection (ddr4_A_SyncBuffer.to_S.i_r,  ddr4_A_AXI4_M_xactor.o_rd_data);
+
+   // ----------------
+   // ddr4 B M clock crossing
+
+`ifdef INCLUDE_DDR4_B
+
+   AXI4_Slave_Xactor_IFC  #(16, 64, 512, 0) ddr4_B_AXI4_S_xactor <- mkAXI4_Slave_Xactor (clocked_by slow_CLK,
+											 reset_by   slow_RSTN);
+
+   AXI_SyncBuffer_IFC #(AXI4_Wr_Addr #(16, 64,      0),    // wd_id, wd_addr,          wd_user
+			AXI4_Wr_Data #(        512, 0),    //                 wd_data, wd_user
+			AXI4_Wr_Resp #(16,          0),    // wd_id,                   wd_user
+			AXI4_Rd_Addr #(16, 64,      0),    // wd_id, wd_addr,          wd_user
+			AXI4_Rd_Data #(16,     512, 0))    // wd_id,          wd_data, wd_user
+   ddr4_B_SyncBuffer <- mkAXI_SyncBuffer (depth,
+						 slow_CLK, slow_RSTN,
+						 fast_CLK, fast_RSTN);
+   
+   AXI4_Master_Xactor_IFC #(16, 64, 512, 0) ddr4_B_AXI4_M_xactor <- mkAXI4_Master_Xactor;
+
+   mkConnection (hw_side_depth1.ddr4_B_M, ddr4_B_AXI4_S_xactor.axi_side);
+
+   mkConnection (ddr4_B_AXI4_S_xactor.o_wr_addr, ddr4_B_SyncBuffer.from_M.i_aw);
+   mkConnection (ddr4_B_AXI4_S_xactor.o_wr_data, ddr4_B_SyncBuffer.from_M.i_w);
+   mkConnection (ddr4_B_AXI4_S_xactor.i_wr_resp, ddr4_B_SyncBuffer.from_M.o_b);
+   mkConnection (ddr4_B_AXI4_S_xactor.o_rd_addr, ddr4_B_SyncBuffer.from_M.i_ar);
+   mkConnection (ddr4_B_AXI4_S_xactor.i_rd_data, ddr4_B_SyncBuffer.from_M.o_r);
+
+   mkConnection (ddr4_B_SyncBuffer.to_S.o_aw, ddr4_B_AXI4_M_xactor.i_wr_addr);
+   mkConnection (ddr4_B_SyncBuffer.to_S.o_w,  ddr4_B_AXI4_M_xactor.i_wr_data);
+   mkConnection (ddr4_B_SyncBuffer.to_S.i_b,  ddr4_B_AXI4_M_xactor.o_wr_resp);
+   mkConnection (ddr4_B_SyncBuffer.to_S.o_ar, ddr4_B_AXI4_M_xactor.i_rd_addr);
+   mkConnection (ddr4_B_SyncBuffer.to_S.i_r,  ddr4_B_AXI4_M_xactor.o_rd_data);
+
+`endif
 
    // ================================================================
    // BEHAVIOR
+   // TODO: clock-cross these from depth 0?
 
-   // Connect AXI4-Lite-to-AXI4-adapter to AXI4 fabric
-   mkConnection (adapter_AXI4L_S_to_AXI4_M.ifc_AXI4_M,
-		 fabric.v_from_masters [1]);
-
-   /* For Debugging only
-   Reg #(Bool) rg_done_once <- mkReg (False);
-
-   rule rl_once (! rg_done_once);
-      fabric.set_verbosity (1);
-      rg_done_once <= True;
+   rule rl_drive_unused_ddr4s_ready;
+      hw_side_depth1.m_ddr4s_ready ('1);
    endrule
-   */
+
+   rule rl_drive_unused_glcount0;
+      hw_side_depth1.m_glcount0 (0);
+   endrule
+
+   rule rl_drive_unused_glcount1;
+      hw_side_depth1.m_glcount1 (0);
+   endrule
+
+   rule rl_drive_unused_vdip;
+      hw_side_depth1.m_vdip (0);
+   endrule
 
    // ================================================================
    // INTERFACE
@@ -159,14 +241,14 @@ module mkBluPont_HW_Side (BluPont_HW_Side_IFC #(AXI4_16_64_512_0_S_IFC,
    AXI4_Master_IFC #(16,64,512,0) dummy_ddr4_master = dummy_AXI4_Master_ifc;
 
    // Facing Host
-   interface AXI4_Slave_IFC      host_AXI4_S  = fabric.v_from_masters [0];
-   interface AXI4_Lite_Slave_IFC host_AXI4L_S = adapter_AXI4L_S_to_AXI4_M.ifc_AXI4L_S;
+   interface AXI4_Slave_IFC      host_AXI4_S  = host_AXI4_S_xactor.axi_side;
+   interface AXI4_Lite_Slave_IFC host_AXI4L_S = host_AXI4L_S_xactor.axi_side;
 
    // Facing DDR4
-   interface AXI4_Master_IFC ddr4_A_M = fabric.v_to_slaves [0];
+   interface AXI4_Master_IFC ddr4_A_M = ddr4_A_AXI4_M_xactor.axi_side;
 
 `ifdef INCLUDE_DDR4_B
-   interface AXI4_Master_IFC ddr4_B_M = fabric.v_to_slaves [1];
+   interface AXI4_Master_IFC ddr4_B_M = ddr4_B_AXI4_M_xactor.axi_side;
 `endif
 
 `ifdef INCLUDE_DDR4_C
@@ -180,33 +262,33 @@ module mkBluPont_HW_Side (BluPont_HW_Side_IFC #(AXI4_16_64_512_0_S_IFC,
    // DDR4 ready signals
    // The BluPont environment invokes this to signal that DDR4s are ready for access
    method Action m_ddr4s_ready (Bit #(N_DDR4s) ddr4s_ready);
-      rg_ddr4s_ready <= ddr4s_ready;
+      noAction;    // TODO: clock-cross into Depth 1
    endmethod
 
    // Global counters
    // The BluPont environment may provide these counters.
    // (in AWS: these tick at 4ns, irrespective of DUT clock)
    method Action m_glcount0 (Bit #(64) glcount0);
-      rg_glcount0 <= glcount0;
+      noAction;    // TODO: clock-cross into Depth 1
    endmethod
 
    method Action m_glcount1 (Bit #(64) glcount1);
-      rg_glcount1 <= glcount1;
+      noAction;    // TODO: clock-cross into Depth 1
    endmethod
 
    // Virtual LEDs
    // The BluPont environment may use these LED outputs.
-   method Bit #(16) m_vled = rg_vled;
+   method Bit #(16) m_vled = 0;    // TODO: clock-cross from Depth 1
 
    // Virtual DIP Switches
    // The BluPont environment may provide these DIP switch inputs.
    method Action m_vdip (Bit #(16) vdip);
-      rg_vdip <= vdip;
+      noAction;    // TODO: clock-cross into Depth 1
    endmethod
 
    // Final shutdown
    // The BluPont environment may use this to know the DUT has "shut down".
-   method Bool m_shutdown_received = rg_shutdown_received;
+   method Bool m_shutdown_received = False;    // TODO: clock-cross from Depth 1
 endmodule
 
 // ================================================================
