@@ -81,6 +81,7 @@ interface BluPont_HW_Side_IFC #(type host_AXI4_S_IFC,     // facing host
 
    // Final shutdown
    // The BluPont environment may use this to know the DUT has "shut down".
+   (* always_ready *)
    method Bool m_shutdown_received;
 endinterface
 

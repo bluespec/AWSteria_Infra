@@ -1,32 +1,22 @@
-# Prerequisites
-*.d
-
-# Object files
+# Object files and executables
 *.o
-*.ko
-*.obj
-*.elf
+exe_*
 
-# Linker output
-*.ilk
-*.map
-*.exp
+# Log files
+*log_*
 
-# Precompiled Headers
-*.gch
-*.pch
+# Temporary dirs for collecting all sources, builds, etc.
+tmpdir
+build_dir
+all_srcs
 
-# Libraries
-*.lib
-*.a
-*.la
-*.lo
+# Verilator temporary build-dirs
+Verilator_Make
+Verilator_RTL
 
-# Shared objects (inc. Windows DLLs)
-*.dll
-*.so
-*.so.*
-*.dylib
+# Xilinx vivado logs etc
+vivado_*
+vivado.*
 
 # Executables
 *.exe
@@ -36,17 +26,3 @@
 *.x86_64
 *.hex
 
-# Debug files
-*.dSYM/
-*.su
-*.idb
-*.pdb
-
-# Kernel Module Compile Results
-*.mod*
-*.cmd
-.tmp_versions/
-modules.order
-Module.symvers
-Mkfile.old
-dkms.conf
