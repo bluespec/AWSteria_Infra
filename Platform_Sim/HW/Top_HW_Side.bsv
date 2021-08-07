@@ -4,7 +4,7 @@
 package Top_HW_Side;
 
 // ================================================================
-// mkTop_HW_Side is the top-level module for simulating an BluPont design.
+// mkTop_HW_Side is the top-level module for simulating an AWSteria design.
 
 // ================================================================
 // BSV lib imports
@@ -14,6 +14,7 @@ import FIFOF        :: *;
 import GetPut       :: *;
 import ClientServer :: *;
 import Connectable  :: *;
+import Clocks       :: *;
 
 // ----------------
 // BSV additional libs
@@ -28,15 +29,15 @@ import Semi_FIFOF :: *;
 import AXI4_Types      :: *;
 import AXI4_Lite_Types :: *;
 
-import BluPont_DDR4_Model   :: *;
+import DDR_Model   :: *;
 
 // Communication with host
 import Bytevec   :: *;
 import C_Imports :: *;
 
-// The BluPont DUT
-import BluPont_HW_Side_IFC :: *;
-import BluPont_HW_Side     :: *;
+// The AWSteria DUT
+import AWSteria_HW_IFC :: *;
+import AWSteria_HW     :: *;
 
 // ================================================================
 // Top-level module.
@@ -54,30 +55,36 @@ module mkTop_HW_Side (Empty) ;
 
    Reg #(State) rg_state <- mkReg (STATE_CONNECTING);
 
-   // The top-level of the BluPont design
-   BluPont_HW_Side_IFC #(AXI4_16_64_512_0_S_IFC,
-			 AXI4L_32_32_0_S_IFC,
-			 AXI4_16_64_512_0_M_IFC)  blupont_hw_side <- mkBluPont_HW_Side;
+   // The top-level of the AWSteria design
+   AWSteria_HW_IFC #(AXI4_16_64_512_0_S_IFC,
+		     AXI4L_32_32_0_S_IFC,
+		     AXI4_16_64_512_0_M_IFC)  awsteria_hw <- mkAWSteria_HW (noClock, noReset);
 
    // ----------------
-   // Models for the four DDR4s,
-   // and their connection to blupont_hw_side.
+   // Models for the four DDRs,
+   // and their connection to awsteria_hw.
 
-   // DDR4 A (cached mem access, incl. bursts)
-   AXI4_16_64_512_0_Slave_IFC  ddr4_A <- mkBluPont_DDR4_A_Model;
-   mkConnection (blupont_hw_side.ddr4_A_M, ddr4_A);
+   // DDR A (cached mem access, incl. bursts)
+   AXI4_16_64_512_0_Slave_IFC  ddr_A <- mkDDR_A_Model;
+   mkConnection (awsteria_hw.ddr_A_M, ddr_A);
 
-   // DDR4 B (uncached mem access, no bursts)
-   AXI4_16_64_512_0_Slave_IFC  ddr4_B <- mkBluPont_DDR4_B_Model;
-   mkConnection (blupont_hw_side.ddr4_B_M, ddr4_B);
+`ifdef INCLUDE_DDR_B
+   // DDR B (uncached mem access, no bursts)
+   AXI4_16_64_512_0_Slave_IFC  ddr_B <- mkDDR_B_Model;
+   mkConnection (awsteria_hw.ddr_B_M, ddr_B);
+`endif
 
-   // DDR4 C (tie-off: unused for now)
-   AXI4_16_64_512_0_Slave_IFC  ddr4_C <- mkBluPont_DDR4_C_Model;
-   mkConnection (blupont_hw_side.ddr4_C_M, ddr4_C);
+`ifdef INCLUDE_DDR_C
+   // DDR C (tie-off: unused for now)
+   AXI4_16_64_512_0_Slave_IFC  ddr_C <- mkDDR_C_Model;
+   mkConnection (awsteria_hw.ddr_C_M, ddr_C);
+`endif
 
-   // DDR4 D (tie-off: unused for now)
-   AXI4_16_64_512_0_Slave_IFC  ddr4_D <- mkBluPont_DDR4_D_Model;
-   mkConnection (blupont_hw_side.ddr4_D_M, ddr4_D);
+`ifdef INCLUDE_DDR_D
+   // DDR D (tie-off: unused for now)
+   AXI4_16_64_512_0_Slave_IFC  ddr_D <- mkDDR_D_Model;
+   mkConnection (awsteria_hw.ddr_D_M, ddr_D);
+`endif
 
    // ================================================================
    // BEHAVIOR: start up
@@ -168,7 +175,7 @@ module mkTop_HW_Side (Empty) ;
    endrule
 
    // ----------------
-   // Connect communication box and host_AXI4 port of blupont_hw_side
+   // Connect communication box and host_AXI4 port of awsteria_hw
 
    // Note: the rules rl_xxx below can't be replaced by 'mkConnection'
    // because although t1 and t2 are isomorphic types, they are
@@ -176,7 +183,7 @@ module mkTop_HW_Side (Empty) ;
 
    AXI4_Master_Xactor_IFC #(16,64,512,0)  host_AXI4_xactor <- mkAXI4_Master_Xactor;
 
-   mkConnection (host_AXI4_xactor.axi_side, blupont_hw_side.host_AXI4_S);
+   mkConnection (host_AXI4_xactor.axi_side, awsteria_hw.host_AXI4_S);
 
    // Connect AXI4 WR_ADDR channel
    // = mkConnection (comms.fo_AXI4_Wr_Addr_i16_a64_u0,  host_AXI4_xactor.i_wr_addr)
@@ -273,11 +280,11 @@ module mkTop_HW_Side (Empty) ;
    endrule
 
    // ----------------
-   // Connect communication box and host AXI4-Lite port of blupont_hw_side
+   // Connect communication box and host AXI4-Lite port of awsteria_hw
 
    AXI4_Lite_Master_Xactor_IFC #(32,32,0)  host_AXI4L_xactor <- mkAXI4_Lite_Master_Xactor;
 
-   mkConnection (host_AXI4L_xactor.axi_side, blupont_hw_side.host_AXI4L_S);
+   mkConnection (host_AXI4L_xactor.axi_side, awsteria_hw.host_AXI4L_S);
 
    // Connect AXI4L WR_ADDR channel
    // = mkConnection (comms.fo_AXI4L_Wr_Addr_a32_u0,  host_AXI4L_xactor.i_wr_addr)
@@ -328,36 +335,22 @@ module mkTop_HW_Side (Empty) ;
    endrule
 
    // ================================================================
-   // Misc. other connections to Blupont_hw_side
+   // Misc. other connections to awsteria_hw
 
    Reg #(Bit #(64)) rg_counter   <- mkReg (0);
-   Reg #(Bit #(16)) rg_last_vled <- mkReg (0);
-   Reg #(Bit #(16)) rg_vdip      <- mkReg (0);
 
    rule rl_status_signals;
-      // ---------------- gcounts (counters)
-      blupont_hw_side.m_glcount0 (rg_counter);
-      blupont_hw_side.m_glcount1 (rg_counter);
+      // The AWSteria environment asserts this to inform the DUT that it is ready
+      awsteria_hw.m_env_ready (True);
+
+      // The DUT asserts this to inform the AWSteria environment that it has "halted"
+      if (awsteria_hw.m_halted)
+	 $display ("Top_HW_Side.awsteria_hw: halted");
+
+      // ================
+      // Real-time counter (here, just using the simulation's top-level clock)
+      awsteria_hw.m_glcount (rg_counter);
       rg_counter <= rg_counter + 1;
-
-      // ---------------- DDR ready
-      blupont_hw_side.m_ddr4s_ready ('1);
-
-      // ---------------- VDIP
-      blupont_hw_side.m_vdip (rg_vdip);
-
-      // ---------------- VLED
-      let vled = blupont_hw_side.m_vled;
-      for (Integer j = 0; j < 16; j = j + 1)
-	 if ((rg_last_vled [j] == 0) && (vled [j] == 1)) begin
-	    if (verbosity != 0)
-	       $display ("vled [%0d] turned on", j);
-	 end
-	 else if ((rg_last_vled [j] == 1) && (vled [j] == 0)) begin
-	    if (verbosity != 0)
-	       $display ("vled [%0d] turned off", j);
-	 end
-      rg_last_vled <= vled;
    endrule
 
    // ================================================================

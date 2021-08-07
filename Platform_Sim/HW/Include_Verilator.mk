@@ -26,7 +26,7 @@ compile:  build_dir  Verilog_RTL  rsync_srcs
 
 # Additional module(s) with DPI-C calls that need edits to remove '$imported_' prefix
 # Each of these should have a 'sed' step (see below)
-EDIT_MODULE2 = mkBluPont_HW_Side
+EDIT_MODULE2 = mkAWSteria_HW
 
 # Verilator flags:
 #   The following are recommended in verilator manual for best performance
@@ -56,7 +56,7 @@ VERILATOR_FLAGS += --stats -CFLAGS -O3 -CFLAGS -DVL_DEBUG -LDFLAGS -static
 # VERILATOR_FLAGS += --trace  --trace-depth 2  -CFLAGS -DVM_TRACE
 
 VTOP                = V$(TOPMODULE)
-VERILATOR_RESOURCES = $(BLUPONT_REPO)/Platform_Sim/Resources/Verilator_resources
+VERILATOR_RESOURCES = $(AWSTERIA_INFRA_REPO)/Platform_Sim/HW/Verilator_resources
 VERILATOR_MAKE_DIR  = Verilator_Make
 
 .PHONY: simulator
@@ -85,7 +85,7 @@ simulator:
 		--cc  --exe --build -j 4 -o exe_HW_sim  $(TOPMODULE).v \
 		--top-module $(TOPMODULE) \
 		$(VERILATOR_RESOURCES)/sim_main.cpp \
-		$(BLUPONT_REPO)/Platform_Sim/HW_Side/C_Imported_Functions.c
+		all_srcs/C_Imported_Functions.c
 	mv  $(VERILATOR_MAKE_DIR)/$(SIM_EXE_FILE)  .
 	@echo "----------------"
 	@echo "INFO: Created verilator executable:    $(SIM_EXE_FILE)"

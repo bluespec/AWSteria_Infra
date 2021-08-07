@@ -1,7 +1,7 @@
-= BluPont
+= AWSteria_Infra
 Rishiyur S. Nikhil, Bluespec, Inc. (c) 2021
 :revnumber: v1.0
-:revdate: 2021-07-08
+:revdate: 2021-08-07
 :sectnums:
 :toc:
 :toclevels: 5
@@ -14,50 +14,189 @@ Rishiyur S. Nikhil, Bluespec, Inc. (c) 2021
 
 // ================================================================
 // SECTION
-== BluPont Overview
+== AWSteria_Infra Overview
 
-BluPont provides infrastructure for apps that run jointly on a
-standard host computer and an attached FPGA board.
+AWSteria_Infra is for apps that run jointly on a standard host
+computer and an attached FPGA board ("`hardware side`").  The
+infrastructure provides:
 
-On the hardware side, BluPont defines a Bluespec BSV interface for
-your app hardware.  This interface several ports:
+* a high-level API for the host and hardware to communicate
+* a high-level API for the hardware to access FPGA DDR memory
 
-* An AXI4 M port (manager/master) through which the host communicates with your hardware.
-* An AXI4-Lite M port (manager/master) through which the host communicates with your hardware.
-* From one to four An AXI4 S ports (subordinate/slave) through which
-    your hardware connects to DDR4 memories.
-* Some other miscellanous ports for virtual LEDs, DIP switches, DDR4 "`ready`" signals, etc.
+and implementations for a number of platforms (host and hardware-side
+combinations), including reclocking facilities for the hardware-side
+to run at a clock speed appropriate for the design.
 
-On the host side, BluPont defines a C API through which your host-side
-application communicates with the hardware, using thwe AXI4 M and
-AXI4-Lite M ports described above.
+The APIs are specified in files in the `Include_API/` directory.
 
-These APIs are patterned after the "`shell`" in Amazon AWS F1 SDK (`aws-fpga`).
+The API is inspired by Xilinx XDMA facilities (at
+https://github.com/Xilinx/dma_ip_drivers[]) and the "`shell`" in the
+Amazon AWS F1 HDK/SDK (at https://github.com/aws/aws-fpga.git[]).
+Implementations are provided on XDMA and on AWS F1.
 
-These APIs are in the `APIs` directory.
+// ----------------------------------------------------------------
+// SUBSECTION
+=== Hardware side API
 
-_Naming note: "`Blue`" from Bluespec. "`Pont`" is "`bridge`" in French
-(Latin pontem; Spanish puente, Italian ponte)._
+AWSteria_Infra defines the top-level Verilog or Bluespec BSV interface
+for your app hardware.  This interface has several ports:
+
+* Two sets of clock-and-reset (a default and an extra).
+* An AXI4 M port (manager/master) through which the host communicates
+    with your hardware (wide interface, high bandwidth, typically used for moving data).
+* An AXI4-Lite M port (manager/master) through which the host
+    communicates with your hardware (32-bit wide, typically used for control/status).
+* One to four An AXI4 S ports (subordinate/slave) through which
+    your hardware connects to DDR4 memories on the FPGA board.
+* A few miscellanous utility ports
+
+If you are coding directly in Verilog, use the the following file as a
+starting point: it is an "`empty`" module with the correct module name
+and port list; you can populate the interior with your
+application-specific logic (including instantiating sub-modules, etc.)
+
+----
+    Include_API/mkAWSteria_HW_EMPTY.v
+----
+
+If you are coding in BSV, use the following files as a starting point:
+
+----
+    Include_API/AWSteria_HW_EMPTY.bsv
+    Include_API/AWSteria_HW_IFC.bsv
+----
+
+The former is an "`empty`" BSV module with the correct module name and
+interface.  The module header looks like this, using the interface
+specified in the latter file:
+
+----
+    module mkAWSteria_HW #(Clock b_CLK, Reset b_RST_N)
+       (AWSteria_HW_IFC #(AXI4_Slave_IFC #(16, 64, 512, 0),
+                          AXI4_Lite_Slave_IFC #(32, 32, 0),
+                          AXI4_Master_IFC #(16, 64, 512, 0)));
+----
+
+Here, `b_CLK` and `b_RST_N` are the extra clock-reset pair, beyond the
+module's own default `CLK` and `RST_N` (your app can ignore the extra
+pair if they are not needed).
+
+If you are coding in some other HDL or using HLS, you can either
+arrange for it to compile your top-level module to look like:
+
+----
+    Include_API/mkAWSteria_HW_EMPTY.v
+----
+
+or manually instantiate your top-level module inside this.
+
+Of course, when targeting an FPGA platform (Amazon AWS F1, Xilinx
+VCU118, ...)  your Verilog RTL should be acceptable to the synthesis
+tool for that platform.
+
+// ----------------------------------------------------------------
+// SUBSECTION
+=== Host side API
+
+On the host side, AWSteria_Infra defines a C API through which your
+host-side application communicates with the hardware via the AXI4 M
+and AXI4-Lite M ports described above.
+
+----
+    Include_API/AWSteria_Host_lib.h
+----
+
+Host side code can be written in any language environment.  To
+communicate with the hardware side, it should invoke the C API
+specified in `Include_API/AWSteria_Host_lib.h`.  `AWSteria_Infra`
+provides C code implementing the API for each platform.
+
+// ----------------------------------------------------------------
+// SUBSECTION
+=== Platforms implementing the API
+
+Each `Platform_XXX/` directory is an implementation of these APIs, for
+both the host and the hardware sides.  Current platforms are:
+
+----
+Platform_Sim/
+Platform_AWSF1/
+Platform_VCU118/
+----
+
+and more details are given in separate sections below.
+More platforms may become available in the future.
+
+// ----------------------------------------------------------------
+// SUBSECTION
+=== A Small Test Application
+
+The `TestApp/` directory is a small test application to test that the
+infrastructure is working properly.  It should work on all supported
+platforms, and is particularly useful when developing/porting an
+implementation of `AWSteria_Infra` for a new platform.
 
 // ================================================================
 // SECTION
-== BluPont Implementation: Bluesim and Verilog simulation
+== Porting your application to use AWSteria_Infra
+
+The small test application in the `TestApp/` directory is such an
+example, where the HW-side is written in BSV and compiled using the
+Bluespec compiler `bsc` into Verilog RTL.  When you create a new
+application, you could use this as a starting template and modify it
+for purpose (see next section for more details).
+
+Each "`Platform`" section below provides more details on how to build
+and execute on that platform.
+
+1. If desired, populate the `TestApp/Host_Side/` directory with your
+    host-side sources (e.g., C files).  In Steps 3 and 4 you will edit
+    Makefiles to make a local copy of sources anyway, so you can copy
+    them from their original locations, if desired.
++
+    Your source files should invoke the C API described in
+    `APIs/AWSteria_Infra_Host_Side_API.h`
+
+2. If desired, populate the `TestApp/HW_Side/` directory with your
+    hardware-side sources (e.g., BSV files).  In Steps 3 and 4 you
+    will edit Makefiles to make a local copy of sources anyway, so you
+    can copy them from their original locations, if desired.
++
+    Your source files should have a top-level module called
+    `mkAWSteria_InfraHost_Side` with the interface `AWSteria_Infra_Host_Side_IFC`
+    specfied in the file `APIs/AWSteria_Infra_Host_Side_IFC.bsv`.
+
+3. Each of the `TestApp/HW_Side/builds/*/Copy_Sources.mk` files shows
+    commands to copy the TestApp's hardware-side source files into a
+    local directory for a hardware-side build (Bluesim, Verilator or
+    F1).  Edit `Copy_Sources.mk` to copy all your app's hardware-side
+    sources, then `make`.
+
+4. Each of the `TestApp/Host_Side/builds/*/Copy_Sources.mk` files
+    shows commands to copy the TestApp's hosgt-side source files into
+    a local directory for a host-side build (Sim or F1).  Edit
+    `Copy_Sources.mk` to copy all your app's host-side sources, then
+    `make`.
+
+// ================================================================
+// SECTION
+== Platform: Simulation (Bluesim and Verilog)
 
 The `Platform_Sim/` directory provides an implementation of the
-BluPont infrastructure for simulation.
+AWSteria_Infra infrastructure for simulation.
 
 * The host side and hardware side run as two processes on a standard computer.
 * The hardware side runs in simulation, Bluesim or Verilator
     simulation (it can be ported easily to other Verilog simulators).
-* The BluPont host-hardware communication is emulated over TCP/IP.
-* The BluPont DDR4 memory interfaces are connected to memory models.
+* The AWSteria_Infra host-hardware communication is emulated over TCP/IP.
+* The AWSteria_Infra DDR4 memory interfaces are connected to memory models.
 
 // ================================================================
 // SECTION
-== BluPont Implementation: Amazon AWS F1
+== Platform: Amazon AWS F1
 
 The `Platform_AWSF1/` directory provides an implementation of the
-BluPont infrastructure for an Amazon AWS F1 instance (i.e., a server
+AWSteria_Infra infrastructure for an Amazon AWS F1 instance (i.e., a server
 in the cloud with an FPGA board attached with a PCIe bus).
 
 * The host side runs as a regular program on the Amazon AWS F1
@@ -71,13 +210,10 @@ in the cloud with an FPGA board attached with a PCIe bus).
 
 // ================================================================
 // SECTION
-== BluPont Implementation: Xilinx VCU118 board
-
-*_(This section to be written.  Code is still under development as of
-July 8, 2021.  It is expected to be available in the next few weeks)_*
+== Platform: Xilinx VCU118 board
 
 The `Platform_VCU118/` directory provides an implementation of the
-BluPont infrastructure for a standard Debian/Ubuntu computer with a
+AWSteria_Infra infrastructure for a standard Debian/Ubuntu computer with a
 Xilinx VCU118 FPGA board attached with a PCIe bus.
 
 * The host side runs as a regular program on the Debian/Ubunto host.
@@ -86,7 +222,7 @@ Xilinx VCU118 FPGA board attached with a PCIe bus.
 
 // ================================================================
 // SECTION
-== BluPont Test Application
+== Test Application
 
 The `TestApp/` directory provides a small and simple test application.
 When you create a new application, you could use this as a starting
@@ -96,9 +232,9 @@ The `Host_Side/` directory contains the host side application code,
 which invokes the host side C API.
 
 The `HW_Side/` directory contains the hardware side application code,
-i.e., a top-level `mkBluPont_HW_Side` module in the
-`BluPont_HW_Side.bsv` file, with the standard interface
-`BluPont_HW_Side_IFC` defined in the `APIs/` directory.
+i.e., a top-level `mkAWSteria_Infra_HW_Side` module in the
+`AWSteria_Infra_HW_Side.bsv` file, with the standard interface
+`AWSteria_Infra_HW_Side_IFC` defined in the `APIs/` directory.
 
 _What the app does:_
 
@@ -162,46 +298,9 @@ reads, to exercise the AXI4 burst capability.
 July 8, 2021.  It is expected to be available in the next few weeks)_*
 
 // ================================================================
-// SECTION
-== Porting your application to use BluPont
-
-The `TestApp/` directory provides a small and simple test application.
-When you create a new application, you could use this as a starting
-template and modify it for purpose (see next section for more details).
-
-1. If desired, populate the `TestApp/Host_Side/` directory with your
-    host-side sources (e.g., C files).  In Steps 3 and 4 you will edit
-    Makefiles to make a local copy of sources anyway, so you can copy
-    them from their original locations, if desired.
-+
-    Your source files should invoke the C API described in
-    `APIs/BluPont_Host_Side_API.h`
-
-2. If desired, populate the `TestApp/HW_Side/` directory with your
-    hardware-side sources (e.g., BSV files).  In Steps 3 and 4 you
-    will edit Makefiles to make a local copy of sources anyway, so you
-    can copy them from their original locations, if desired.
-+
-    Your source files should have a top-level module called
-    `mkBluPontHost_Side` with the interface `BluPont_Host_Side_IFC`
-    specfied in the file `APIs/BluPont_Host_Side_IFC.bsv`.
-
-3. Each of the `TestApp/HW_Side/builds/*/Copy_Sources.mk` files shows
-    commands to copy the TestApp's hardware-side source files into a
-    local directory for a hardware-side build (Bluesim, Verilator or
-    F1).  Edit `Copy_Sources.mk` to copy all your app's hardware-side
-    sources, then `make`.
-
-4. Each of the `TestApp/Host_Side/builds/*/Copy_Sources.mk` files
-    shows commands to copy the TestApp's hosgt-side source files into
-    a local directory for a host-side build (Sim or F1).  Edit
-    `Copy_Sources.mk` to copy all your app's host-side sources, then
-    `make`.
-
-// ================================================================
 == Future Evolution (expected; not scheduled yet)
 
-* Port BluPont to more platforms (more FPGA boards).  Note the
+* Port AWSteria_Infra to more platforms (more FPGA boards).  Note the
     host-FPGA communication does not have to be over PCIe; it could
     run over other transports such as Ethernet, USB, JTAG, ... (albeit
     with slower performance).  Indeed `Platform_Sim` described above
@@ -210,15 +309,15 @@ template and modify it for purpose (see next section for more details).
 The `TestApp` has components useful for other functions, which we may
 add as time and energy permits:
 
-* Measure BluPont performance: latencies and bandwidths for host-FPGA
+* Measure AWSteria_Infra performance: latencies and bandwidths for host-FPGA
     communication, for DUT-Memory access, etc.
 
-* "`Unloading`" DDR4 after some DUT has run in BluPont, e.g.,
+* "`Unloading`" DDR4 after some DUT has run in AWSteria_Infra, e.g.,
     application performance counters stored in DDR4 (for platforms
     where DDR4 contents are preserved across bitfile reloads).  This
     merely needs alternate C code on the host side.
 
-* "`Preloading`" DDR4 before some DUT has run in BluPont, e.g., a
+* "`Preloading`" DDR4 before some DUT has run in AWSteria_Infra, e.g., a
     section of DDR4 used by the DUT as a ROM, or as initialized memory
     (for platforms where DDR4 contents are preserved across bitfile
     reloads).  This merely needs alternate C code on the

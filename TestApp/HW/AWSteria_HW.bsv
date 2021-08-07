@@ -41,6 +41,9 @@ import AWSteria_HW_IFC    :: *;
 // ================================================================
 
 export mkAWSteria_HW;
+export AXI4_16_64_512_0_S_IFC;
+export AXI4L_32_32_0_S_IFC;
+export AXI4_16_64_512_0_M_IFC;
 
 // ****************************************************************
 // Module: synthesized instance of AXI4L_S to AXI4_M adapter

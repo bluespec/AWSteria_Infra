@@ -43,8 +43,17 @@ example_AWSteria_HW_reclocked/
         example_AWSteria_HW_reclocked/
         ├── Makefile
         ├── src
-        │   ├── bd/                [This is a copy from the Block Design, see above]
+        │   ├── bd/                [This is copied from AWSteria_HW_reclocked, see above]
         │   ├── synchronizers.v
         │   └── top_garnet.v
         └── tcl
             └── build.tcl
+
+    To run your own AWSteria design,
+    - Add your actual mkAWSteria_HW.v source, and sources for hierarchy below it.
+        These can be added directly to src/, or in a separate sub-directory, ...
+    - Edit tcl/build.tcl to 'add_files' all your sources.
+    - Copy example_AWSteria_HW_reclocked into your clone of the garnet/ repo
+    - There (in example_AWSteria_HW_reclocked), 'make'
+        to create the partial-reconfig bit file to be loaded onto your
+        VCU118 using partial reconfig.

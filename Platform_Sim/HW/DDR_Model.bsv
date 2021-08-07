@@ -1,12 +1,11 @@
 // Copyright (c) 2016-2021 Bluespec, Inc. All Rights Reserved.
 // Author: Rishiyur S. Nikhil
 
-package BluPont_DDR4_Model;
+package DDR_Model;
 
 // ================================================================
-// This package is a model of the BluPont DDR4s (with AXI4 interfaces)
+// This package is a model of the DDRs (with AXI4 interfaces)
 // for use in simulation.
-// WARNING: This is a simplified model: does not support AXI4 bursts.
 
 // ================================================================
 // BSV lib imports
@@ -29,10 +28,10 @@ import AXI4_Deburster :: *;
 
 // ================================================================
 
-export mkBluPont_DDR4_A_Model;
-export mkBluPont_DDR4_B_Model;
-export mkBluPont_DDR4_C_Model;
-export mkBluPont_DDR4_D_Model;
+export mkDDR_A_Model;
+export mkDDR_B_Model;
+export mkDDR_C_Model;
+export mkDDR_D_Model;
 export AXI4_16_64_512_0_Slave_IFC;
 
 // ================================================================
@@ -65,7 +64,7 @@ endfunction
 // Supports bursts
 
 (* synthesize *)
-module mkBluPont_DDR4_A_Model (AXI4_16_64_512_0_Slave_IFC);
+module mkDDR_A_Model (AXI4_16_64_512_0_Slave_IFC);
    let ifc <- mkMem_Model (0,                       // verbosity
 			   0,                       // ddr4_num
 			   False,                   // init_with_memhex
@@ -84,7 +83,7 @@ endmodule
 // Supports bursts
 
 (* synthesize *)
-module mkBluPont_DDR4_B_Model (AXI4_16_64_512_0_Slave_IFC);
+module mkDDR_B_Model (AXI4_16_64_512_0_Slave_IFC);
    let ifc <- mkMem_Model (0,                       // verbosity
 			   1,                       // ddr4_num
 			   False,                   // init_with_memhex
@@ -102,7 +101,7 @@ endmodule
 // Currently a dummy
 
 (* synthesize *)
-module mkBluPont_DDR4_C_Model (AXI4_16_64_512_0_Slave_IFC);
+module mkDDR_C_Model (AXI4_16_64_512_0_Slave_IFC);
    return dummy_AXI4_Slave_ifc;
 endmodule
 
@@ -111,7 +110,7 @@ endmodule
 // Currently a dummy
 
 (* synthesize *)
-module mkBluPont_DDR4_D_Model (AXI4_16_64_512_0_Slave_IFC);
+module mkDDR_D_Model (AXI4_16_64_512_0_Slave_IFC);
    return dummy_AXI4_Slave_ifc;
 endmodule
 
@@ -123,6 +122,8 @@ endmodule
 //       (in AWS: 16GB)
 // - bytes_implemented are the # of bytes implemented (on top of byte_addr_base)
 //       which need not cover until addr_last.
+// WARNING: This is a simplified model: does not support AXI4 bursts.
+//          Use a deburster in front of this, if needed.
 
 module mkMem_Model #(Integer    verbosity,
                      Bit #(2)   ddr4_num,
