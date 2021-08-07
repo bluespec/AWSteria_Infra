@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2021 Bluespec, Inc.  All Rights Reserved
 
-// This library implements the BluPont host-side API routines
+// This library implements the AWSteria host-side API routines
 // Bluesim and Verilator sim.
 
 // ================================================================
@@ -17,7 +17,7 @@
 // ----------------
 // Project includes
 
-#include "BluPont_Host_Side_API.h"
+#include "AWSteria_Host_lib.h"
 
 #include "Bytevec.h"
 #include "TCP_Client_Lib.h"
@@ -32,26 +32,26 @@
 
 typedef struct {
     Bytevec_state *p_bytevec_state;
-} BluPont_Host_State;
+} AWSteria_Host_State;
 
 static
-BluPont_Host_State  bluepont_host_state;
+AWSteria_Host_State  awsteria_host_state;
 
 // ================================================================
 // Host_init returns pointer to any state needed for the remaining API calls
 // Return pointer to host state (or NULL if error)
 
-void *BluPont_Host_Side_init (void)
+void *AWSteria_Host_init (void)
 {
     fprintf (stdout, "%s()\n", __FUNCTION__);
 
-    if (bluepont_host_state.p_bytevec_state != NULL) {
+    if (awsteria_host_state.p_bytevec_state != NULL) {
 	fprintf (stdout, "WARNING: %s: already initialized\n", __FUNCTION__);
-	return (& bluepont_host_state);
+	return (& awsteria_host_state);
     }
 
-    bluepont_host_state.p_bytevec_state = mk_Bytevec_state ();
-    if (bluepont_host_state.p_bytevec_state == NULL) {
+    awsteria_host_state.p_bytevec_state = mk_Bytevec_state ();
+    if (awsteria_host_state.p_bytevec_state == NULL) {
 	fprintf (stdout, "ERROR: %s: mk_Bytevec_state failed\n", __FUNCTION__);
 	exit (1);
     }
@@ -63,21 +63,21 @@ void *BluPont_Host_Side_init (void)
     }
 
     fprintf (stdout, "%s: initialized, connected to simulation server\n", __FUNCTION__);
-    return (& bluepont_host_state);
+    return (& awsteria_host_state);
 }
 
 static
 void check_state_initialized (void)
 {
-    if (bluepont_host_state.p_bytevec_state != NULL) return;
-    BluPont_Host_Side_init ();
+    if (awsteria_host_state.p_bytevec_state != NULL) return;
+    AWSteria_Host_init ();
 }
 
 // ================================================================
 // Host_shutdown takes pointer to state returned by Host_init
 // Return 0 if ok, non-zero if error
 
-int BluPont_Host_Side_shutdown (void *bluPont_Host_state)
+int AWSteria_Host_shutdown (void *awsteria_host_state)
 {
     fprintf (stdout, "%s: closing TCP connection\n", __FUNCTION__);
     tcp_client_close (0);
@@ -99,17 +99,17 @@ bool do_comms (void)
     // Send
     if (verbosity2 > 1)
 	fprintf (stdout, "%s: packet to_bytevec\n", __FUNCTION__);
-    int ready = Bytevec_struct_to_bytevec (bluepont_host_state.p_bytevec_state);
+    int ready = Bytevec_struct_to_bytevec (awsteria_host_state.p_bytevec_state);
     if (ready) {
 	if (verbosity2 != 0) {
 	    fprintf (stdout, "%s: sending %0d bytes\n  ",  __FUNCTION__,
-		     bluepont_host_state.p_bytevec_state->bytevec_C_to_BSV [0]);
-	    for (int j = 0; j < bluepont_host_state.p_bytevec_state->bytevec_C_to_BSV [0]; j++)
-		fprintf (stdout, " %02x", bluepont_host_state.p_bytevec_state->bytevec_C_to_BSV [j]);
+		     awsteria_host_state.p_bytevec_state->bytevec_C_to_BSV [0]);
+	    for (int j = 0; j < awsteria_host_state.p_bytevec_state->bytevec_C_to_BSV [0]; j++)
+		fprintf (stdout, " %02x", awsteria_host_state.p_bytevec_state->bytevec_C_to_BSV [j]);
 	    fprintf (stdout, "\n");
 	}
-	status = tcp_client_send (bluepont_host_state.p_bytevec_state->bytevec_C_to_BSV [0],
-				  bluepont_host_state.p_bytevec_state->bytevec_C_to_BSV);
+	status = tcp_client_send (awsteria_host_state.p_bytevec_state->bytevec_C_to_BSV [0],
+				  awsteria_host_state.p_bytevec_state->bytevec_C_to_BSV);
 	if (status == 0) {
 	    fprintf (stdout, "%s: tcp_client_send error\n",  __FUNCTION__);
 	    exit (1);
@@ -122,24 +122,24 @@ bool do_comms (void)
     if (verbosity2 > 1)
 	fprintf (stdout, "%s: attempt receive bytevec\n",  __FUNCTION__);
     const bool poll    = true;
-    status = tcp_client_recv (poll, 1, bluepont_host_state.p_bytevec_state->bytevec_BSV_to_C);
+    status = tcp_client_recv (poll, 1, awsteria_host_state.p_bytevec_state->bytevec_BSV_to_C);
     if (status == status_ok) {
 	const bool no_poll = false;
-	uint32_t size = bluepont_host_state.p_bytevec_state->bytevec_BSV_to_C [0] - 1;
+	uint32_t size = awsteria_host_state.p_bytevec_state->bytevec_BSV_to_C [0] - 1;
 	status = tcp_client_recv (no_poll, size,
-				  & (bluepont_host_state.p_bytevec_state->bytevec_BSV_to_C [1]));
+				  & (awsteria_host_state.p_bytevec_state->bytevec_BSV_to_C [1]));
 
 	if (verbosity2 != 0) {
 	    fprintf (stdout, "%s: received %0d bytes\n  ",  __FUNCTION__,
-		     bluepont_host_state.p_bytevec_state->bytevec_BSV_to_C [0]);
-	    for (int j = 0; j < bluepont_host_state.p_bytevec_state->bytevec_BSV_to_C [0]; j++)
-		fprintf (stdout, " %02x", bluepont_host_state.p_bytevec_state->bytevec_BSV_to_C [j]);
+		     awsteria_host_state.p_bytevec_state->bytevec_BSV_to_C [0]);
+	    for (int j = 0; j < awsteria_host_state.p_bytevec_state->bytevec_BSV_to_C [0]; j++)
+		fprintf (stdout, " %02x", awsteria_host_state.p_bytevec_state->bytevec_BSV_to_C [j]);
 	    fprintf (stdout, "\n");
 	}
 
 	if (verbosity2 != 0)
 	    fprintf (stdout, "%s: packet from_bytevec\n",  __FUNCTION__);
-	Bytevec_struct_from_bytevec (bluepont_host_state.p_bytevec_state);
+	Bytevec_struct_from_bytevec (awsteria_host_state.p_bytevec_state);
 
 	activity = true;
     }
@@ -158,7 +158,7 @@ static const int verbosity_AXI4_read  = 0;
 static const int verbosity_AXI4_write = 0;
 
 // ================================================================
-// The following defs are needed for BluPont_AXI4_read()/write()
+// The following defs are needed for AWSteria_AXI4_read()/write()
 // tranfers use AXI4 bursts where
 // - bursts should not straddle 4KB page boundaries
 //    (cf. "AMBA AXI and ACE Protocol Specification, Section A3.4.1 Address structure")
@@ -181,10 +181,10 @@ static const int verbosity_AXI4_write = 0;
 #define MASK_TO_BEAT_START      (~ ((uint64_t) MASK_TO_OFFSET_IN_BEAT))
 
 // ================================================================
-// BluPont_AXI4_read()    for simulation library
+// AWSteria_AXI4_read()    for simulation library
 // Return 0 for ok, non-zero for error.
 
-// The externally-called API function 'BluPont_AXI4_read()' is
+// The externally-called API function 'AWSteria_AXI4_read()' is
 // given later, below.
 // It cannot assume anything about address alignment,
 // nor whether data straddles page boundaries.
@@ -197,7 +197,7 @@ static const int verbosity_AXI4_write = 0;
 // 64-Byte aligned (beat-aligned).
 
 static
-int BluPont_AXI4_read_aux (uint8_t *buffer, const size_t size, const uint64_t address)
+int AWSteria_AXI4_read_aux (uint8_t *buffer, const size_t size, const uint64_t address)
 {
     if (verbosity_AXI4_read >= 2)
 	fprintf (stdout, "%s: size %0ld address %0lx\n", __FUNCTION__, size, address);
@@ -238,7 +238,7 @@ int BluPont_AXI4_read_aux (uint8_t *buffer, const size_t size, const uint64_t ad
 
     while (true) {
 	// Try to send request
-	int status = Bytevec_enqueue_AXI4_Rd_Addr_i16_a64_u0 (bluepont_host_state.p_bytevec_state, & rda);
+	int status = Bytevec_enqueue_AXI4_Rd_Addr_i16_a64_u0 (awsteria_host_state.p_bytevec_state, & rda);
 	if (status == 1) break;
 	usleep (10);                     // Wait, if unable to send
 	did_some_comms = do_comms ();    // Move data in comms channel
@@ -264,7 +264,7 @@ int BluPont_AXI4_read_aux (uint8_t *buffer, const size_t size, const uint64_t ad
 		usleep (10);                 // Wait, if no activity
 
 	    // Try to receive a beat
-	    int status = Bytevec_dequeue_AXI4_Rd_Data_i16_d512_u0 (bluepont_host_state.p_bytevec_state, & rdd);
+	    int status = Bytevec_dequeue_AXI4_Rd_Data_i16_d512_u0 (awsteria_host_state.p_bytevec_state, & rdd);
 	    if (status == 1) break;          // Successfully received a beat
 
 	    if (verbosity_AXI4_read >= 3)
@@ -321,7 +321,7 @@ int BluPont_AXI4_read_aux (uint8_t *buffer, const size_t size, const uint64_t ad
 // This does not assume anything about address alignment,
 // nor whether data straddles page boundaries.
 
-int BluPont_AXI4_read (void *bluPont_Host_state,
+int AWSteria_AXI4_read (void *awsteria_host_state,
 		       uint8_t *buffer, const size_t size, const uint64_t address)
 {
     if (verbosity_AXI4_read >= 1)
@@ -342,7 +342,7 @@ int BluPont_AXI4_read (void *bluPont_Host_state,
 		      ? (addr_of_next_page - chunk_addr)
 		      : ((address + size) - chunk_addr));
 
-	status = BluPont_AXI4_read_aux (& (buffer [chunk_addr - address]), chunk_size, chunk_addr);
+	status = AWSteria_AXI4_read_aux (& (buffer [chunk_addr - address]), chunk_size, chunk_addr);
 	if (status != 0)
 	    return status;
 
@@ -358,11 +358,11 @@ int BluPont_AXI4_read (void *bluPont_Host_state,
 }
 
 // ================================================================
-// This is a simulation model of AWS library routine 'BluPont_AXI4_write()'
+// This is a simulation model of AWS library routine 'AWSteria_AXI4_write()'
 // which, in the real library aws-fpga (on real HW) operates over PCIe.
 // Return 0 for ok, non-zero for error.
 
-// The externally-called API function 'BluPont_AXI4_write()' is
+// The externally-called API function 'AWSteria_AXI4_write()' is
 // given later, below.
 // It cannot assume anything about address alignment,
 // nor whether data straddles page boundaries.
@@ -375,7 +375,7 @@ int BluPont_AXI4_read (void *bluPont_Host_state,
 // 64-Byte aligned (beat-aligned).
 
 static
-int BluPont_AXI4_write_aux (uint8_t *buffer, const size_t size, const uint64_t address)
+int AWSteria_AXI4_write_aux (uint8_t *buffer, const size_t size, const uint64_t address)
 {
     if (verbosity_AXI4_write >= 2) {
 	fprintf (stdout, "%s: size %0ld address %0lx\r", __FUNCTION__, size, address);
@@ -417,7 +417,7 @@ int BluPont_AXI4_write_aux (uint8_t *buffer, const size_t size, const uint64_t a
 		 __FUNCTION__, wra.awaddr, wra.awlen, wra.awsize, wra.awburst);
     while (true) {
 	// Try to send request
-	int status = Bytevec_enqueue_AXI4_Wr_Addr_i16_a64_u0 (bluepont_host_state.p_bytevec_state, & wra);
+	int status = Bytevec_enqueue_AXI4_Wr_Addr_i16_a64_u0 (awsteria_host_state.p_bytevec_state, & wra);
 	if (status == 1) break;
 	usleep (10);                     // Wait, if unable to send
 	did_some_comms = do_comms ();    // Move data in comms channel
@@ -471,7 +471,7 @@ int BluPont_AXI4_write_aux (uint8_t *buffer, const size_t size, const uint64_t a
 	// Send the AXI4 write-data beat
 	while (true) {
 	    // Try to send the beat
-	    int status = Bytevec_enqueue_AXI4_Wr_Data_d512_u0  (bluepont_host_state.p_bytevec_state, & wrd);
+	    int status = Bytevec_enqueue_AXI4_Wr_Data_d512_u0  (awsteria_host_state.p_bytevec_state, & wrd);
 	    if (status == 1) break;
 	    usleep (10);                     // Wait if unable to send
 	    did_some_comms = do_comms ();    // Move data in comms channel
@@ -494,7 +494,7 @@ int BluPont_AXI4_write_aux (uint8_t *buffer, const size_t size, const uint64_t a
 	    usleep (10);
 
 	// Try to receive the response
-	int status = Bytevec_dequeue_AXI4_Wr_Resp_i16_u0 (bluepont_host_state.p_bytevec_state, & wrr);
+	int status = Bytevec_dequeue_AXI4_Wr_Resp_i16_u0 (awsteria_host_state.p_bytevec_state, & wrr);
 	if (status == 1) break;          // Successfully received
 
 	if (verbosity_AXI4_write >= 3)
@@ -512,7 +512,7 @@ int BluPont_AXI4_write_aux (uint8_t *buffer, const size_t size, const uint64_t a
 // This does not assume anything about address alignment,
 // nor whether data straddles page boundaries.
 
-int BluPont_AXI4_write (void *bluPont_Host_state,
+int AWSteria_AXI4_write (void *awsteria_host_state,
 			uint8_t *buffer, const size_t size, const uint64_t address)
 {
     if (verbosity_AXI4_write >= 1)
@@ -533,7 +533,7 @@ int BluPont_AXI4_write (void *bluPont_Host_state,
 		      ? (addr_of_next_page - chunk_addr)
 		      : ((address + size) - chunk_addr));
 
-	status = BluPont_AXI4_write_aux (& (buffer [chunk_addr - address]), chunk_size, chunk_addr);
+	status = AWSteria_AXI4_write_aux (& (buffer [chunk_addr - address]), chunk_size, chunk_addr);
 	if (status != 0)
 	    return status;
 
@@ -551,7 +551,7 @@ int BluPont_AXI4_write (void *bluPont_Host_state,
 // ================================================================
 // This is our simulation model of the corresponding AWS library routine.
 
-int BluPont_AXI4L_read (void *p_state,
+int AWSteria_AXI4L_read (void *p_state,
 			uint64_t addr, uint32_t *p_data)
 {
     int  verbosity2 = 0;
@@ -569,7 +569,7 @@ int BluPont_AXI4L_read (void *p_state,
     if (verbosity2 != 0)
 	fprintf (stdout, "%s: enqueue AXI4L Rd_Addr %08x\n", __FUNCTION__, rda.araddr);
     while (true) {
-	int status = Bytevec_enqueue_AXI4L_Rd_Addr_a32_u0 (bluepont_host_state.p_bytevec_state, & rda);
+	int status = Bytevec_enqueue_AXI4L_Rd_Addr_a32_u0 (awsteria_host_state.p_bytevec_state, & rda);
 	if (status == 1) break;
 	usleep (10);
 	did_some_comms = do_comms ();
@@ -580,7 +580,7 @@ int BluPont_AXI4L_read (void *p_state,
 	if (! did_some_comms)
 	    usleep (1000);
 
-	int status = Bytevec_dequeue_AXI4L_Rd_Data_d32_u0 (bluepont_host_state.p_bytevec_state, & rdd);
+	int status = Bytevec_dequeue_AXI4L_Rd_Data_d32_u0 (awsteria_host_state.p_bytevec_state, & rdd);
 	if (status == 1) {
 	    *p_data = rdd.rdata;
 	    break;
@@ -595,7 +595,7 @@ int BluPont_AXI4L_read (void *p_state,
 // ================================================================
 // This is our simulation model of the corresponding AWS library routine.
 
-int BluPont_AXI4L_write (void *p_state,
+int AWSteria_AXI4L_write (void *p_state,
 			 uint64_t addr, uint32_t data)
 {
     int  verbosity2 = 0;
@@ -615,13 +615,13 @@ int BluPont_AXI4L_write (void *p_state,
     wrd.wstrb  = 0xFF;
 
     while (true) {
-	int status = Bytevec_enqueue_AXI4L_Wr_Addr_a32_u0 (bluepont_host_state.p_bytevec_state, & wra);
+	int status = Bytevec_enqueue_AXI4L_Wr_Addr_a32_u0 (awsteria_host_state.p_bytevec_state, & wra);
 	if (status == 1) break;
 	usleep (10);
 	did_some_comms = do_comms ();
     }
     while (true) {
-	int status = Bytevec_enqueue_AXI4L_Wr_Data_d32 (bluepont_host_state.p_bytevec_state, & wrd);
+	int status = Bytevec_enqueue_AXI4L_Wr_Data_d32 (awsteria_host_state.p_bytevec_state, & wrd);
 	if (status == 1) break;
 	usleep (10);
 	did_some_comms = do_comms ();
@@ -632,7 +632,7 @@ int BluPont_AXI4L_write (void *p_state,
 	if (! did_some_comms)
 	    usleep (10);
 
-	int status = Bytevec_dequeue_AXI4L_Wr_Resp_u0 (bluepont_host_state.p_bytevec_state, & wrr);
+	int status = Bytevec_dequeue_AXI4L_Wr_Resp_u0 (awsteria_host_state.p_bytevec_state, & wrr);
 	if (status == 1) break;
     }
     if (verbosity2 != 0)
