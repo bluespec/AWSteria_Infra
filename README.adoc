@@ -220,6 +220,8 @@ Xilinx VCU118 FPGA board attached with a PCIe bus.
     
 * The hardware side runs on the FPGA board.
 
+See link:Platform_VCU118/README.html[] for details.
+
 // ================================================================
 // SECTION
 == Test Application

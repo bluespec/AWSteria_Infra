@@ -1,0 +1,98 @@
+= AWSteria_Infra support for VCU118
+Rishiyur S. Nikhil, Bluespec, Inc. (c) 2021
+:revnumber: v1.0
+:revdate: 2021-08-08
+:sectnums:
+:toc:
+:toclevels: 5
+:toc: left
+:toc-title: Contents
+:description: VCU118-specific infor for AWteria_Infra
+:keywords: AWS, F1, Shell, Instance AFI, AMI, DCP, Design Checkpoint, Custom Logic
+:imagesdir: Figures
+:data-uri:
+
+// ================================================================
+// SECTION
+
+== Introduction and Prerequisites
+
+AWSteria_Infra provides support for VCU118 using the "`Garnet`" system
+(https://github.com/CTSRD-CHERI/garnet[]) from Jessica Clarke
+(Univ. of Cambridge, UK).  Please clone the Garnet repository in
+preparation for building your hardware-side design.
+
+Garnet, in turn, uses Xilinx's XDMA system
+(https://github.com/Xilinx/dma_ip_drivers[]).  Please follow the
+instructions in the XDMA repository to install the XDMA kernel driver
+on your Linux system, required for host-FPGA communication over the
+PCIe bus.
+
+// ================================================================
+// SECTION
+
+== Hardware side
+
+For the VCU118 HW side, Garnet provides:
+
+* A `make` resulting in a fixed bitfile for the VCU118 that contains:
+
+  ** Xilinx XDMA hardware IP that connects to the VCU118's PCIe bus
+     interface, and provides AXI4 and AXI4-Lite interfaces to the DUT
+
+  ** Xilinx DDR4 IP that connects to one or both VCU118 DDR4 memories,
+     and provides AXI4 interfaces to the DUT
+
+  ** A 250 MHz clock
+
+* A `make` for the user's RTL design with a standard RTL interface
+    that plugs into the above facilities.  This results in a
+    "`partial`" bitfile which can be downloaded into the VCU118 using
+    "`partial reconfiguration`", so that it fits into the fixed bitfile.
+
+The fixed bitfile is loaded just once into the VCU118; the partial
+reconfiguration may be done repeatedly as you iterate your design.
+
+An AWSteria design plugs into the above facilities provided by Garnet.
+AWSteria_Infra provides two flow options:
+
+* _Full speed_: AWSteria_Infra provide a `top_garnet.v` shim that:
+    ** has the standard Garnet interface ports,
+    ** instantiates your top-level `mkAWSteria_HW`, and
+    ** connects the ports of `top_garnet.v` directly to the ports of
+        your instance (including the Garnet 250 MHz clock).
+
+* _Reclocked_: AWSteria_Infra provide a `top_garnet.v` shim that:
+    ** has the standard Garnet interface ports,
+    ** instantiates clock dividers providing 100 MHz and 50 MHz clocks,
+
+    ** instantiates your top-level `mkAWSteria_HW`, providing the 100
+       MHz clock as the default clock and the 50 MHz clock an extra
+       clock (which your DUT can ignore, if it's not needed),
+
+    ** connects the ports of `top_garnet.v` via suitable 250
+       MHz-to-100 MHz clock-crossing synchronizers to the ports of
+       your instance.
+
+// ================================================================
+// SECTION
+
+== Host side
+
+You can exercise the hardware side in two different ways:
+
+* Directly from the Linux command-line using command-line tools
+    provided by Xilinx in their XDMA repository
+    (https://github.com/Xilinx/dma_ip_drivers/tree/master/XDMA/linux-kernel/tools[]).
+
+    ** The `dma_from_device` and `dma_to_device` tools read and write
+         arbitrarily large data via the AXI4 port of `mkAWSteria_HW`
+         (via PCIe).
+
+    ** The `reg_rw` tool reads and writes 32-bit data via the
+         AXI4-Lite port of `mkAWSteria_HW` (via PCIe).
+
+* Writing your own host-side program that invokes the C API in `AWSteria_Host_lib.h`.
+    by linking it with the `AWSteria_Host_lib.c` provided here.
+
+// ================================================================
