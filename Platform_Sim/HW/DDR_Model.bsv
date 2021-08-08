@@ -68,7 +68,7 @@ module mkDDR_A_Model (AXI4_16_64_512_0_Slave_IFC);
    let ifc <- mkMem_Model (0,                       // verbosity
 			   0,                       // ddr4_num
 			   False,                   // init_with_memhex
-			   "DDR4_A.memhex512",      // memhex_filename
+			   "DDR_A.memhex512",       // memhex_filename
 			   'h_0_0000_0000,          // byte_addr_base
 			   'h_4_0000_0000,          // byte_addr_lim    (16 GB)
 			   'h_1_0000_0000);         // bytes_implemented (4 GB)
@@ -87,7 +87,7 @@ module mkDDR_B_Model (AXI4_16_64_512_0_Slave_IFC);
    let ifc <- mkMem_Model (0,                       // verbosity
 			   1,                       // ddr4_num
 			   False,                   // init_with_memhex
-			   "DDR4_B.memhex512",      // memhex_filename
+			   "DDR_B.memhex512",       // memhex_filename
 			   'h_4_0000_0000,          // byte_addr_base
 			   'h_8_0000_0000,          // byte_addr_lim  (16 GB)
 			   'h_1_0000_0000);         // bytes_implemented (4 GB)

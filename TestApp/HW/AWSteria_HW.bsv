@@ -75,8 +75,8 @@ endmodule
 
 function Tuple2 #(Bool, Bit #(TLog #(N_DDRs)))  fn_addr_to_ddr_num (Bit #(64) addr);
    Bit #(TLog #(N_DDRs)) ddr_num = truncate (addr [63:34]);
-   Bit #(TSub #(64, TAdd #(TLog #(N_DDRs), 33))) msbs = truncateLSB (addr);
-   Bool                  valid   = (msbs == 0);
+   Bit #(TSub #(64, TAdd #(TLog #(N_DDRs), 34))) msbs = truncateLSB (addr);
+   Bool valid = (msbs == 0);
    return tuple2 (valid, ddr_num);
 endfunction
 

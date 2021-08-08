@@ -91,7 +91,7 @@ module mkTop_HW_Side (Empty) ;
 
    rule rl_connecting (rg_state == STATE_CONNECTING);
       $display ("================================================================");
-      $display ("Bluespec AWSteria simulation v1.0");
+      $display ("Bluespec AWSteria simulation v2.0");
       $display ("Copyright (c) 2020-2021 Bluespec, Inc. All Rights Reserved.");
       $display ("================================================================");
 
@@ -111,8 +111,8 @@ module mkTop_HW_Side (Empty) ;
    // Interaction with remote host
 
    Integer verbosity_bytevec = 0;
-   Integer verbosity_AXI     = 0;
-   Integer verbosity_AXIL    = 0;
+   Integer verbosity_AXI4    = 0;
+   Integer verbosity_AXI4L   = 0;
 
    // Communication box (converts between bytevecs and message structs)
    Bytevec_IFC comms <- mkBytevec;
@@ -202,7 +202,7 @@ module mkTop_HW_Side (Empty) ;
 			     awuser: x1.awuser};
       host_AXI4_xactor.i_wr_addr.enq (x2);
 
-      if (verbosity_AXI != 0) begin
+      if (verbosity_AXI4 != 0) begin
 	 $display ("Top_HW_Side.rl_connect_host_AXI4_wr_addr");
 	 $display ("    ", fshow (x2));
       end
@@ -218,7 +218,7 @@ module mkTop_HW_Side (Empty) ;
 			     wuser: x1.wuser};
       host_AXI4_xactor.i_wr_data.enq (x2);
 
-      if (verbosity_AXI != 0) begin
+      if (verbosity_AXI4 != 0) begin
 	 $display ("Top_HW_Side.rl_connect_host_AXI4_wr_data:");
 	 $display ("    ", fshow (x2));
       end
@@ -241,7 +241,7 @@ module mkTop_HW_Side (Empty) ;
 			     aruser: x1.aruser};
       host_AXI4_xactor.i_rd_addr.enq (x2);
 
-      if (verbosity_AXI != 0) begin
+      if (verbosity_AXI4 != 0) begin
 	 $display ("Top_HW_Side.rl_connect_host_AXI4_rd_addr");
 	 $display ("    ", fshow (x2));
       end
@@ -256,7 +256,7 @@ module mkTop_HW_Side (Empty) ;
 				    buser: x1.buser};
       comms.fi_AXI4_Wr_Resp_i16_u0.enq (x2);
 
-      if (verbosity_AXI != 0) begin
+      if (verbosity_AXI4 != 0) begin
 	 $display ("Top_HW_Side.rl_connect_host_AXI4_wr_resp");
 	 $display ("    ", fshow (x2));
       end
@@ -273,7 +273,7 @@ module mkTop_HW_Side (Empty) ;
 					 ruser: x1.ruser};
       comms.fi_AXI4_Rd_Data_i16_d512_u0.enq (x2);
 
-      if (verbosity_AXI != 0) begin
+      if (verbosity_AXI4 != 0) begin
 	 $display ("Top_HW_Side.rl_connect_host_AXI4_rd_data");
 	 $display ("    ", fshow (x2));
       end
@@ -294,6 +294,11 @@ module mkTop_HW_Side (Empty) ;
 				  awprot: x1.awprot,
 				  awuser: x1.awuser};
       host_AXI4L_xactor.i_wr_addr.enq (x2);
+
+      if (verbosity_AXI4L != 0) begin
+	 $display ("Top_HW_Side.rl_connect_host_AXI4L_wr_addr");
+	 $display ("    ", fshow (x2));
+      end
    endrule
 
    // Connect AXI4L WR_DATA channel
@@ -303,6 +308,11 @@ module mkTop_HW_Side (Empty) ;
       let x2 = AXI4_Lite_Wr_Data {wdata: x1.wdata,
 				  wstrb: x1.wstrb};
       host_AXI4L_xactor.i_wr_data.enq (x2);
+
+      if (verbosity_AXI4L != 0) begin
+	 $display ("Top_HW_Side.rl_connect_host_AXI4L_wr_data:");
+	 $display ("    ", fshow (x2));
+      end
    endrule
 
    // Connect AXI4L RD_ADDR channel
@@ -313,6 +323,11 @@ module mkTop_HW_Side (Empty) ;
 				  arprot: x1.arprot,
 				  aruser: x1.aruser};
       host_AXI4L_xactor.i_rd_addr.enq (x2);
+
+      if (verbosity_AXI4L != 0) begin
+	 $display ("Top_HW_Side.rl_connect_host_AXI4L_rd_addr");
+	 $display ("    ", fshow (x2));
+      end
    endrule
 
    // Connect AXI4L WR_RESP channel
@@ -322,6 +337,11 @@ module mkTop_HW_Side (Empty) ;
       let x2 = AXI4L_Wr_Resp_u0 {bresp: pack (x1.bresp),
 				 buser: x1.buser};
       comms.fi_AXI4L_Wr_Resp_u0.enq (x2);
+
+      if (verbosity_AXI4L != 0) begin
+	 $display ("Top_HW_Side.rl_connect_host_AXI4L_wr_resp");
+	 $display ("    ", fshow (x2));
+      end
    endrule
    
    // Connect AXI4L RD_DATA channel
@@ -332,6 +352,11 @@ module mkTop_HW_Side (Empty) ;
 				     rdata: x1.rdata,
 				     ruser: x1.ruser};
       comms.fi_AXI4L_Rd_Data_d32_u0.enq (x2);
+
+      if (verbosity_AXI4L != 0) begin
+	 $display ("Top_HW_Side.rl_connect_host_AXI4L_rd_data");
+	 $display ("    ", fshow (x2));
+      end
    endrule
 
    // ================================================================

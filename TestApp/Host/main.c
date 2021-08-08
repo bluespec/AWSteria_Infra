@@ -22,7 +22,7 @@
 // ================
 // Project includes
 
-#include "BluPont_Host_Side_API.h"
+#include "AWSteria_Host_lib.h"
 
 // ================================================================
 // On AWS F1, FPGA Developer AMI (CentOS 7), gcc  does not seem to
@@ -43,7 +43,7 @@ int verbosity = 0;
 
 // ================================================================
 
-void *blupont_host_state = NULL;
+void *AWSteria_Host_state = NULL;
 
 uint64_t n_burst_reads    = 0;
 uint64_t burst_read_bytes = 0;
@@ -65,9 +65,13 @@ void buf_write_AXI4 (uint8_t *wbuf, const int n_bytes, const uint64_t addr)
 	fprintf (stdout, "%s: %0d bytes to addr 0x%0lx\n",
 		 __FUNCTION__, n_bytes, addr);
 
-    rc = BluPont_AXI4_write (blupont_host_state, wbuf, n_bytes, addr);
-    if (rc != 0)
+    rc = AWSteria_AXI4_write (AWSteria_Host_state, wbuf, n_bytes, addr);
+    if (rc != 0) {
+	if (verbosity == 0)
+	    fprintf (stdout, "%s: %0d bytes to addr 0x%0lx\n",
+		     __FUNCTION__, n_bytes, addr);
 	fprintf (stdout, "    FAILED: rc = %0d\n", rc);
+    }
     else {
 	n_burst_writes++;
 	burst_write_bytes += n_bytes;
@@ -86,8 +90,11 @@ void buf_read_AXI4 (uint8_t *rbuf, const int n_bytes, const uint64_t addr,
 	fprintf (stdout, "%s: %0d bytes from addr 0x%0lx\n",
 		 __FUNCTION__, n_bytes, addr);
 
-    rc = BluPont_AXI4_read (blupont_host_state, rbuf, n_bytes, addr);
+    rc = AWSteria_AXI4_read (AWSteria_Host_state, rbuf, n_bytes, addr);
     if (rc != 0) {
+	if (verbosity == 0)
+	    fprintf (stdout, "%s: %0d bytes from addr 0x%0lx\n",
+		     __FUNCTION__, n_bytes, addr);
 	fprintf (stdout, "    FAILED: rc = %0d\n", rc);
 	return;
     }
@@ -109,7 +116,10 @@ void buf_read_AXI4 (uint8_t *rbuf, const int n_bytes, const uint64_t addr,
 	    fprintf (stdout, "    Readback check OK\n");
     }
     else {
-	fprintf (stdout, "ERROR: %s: %0d bytes from addr 0x%0lx\n", __FUNCTION__, n_bytes, addr);
+	if (verbosity == 0)
+	    fprintf (stdout, "%s: %0d bytes from addr 0x%0lx\n",
+		     __FUNCTION__, n_bytes, addr);
+	fprintf (stdout, "    ERROR: %0d bytes from addr 0x%0lx\n", n_bytes, addr);
 	fprintf (stdout, "    Readback check FAILED with %0d mismatches\n", n_mismatches);
     }
 }
@@ -128,7 +138,7 @@ void buf_write_AXI4L (uint8_t *wbuf, const uint64_t addr)
 	return;
     }
 
-    rc = BluPont_AXI4L_write (blupont_host_state, addr, *p32);
+    rc = AWSteria_AXI4L_write (AWSteria_Host_state, addr, *p32);
     if (rc != 0) {
 	fprintf (stdout, "%s: 4 bytes to addr 0x%0lx\n", __FUNCTION__, addr);
 	fprintf (stdout, "    FAILED: rc = %0d\n", rc);
@@ -150,7 +160,7 @@ void buf_read_AXI4L (uint8_t *rbuf, const uint64_t addr, const uint8_t *wbuf)
 	return;
     }
 
-    rc = BluPont_AXI4L_read (blupont_host_state, addr, (uint32_t *) rbuf);
+    rc = AWSteria_AXI4L_read (AWSteria_Host_state, addr, (uint32_t *) rbuf);
     if (rc != 0) {
 	fprintf (stdout, "%s: 4bytes from addr 0x%0lx\n", __FUNCTION__, addr);
 	fprintf (stdout, "    FAILED: rc = %0d\n", rc);
@@ -180,7 +190,7 @@ void buf_read_AXI4L (uint8_t *rbuf, const uint64_t addr, const uint8_t *wbuf)
 // TESTS
 
 // ================================================================
-// A constant for the size of each of the 4 BluPont DDRs
+// A constant for the size of each of the 4 AWSteria DDRs
 
 uint64_t MEM_16G = 0x400000000llu;
 uint64_t MEM_4G  = 0x100000000llu;
@@ -240,7 +250,7 @@ void test4 (uint32_t base_addr)
 void print_help (int argc, char *argv [])
 {
     fprintf (stdout, "Usage:  %s\n", argv [0]);
-    fprintf (stdout, "    Assumes BluPont HW-side is ready and awaiting contact\n");
+    fprintf (stdout, "    Assumes AWSteria HW-side is ready and awaiting contact\n");
     fprintf (stdout, "    Does various random reads and writes, exercising the API, with self-checks\n");
 }
 
@@ -258,11 +268,11 @@ int main (int argc, char *argv [])
     }
 
     // ----------------------------------------------------------------
-    // Initialize BluPont host-side API libs
+    // Initialize AWSteria host-side API libs
 
-    fprintf (stdout, "Initializing BluPont host-side API libs\n");
-    blupont_host_state = BluPont_Host_Side_init ();
-    if (blupont_host_state == NULL) goto ret_err;
+    fprintf (stdout, "Initializing AWSteria host-side API libs\n");
+    AWSteria_Host_state = AWSteria_Host_init ();
+    if (AWSteria_Host_state == NULL) goto ret_err;
 
     // ----------------------------------------------------------------
     // Fill wbuf with random data
@@ -275,7 +285,7 @@ int main (int argc, char *argv [])
 	if (len > 256) len = 256;
 
 	int n = getentropy (& (wbuf [j]), len);
-	if (n != len) {
+	if (n != 0) {
 	    fprintf (stdout, "    getentropy(buf, %0ld) failed; => %0d\n", len, n);
 	    rc = 1;
 	    goto ret_err;
@@ -288,6 +298,7 @@ int main (int argc, char *argv [])
 
     fprintf (stdout, "TESTS ----------------\n");
     fprintf (stdout, "\n");
+
     fprintf (stdout, "AXI4: Single write/read to DDR4 A\n");
     buf_write_AXI4 (wbuf, 1, 0);
     buf_read_AXI4  (rbuf, 1, 0, wbuf);
@@ -377,7 +388,7 @@ int main (int argc, char *argv [])
     // Shutdown FPGA PCIe or simulation libraries
 
     fprintf (stdout, "Finalizing FPGA lib or simulation lib\n");
-    rc = BluPont_Host_Side_shutdown (blupont_host_state);
+    rc = AWSteria_Host_shutdown (AWSteria_Host_state);
     if (rc != 0) goto ret_err;
 
     return 0;
