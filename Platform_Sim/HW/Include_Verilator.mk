@@ -16,7 +16,7 @@ Verilog_RTL:
 	mkdir -p $@
 
 .PHONY: compile
-compile:  build_dir  Verilog_RTL  rsync_srcs
+compile:  build_dir  Verilog_RTL  collect_srcs
 	@echo  "INFO: Verilog RTL generation ..."
 	bsc -u -elab -verilog  $(RTL_GEN_DIRS)  $(BSC_COMPILATION_FLAGS)  -p $(BSC_PATH)  $(TOPFILE)
 	@echo  "INFO: Verilog RTL generation finished"
