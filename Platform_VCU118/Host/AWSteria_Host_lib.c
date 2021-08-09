@@ -124,6 +124,8 @@ int AWSteria_AXI4_write (void *opaque,
     for (uint64_t n_sent = 0; n_sent < size; ) {
 	off_t  rc;
 
+	/* THIS SECTION IS NEEDED IF USING write() INSTEAD OF pwrite(), below
+	   pwrite takes an additional 'offset' arg, so seek() is not needed.
 	// Set address
 	if (verbosity_AXI4_W != 0) {
 	    fprintf (stdout, "    n_sent = 0x%0lx; seek()\n", n_sent);
@@ -137,15 +139,18 @@ int AWSteria_AXI4_write (void *opaque,
 		     rc, n_sent);
 	    return -1;
 	}
+	*/
 
 	// Write data from buffer
 	size_t count = size - n_sent;
 	if (count > RW_MAX_SIZE) count = RW_MAX_SIZE;
 
 	if (verbosity_AXI4_W != 0) {
-	    fprintf (stdout, "    write (count = 0x%0lx)\n", count);
+	    fprintf (stdout, "    pwrite (AXI4_w_fd, buf, count 0x%0lx, offset 0x%0lx)\n",
+		     count, address + n_sent);
 	}
-	rc = write (p_state->pci_AXI4_w_fd, & (buffer [n_sent]), count);
+	// rc = write (p_state->pci_AXI4_w_fd, & (buffer [n_sent]), count);
+	rc = pwrite (p_state->pci_AXI4_w_fd, & (buffer [n_sent]), count, address + n_sent);
 	if (rc < 0) {
 	    perror("write device");
 	    fprintf (stdout, "ERROR: %s (size 0x%lx address 0x%0lx)\n",
@@ -180,6 +185,8 @@ int AWSteria_AXI4_read (void *opaque,
     for (uint64_t n_recd = 0; n_recd < size; ) {
 	off_t  rc;
 
+	/* THIS SECTION IS NEEDED IF USING read() INSTEAD OF pread(), below
+	   pwrite takes an additional 'offset' arg, so seek() is not needed.
 	// Set address
 	if (verbosity_AXI4_R != 0) {
 	    fprintf (stdout, "    n_recd = 0x%0lx; seek()\n", n_recd);
@@ -193,15 +200,18 @@ int AWSteria_AXI4_read (void *opaque,
 		     rc, n_recd);
 	    return -1;
 	}
+	*/
 
 	// Read data into buffer
 	size_t count = size - n_recd;
 	if (count > RW_MAX_SIZE) count = RW_MAX_SIZE;
 
 	if (verbosity_AXI4_R != 0) {
-	    fprintf (stdout, "    read (count = 0x%0lx)\n", count);
+	    fprintf (stdout, "    pread (AXI4_w_fd, buf, count 0x%0lx, offset 0x%0lx)\n",
+		     count, address + n_recd);
 	}
-	rc = read (p_state->pci_AXI4_r_fd, & (buffer [n_recd]), count);
+	// rc = read (p_state->pci_AXI4_r_fd, & (buffer [n_recd]), count);
+	rc = pread (p_state->pci_AXI4_r_fd, & (buffer [n_recd]), count, address + n_recd);
 	if (rc < 0) {
 	    perror("read device");
 	    fprintf (stdout, "ERROR: %s (size 0x%lx address 0x%0lx)\n",
