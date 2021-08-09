@@ -45,6 +45,11 @@ typedef struct {
     void *map_base;
 } AWSteria_Host_State;
 
+static int verbosity_AXI4_W = 0;
+static int verbosity_AXI4_R = 0;
+static int verbosity_AXI4L_W = 0;
+static int verbosity_AXI4L_R = 0;
+
 // ================================================================
 // Initialization
 
@@ -107,13 +112,23 @@ void *AWSteria_Host_init (void)
 int AWSteria_AXI4_write (void *opaque,
 			 uint8_t *buffer, const size_t size, const uint64_t address)
 {
+    assert (opaque != NULL);
+
     AWSteria_Host_State *p_state = opaque;
+
+    if (verbosity_AXI4_W != 0) {
+        fprintf (stdout, "%s (size 0x%lx address 0x%0lx)\n",
+		 __FUNCTION__, size, address);
+    }
 
     for (uint64_t n_sent = 0; n_sent < size; ) {
 	off_t  rc;
 
 	// Set address
-	rc = lseek (p_state->pci_AXI4_r_fd, address + n_sent, SEEK_SET);
+	if (verbosity_AXI4_W != 0) {
+	    fprintf (stdout, "    n_sent = 0x%0lx; seek()\n", n_sent);
+	}
+	rc = lseek (p_state->pci_AXI4_w_fd, address + n_sent, SEEK_SET);
 	if (rc != (address + n_sent)) {
 	    perror("seek device");
 	    fprintf (stdout, "ERROR: %s (size 0x%lx address 0x%0lx)\n",
@@ -127,6 +142,9 @@ int AWSteria_AXI4_write (void *opaque,
 	size_t count = size - n_sent;
 	if (count > RW_MAX_SIZE) count = RW_MAX_SIZE;
 
+	if (verbosity_AXI4_W != 0) {
+	    fprintf (stdout, "    write (count = 0x%0lx)\n", count);
+	}
 	rc = write (p_state->pci_AXI4_w_fd, & (buffer [n_sent]), count);
 	if (rc < 0) {
 	    perror("write device");
@@ -142,7 +160,7 @@ int AWSteria_AXI4_write (void *opaque,
 	    fprintf (stdout, "    write => rc %0lx; n_sent 0x%lx, count 0x%lx\n",
 		     rc, n_sent, count);
 	}
-	count += rc;
+	n_sent += rc;
     }
     return 0;
 }
@@ -150,42 +168,55 @@ int AWSteria_AXI4_write (void *opaque,
 int AWSteria_AXI4_read (void *opaque,
 			uint8_t *buffer, const size_t size, const uint64_t address)
 {
+    assert (opaque != NULL);
+
     AWSteria_Host_State *p_state = opaque;
 
-    for (uint64_t n_sent = 0; n_sent < size; ) {
+    if (verbosity_AXI4_R != 0) {
+        fprintf (stdout, "%s (size 0x%lx address 0x%0lx)\n",
+		 __FUNCTION__, size, address);
+    }
+
+    for (uint64_t n_recd = 0; n_recd < size; ) {
 	off_t  rc;
 
 	// Set address
-	rc = lseek (p_state->pci_AXI4_r_fd, address + n_sent, SEEK_SET);
-	if (rc != (address + n_sent)) {
+	if (verbosity_AXI4_R != 0) {
+	    fprintf (stdout, "    n_recd = 0x%0lx; seek()\n", n_recd);
+	}
+	rc = lseek (p_state->pci_AXI4_r_fd, address + n_recd, SEEK_SET);
+	if (rc != (address + n_recd)) {
 	    perror("seek device");
 	    fprintf (stdout, "ERROR: %s (size 0x%lx address 0x%0lx)\n",
 		     __FUNCTION__, size, address);
-	    fprintf (stdout, "    seek => rc 0x%lx != address + n_sent 0x%0lx\n",
-		     rc, n_sent);
+	    fprintf (stdout, "    seek => rc 0x%lx != address + n_recd 0x%0lx\n",
+		     rc, n_recd);
 	    return -1;
 	}
 
 	// Read data into buffer
-	size_t count = size - n_sent;
+	size_t count = size - n_recd;
 	if (count > RW_MAX_SIZE) count = RW_MAX_SIZE;
 
-	rc = read (p_state->pci_AXI4_r_fd, & (buffer [n_sent]), count);
+	if (verbosity_AXI4_R != 0) {
+	    fprintf (stdout, "    read (count = 0x%0lx)\n", count);
+	}
+	rc = read (p_state->pci_AXI4_r_fd, & (buffer [n_recd]), count);
 	if (rc < 0) {
 	    perror("read device");
 	    fprintf (stdout, "ERROR: %s (size 0x%lx address 0x%0lx)\n",
 		     __FUNCTION__, size, address);
-	    fprintf (stdout, "    read => rc %0ld; n_sent 0x%lx, count 0x%lx\n",
-		     rc, n_sent, count);
+	    fprintf (stdout, "    read => rc %0ld; n_recd 0x%lx, count 0x%lx\n",
+		     rc, n_recd, count);
 	    return -1;
 	}
 	if (rc != count) {
 	    fprintf (stdout, "NOTE: %s (size 0x%lx address 0x%0lx)\n",
 		     __FUNCTION__, size, address);
-	    fprintf (stdout, "    read => rc %0lx; n_sent 0x%lx, count 0x%lx\n",
-		     rc, n_sent, count);
+	    fprintf (stdout, "    read => rc %0lx; n_recd 0x%lx, count 0x%lx\n",
+		     rc, n_recd, count);
 	}
-	n_sent += rc;
+	n_recd += rc;
     }
     return 0;
 }
@@ -196,11 +227,18 @@ int AWSteria_AXI4_read (void *opaque,
 
 int AWSteria_AXI4L_write (void *opaque, uint64_t addr, uint32_t data)
 {
+    assert (opaque != NULL);
+
     AWSteria_Host_State *p_state = opaque;
 
-    uint32_t *p = (uint32_t *) p_state->map_base + addr;
+    if (verbosity_AXI4L_W != 0) {
+	fprintf (stdout, "%s: mem [0x%0lx] <= 0x%0x\n", __FUNCTION__, addr, data);
+    }
+
+    uint32_t *p = (uint32_t *) (p_state->map_base + addr);
 
     *p = data;
+
     return 0;
 }
 
@@ -210,9 +248,14 @@ int AWSteria_AXI4L_read (void *opaque, uint64_t addr, uint32_t *p_data)
 
     AWSteria_Host_State *p_state = opaque;
 
-    uint32_t *p = (uint32_t *) p_state->map_base + addr;
+    uint32_t *p = (uint32_t *) (p_state->map_base + addr);
 
     *p_data = *p;
+
+    if (verbosity_AXI4L_R != 0) {
+	fprintf (stdout, "%s: mem [0x%0lx] => 0x%0x\n", __FUNCTION__, addr, *p_data);
+    }
+
     return 0;
 }
 

@@ -39,7 +39,10 @@ int getentropy (void *buf, size_t buflen) {
 
 // ================================================================
 
-int verbosity = 0;
+int verbosity_AXI4_R = 0;
+int verbosity_AXI4_W = 0;
+int verbosity_AXI4L_R = 0;
+int verbosity_AXI4L_W = 0;
 
 // ================================================================
 
@@ -61,13 +64,13 @@ void buf_write_AXI4 (uint8_t *wbuf, const int n_bytes, const uint64_t addr)
 {
     int rc;
 
-    if (verbosity != 0)
+    if (verbosity_AXI4_W != 0)
 	fprintf (stdout, "%s: %0d bytes to addr 0x%0lx\n",
 		 __FUNCTION__, n_bytes, addr);
 
     rc = AWSteria_AXI4_write (AWSteria_Host_state, wbuf, n_bytes, addr);
     if (rc != 0) {
-	if (verbosity == 0)
+	if (verbosity_AXI4_W == 0)
 	    fprintf (stdout, "%s: %0d bytes to addr 0x%0lx\n",
 		     __FUNCTION__, n_bytes, addr);
 	fprintf (stdout, "    FAILED: rc = %0d\n", rc);
@@ -86,13 +89,13 @@ void buf_read_AXI4 (uint8_t *rbuf, const int n_bytes, const uint64_t addr,
 {
     int rc;
 
-    if (verbosity != 0)
+    if (verbosity_AXI4_R != 0)
 	fprintf (stdout, "%s: %0d bytes from addr 0x%0lx\n",
 		 __FUNCTION__, n_bytes, addr);
 
     rc = AWSteria_AXI4_read (AWSteria_Host_state, rbuf, n_bytes, addr);
     if (rc != 0) {
-	if (verbosity == 0)
+	if (verbosity_AXI4_R == 0)
 	    fprintf (stdout, "%s: %0d bytes from addr 0x%0lx\n",
 		     __FUNCTION__, n_bytes, addr);
 	fprintf (stdout, "    FAILED: rc = %0d\n", rc);
@@ -102,7 +105,7 @@ void buf_read_AXI4 (uint8_t *rbuf, const int n_bytes, const uint64_t addr,
     int n_mismatches = 0;
     for (int j = 0; j < n_bytes; j++) {
 	if (wbuf [j] != rbuf [j]) {
-	    if (verbosity > 1)
+	    if (verbosity_AXI4_R > 1)
 		fprintf (stdout, "    Wrote %02x readback %02x\n",
 			 wbuf [j], rbuf [j]);
 	    n_mismatches++;
@@ -112,11 +115,11 @@ void buf_read_AXI4 (uint8_t *rbuf, const int n_bytes, const uint64_t addr,
 	n_burst_reads++;
 	burst_read_bytes += n_bytes;
 
-	if (verbosity != 0)
+	if (verbosity_AXI4_R != 0)
 	    fprintf (stdout, "    Readback check OK\n");
     }
     else {
-	if (verbosity == 0)
+	if (verbosity_AXI4_R == 0)
 	    fprintf (stdout, "%s: %0d bytes from addr 0x%0lx\n",
 		     __FUNCTION__, n_bytes, addr);
 	fprintf (stdout, "    ERROR: %0d bytes from addr 0x%0lx\n", n_bytes, addr);
@@ -170,14 +173,16 @@ void buf_read_AXI4L (uint8_t *rbuf, const uint64_t addr, const uint8_t *wbuf)
     int n_mismatches = 0;
     for (int j = 0; j < 4; j++) {
 	if (wbuf [j] != rbuf [j]) {
-	    if (verbosity > 1)
+	    if (verbosity_AXI4L_R > 0) {
+		fprintf (stdout, "ERROR: %s addr 0x%0lx [%0d]\n", __FUNCTION__, addr, j);
 		fprintf (stdout, "    Wrote %02x readback %02x\n", wbuf [j], rbuf [j]);
+	    }
 	    n_mismatches++;
 	}
     }
     if (n_mismatches == 0) {
 	n_peeks++;
-	if (verbosity != 0)
+	if (verbosity_AXI4L_R != 0)
 	    fprintf (stdout, "    Readback check OK\n");
     }
     else {
@@ -201,46 +206,81 @@ uint64_t MEM_4G  = 0x100000000llu;
 uint8_t wbuf [BUFSIZE];
 uint8_t rbuf [BUFSIZE];
 
-int sizes [] = { 0, 1, 2, 3, 4, 5, 6, 7, 8 };
-
-void test0 (int size, uint64_t base_addr)
+void test0 (uint64_t base_addr)
 {
-    // Series of writes/reads over first 128 bytes
-    for (int j = 0; j < 128; j += size)
-	buf_write_AXI4 (& (wbuf [j]), sizes [size], base_addr + j);
+    fprintf (stdout, "\n");
+    fprintf (stdout, "%s: ----------------\n", __FUNCTION__);
+    fprintf (stdout, "AXI4: Series of small writes/reads across first 128 bytes, to DDR4 A\n");
+    fprintf (stdout, "    at sizes 1, 2, 4, 8 bytes\n");
 
-    for (int j = 0; j < 128; j += size)
-	buf_read_AXI4 (& (rbuf [j]), sizes [size], base_addr + j, & (wbuf [j]));
+    for (int size = 1; size <= 8; size = 2 * size) {
+	for (int j = 0; j < 128; j += size)
+	    buf_write_AXI4 (& (wbuf [j]), size, base_addr + j);
+
+	for (int j = 0; j < 128; j += size)
+	    buf_read_AXI4  (& (rbuf [j]), size, base_addr + j, & (wbuf [j]));
+    }
 }
 
 void test1 (int size, uint64_t base_addr)
 {
+    fprintf (stdout, "\n");
+    fprintf (stdout, "%s: ----------------\n", __FUNCTION__);
+    fprintf (stdout, "AXI4: write/read 0x%0x bytes, base_addr 0x%0lx\n", size, base_addr);
     buf_write_AXI4 (wbuf, size, base_addr);
     buf_read_AXI4  (rbuf, size, base_addr, wbuf);
 }
 
-void test2 (uint64_t addr)
+void test2 ()
 {
-    buf_write_AXI4L (wbuf, addr);
-    buf_read_AXI4L  (rbuf, addr, wbuf);
+    fprintf (stdout, "\n");
+    fprintf (stdout, "%s: ----------------\n", __FUNCTION__);
+    fprintf (stdout, "AXI4L: Series of 4 byte write/read across first 128 bytes\n");
+
+    for (int addr = 0; addr < 128; addr += 4) {
+	buf_write_AXI4L (wbuf, addr);
+	buf_read_AXI4L  (rbuf, addr, wbuf);
+    }
 }
 
 void test3 (uint32_t base_addr)
 {
+    fprintf (stdout, "\n");
+    fprintf (stdout, "%s: ----------------\n", __FUNCTION__);
+    fprintf (stdout, "AXI4 write, AXI4-Lite read, base_addr 0x%0x\n", base_addr);
+    if (base_addr >= 0x8000) {
+	fprintf (stdout, "ERROR: only addrs < 0x8000\n");
+	return;
+    }
+
     // Write via AXI4
+    fprintf (stdout, "AXI4 write 128 bytes\n");
     buf_write_AXI4 (wbuf, 128, base_addr);
+
     // Readback via AXI4L
+    fprintf (stdout, "AXI4L: readback 128 bytes\n");
     for (int j = 0; j < 128; j += 4)
 	buf_read_AXI4L (& (rbuf [j]), base_addr + j, & (wbuf [j]));
 }
 
 void test4 (uint32_t base_addr)
 {
+    fprintf (stdout, "\n");
+    fprintf (stdout, "%s: ----------------\n", __FUNCTION__);
+    fprintf (stdout, "\n");
+    fprintf (stdout, "AXI4 write, AXI4-Lite read, base_addr 0x%0x\n", base_addr);
+    if (base_addr >= 0x8000) {
+	fprintf (stdout, "ERROR: only addrs < 0x8000\n");
+	return;
+    }
+
     // Write via AXI4L
+    fprintf (stdout, "AXI4L write 128 bytes\n");
     for (int j = 0; j < 128; j += 4)
 	buf_write_AXI4L (& (wbuf [j]), base_addr + j);
 
     // Readback via AXI4
+    fprintf (stdout, "AXI4: readback 128 bytes\n");
     buf_read_AXI4 (rbuf, 128, base_addr, wbuf);
 }
 
@@ -255,6 +295,8 @@ void print_help (int argc, char *argv [])
 }
 
 // ----------------
+
+bool test_DDR_B = true;
 
 int main (int argc, char *argv [])
 {
@@ -296,78 +338,36 @@ int main (int argc, char *argv [])
     // ----------------------------------------------------------------
     // Tests
 
-    fprintf (stdout, "TESTS ----------------\n");
-    fprintf (stdout, "\n");
+    fprintf (stdout, "TESTS\n");
 
-    fprintf (stdout, "AXI4: Single write/read to DDR4 A\n");
+    fprintf (stdout, "\n");
+    fprintf (stdout, "----------------\n");
+    fprintf (stdout, "AXI4: Single write to DDR4 A\n");
     buf_write_AXI4 (wbuf, 1, 0);
+    fprintf (stdout, "AXI4: Single read to DDR4 A\n");
     buf_read_AXI4  (rbuf, 1, 0, wbuf);
 
-    fprintf (stdout, "AXI4: Single write/read to DDR4 B\n");
-    buf_write_AXI4 (wbuf, 1, MEM_16G);
-    buf_read_AXI4  (rbuf, 1, MEM_16G, wbuf);
-
-    // ----------------
-
-    fprintf (stdout, "\n");
-    fprintf (stdout, "AXI4: Series of small writes/reads across first 128 bytes, to DDR4 A\n");
-    fprintf (stdout, "    at sizes 1, 2, 4, 8 bytes\n");
-    for (int size = 1; size <= 8; size = 2 * size) {
-	test0 (size, 0);
-    }
-    fprintf (stdout, "AXI4: Series of small writes/reads across first 128 bytes, to DDR4 B\n");
-    fprintf (stdout, "    at sizes 1, 2, 4, 8 bytes\n");
-    for (int size = 1; size <= 8; size = 2 * size) {
-	test0 (size, MEM_16G);
+    if (test_DDR_B) {
+	fprintf (stdout, "AXI4: Single write to DDR4 B\n");
+	buf_write_AXI4 (wbuf, 1, MEM_16G);
+	fprintf (stdout, "AXI4: Single write to DDR4 B\n");
+	buf_read_AXI4  (rbuf, 1, MEM_16G, wbuf);
     }
 
-    // ----------------
+    test0 (0);
+    if (test_DDR_B) test0 (MEM_16G);
 
-    fprintf (stdout, "\n");
-    fprintf (stdout, "AXI4: 8KB write/read, aligned, to DDR4 A\n");
     test1 (0x2000, 0);
-    fprintf (stdout, "AXI4: 8KB write/read, aligned, to DDR4 B\n");
-    test1 (0x2000, MEM_16G);
+    if (test_DDR_B) test1 (0x2000, MEM_16G);
 
-    // ----------------
-
-    fprintf (stdout, "\n");
-    fprintf (stdout, "AXI4: 4KB+1 write/read, unaligned, to DDR4 A\n");
     test1 (0x1001, 5);
-    fprintf (stdout, "AXI4: 4KB+1 write/read, unaligned, to DDR4 B\n");
-    test1 (0x1001, MEM_16G + 5);
+    if (test_DDR_B) test1 (0x1001, MEM_16G + 5);
 
-    // ----------------
+    test2 ();
 
-    fprintf (stdout, "\n");
-    fprintf (stdout, "AXI4L: Series of 4 byte write/read across first 128 bytes\n");
-
-    for (int addr = 0; addr < 128; addr += 4)
-	test2 (addr);
-
-    // ----------------
-
-    fprintf (stdout, "\n");
-
-    fprintf (stdout, "AXI4: Write 128 bytes to DDR4 A\n");
-    fprintf (stdout, "AXI4L: readback 128 bytes from DDR4 A\n");
     test3 (0);
 
-    fprintf (stdout, "AXI4: Write 128 bytes to DDR4 B\n");
-    fprintf (stdout, "AXI4L: readback 128 bytes from DDR4 B\n");
-    test3 (MEM_16G);
-
-    // ----------------
-
-    fprintf (stdout, "\n");
-
-    fprintf (stdout, "AXI4L: Write 128 bytes to DDR4 A\n");
-    fprintf (stdout, "AXI4: readback 128 bytes from DDR4 A\n");
     test4 (0);
-
-    fprintf (stdout, "AXI4L: Write 128 bytes to DDR4 B\n");
-    fprintf (stdout, "AXI4: readback 128 bytes from DDR4 B\n");
-    test4 (MEM_16G);
 
     // ----------------------------------------------------------------
     // Final test stats
