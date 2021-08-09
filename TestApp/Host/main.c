@@ -210,7 +210,8 @@ void test0 (uint64_t base_addr)
 {
     fprintf (stdout, "\n");
     fprintf (stdout, "%s: ----------------\n", __FUNCTION__);
-    fprintf (stdout, "AXI4: Series of small writes/reads across first 128 bytes, to DDR4 A\n");
+    fprintf (stdout, "AXI4: Series of small writes/reads across first 128 bytes\n");
+    fprintf (stdout, "    base_addr = 0x%0lx\n", base_addr);
     fprintf (stdout, "    at sizes 1, 2, 4, 8 bytes\n");
 
     for (int size = 1; size <= 8; size = 2 * size) {
