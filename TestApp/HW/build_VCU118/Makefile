@@ -34,8 +34,8 @@ RSYNC = rsync --times
 copy_external_BSV:
 	mkdir -p tmp_all_srcs
 	@echo "INFO: Copying BSV sources"
-	$(RSYNC)  ../../Include_API/AWSteria_HW_IFC.bsv                                       tmp_all_srcs/
-	$(RSYNC)  ./AWSteria_HW.bsv                                                           tmp_all_srcs/
+	$(RSYNC)  ../../../Include_API/AWSteria_HW_IFC.bsv                                    tmp_all_srcs/
+	$(RSYNC)  ../AWSteria_HW.bsv                                                          tmp_all_srcs/
 	@echo "INFO: Copying additional BSV sources from $(FLUTE_REPO)"
 	$(RSYNC)  $(FLUTE_REPO)/src_Testbench/Fabrics/AXI4/AXI4_Types.bsv                     tmp_all_srcs/
 	$(RSYNC)  $(FLUTE_REPO)/src_Testbench/Fabrics/AXI4/AXI4_Fabric.bsv                    tmp_all_srcs/
@@ -49,7 +49,7 @@ copy_external_BSV:
 #================================================================
 # Top-level file and module
 
-TOPFILE   = AWSteria_HW.bsv
+TOPFILE   = tmp_all_srcs/AWSteria_HW.bsv
 TOPMODULE = mkAWSteria_HW
 
 # ================================================================
@@ -79,22 +79,27 @@ compile:  copy_external_BSV
 	mkdir -p  RTL_from_bsc
 	@echo  "INFO: RTL generation ..."
 	bsc -u -elab -verilog  $(RTL_GEN_DIRS)  $(BSC_COMPILATION_FLAGS)  -p $(BSC_PATH)  $(TOPFILE)
-	@echo  "INFO: RTL generation finished: RTL_from_bsc/ is ready for AWS F1 DCP-build."
+	@echo  "INFO: RTL generation finished: RTL_from_bsc/ is ready for FPGA build."
 
 # ================================================================
 # For VCU118: collect all RTL needed for garnet flow
 
 .PHONY: for_garnet
 for_garnet:
-	@echo "TBD: for_garnet (not reclocked)"
+	@echo "Creating and populating garnet example dir (no reclocking)"
+	cp -p -R ../../../Platform_VCU118/HW/example_AWSteria_HW  .
+	cp -p    RTL_from_bsc/*.v                             example_AWSteria_HW/src/
+	cp -p    $(BLUESPEC_HOME)/lib/Verilog/FIFO2.v         example_AWSteria_HW/src/
+	cp -p    $(BLUESPEC_HOME)/lib/Verilog/SizedFIFO.v     example_AWSteria_HW/src/
 
 .PHONY: for_garnet_reclocked
 for_garnet_reclocked:
-	@echo "Creating and populating garnet reclocked example dir"
-	cp -p -R ../../Platform_VCU118/HW/example_AWSteria_HW_reclocked  .
-	cp -p    RTL_from_bsc/*.v                          example_AWSteria_HW_reclocked/src/
-	cp -p    $(BLUESPEC_HOME)/lib/Verilog/FIFO2.v      example_AWSteria_HW_reclocked/src/
-	cp -p    $(BLUESPEC_HOME)/lib/Verilog/SizedFIFO.v  example_AWSteria_HW_reclocked/src/
+	@echo "Creating and populating garnet example dir (reclocked)"
+	cp -p -R ../../../Platform_VCU118/HW/example_AWSteria_HW_reclocked  .
+	cp -p    ../../../Platform_VCU118/HW/synchronizers.v  example_AWSteria_HW_reclocked/src/
+	cp -p    RTL_from_bsc/*.v                             example_AWSteria_HW_reclocked/src/
+	cp -p    $(BLUESPEC_HOME)/lib/Verilog/FIFO2.v         example_AWSteria_HW_reclocked/src/
+	cp -p    $(BLUESPEC_HOME)/lib/Verilog/SizedFIFO.v     example_AWSteria_HW_reclocked/src/
 
 # ================================================================
 
@@ -104,6 +109,6 @@ clean:
 
 .PHONY: full_clean
 full_clean: clean
-	rm -r -f  *~  tmp_all_srcs  build_dir  RTL_from_bsc  example_AWSteria_HW_reclocked
+	rm -r -f  *~  tmp_all_srcs  build_dir  RTL_from_bsc  example_AWSteria_HW  example_AWSteria_HW_reclocked
 
 # ================================================================
