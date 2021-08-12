@@ -257,16 +257,22 @@ int AWSteria_AXI4L_write (void *opaque, uint64_t addr, uint32_t data)
 
 int AWSteria_AXI4L_read (void *opaque, uint64_t addr, uint32_t *p_data)
 {
+    assert (opaque != NULL);
     assert (p_data != NULL);
 
     AWSteria_Host_State *p_state = opaque;
+
+    if (verbosity_AXI4L_R != 0) {
+	fprintf (stdout, "%s: map_base 0x%p  addr 0x%0lx\n",
+		 __FUNCTION__, p_state->map_base, addr);
+    }
 
     uint32_t *p = (uint32_t *) (p_state->map_base + addr);
 
     *p_data = *p;
 
     if (verbosity_AXI4L_R != 0) {
-	fprintf (stdout, "%s: mem [0x%0lx] => 0x%0x\n", __FUNCTION__, addr, *p_data);
+	fprintf (stdout, "    => 0x%0x\n", *p_data);
     }
 
     return 0;
