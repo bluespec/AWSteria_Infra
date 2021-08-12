@@ -16,7 +16,7 @@ Verilog_RTL:
 	mkdir -p $@
 
 .PHONY: compile
-compile:  build_dir  Verilog_RTL  collect_srcs
+compile:  build_dir  Verilog_RTL
 	@echo  "INFO: Verilog RTL generation ..."
 	bsc -u -elab -verilog  $(RTL_GEN_DIRS)  $(BSC_COMPILATION_FLAGS)  -p $(BSC_PATH)  $(TOPFILE)
 	@echo  "INFO: Verilog RTL generation finished"
@@ -27,6 +27,10 @@ compile:  build_dir  Verilog_RTL  collect_srcs
 # Additional module(s) with DPI-C calls that need edits to remove '$imported_' prefix
 # Each of these should have a 'sed' step (see below)
 EDIT_MODULE2 = mkAWSteria_HW
+
+VTOP                = V$(TOPMODULE)
+VERILATOR_RESOURCES = $(AWSTERIA_INFRA_REPO)/Platform_Sim/HW/Verilator_resources
+VERILATOR_MAKE_DIR  = Verilator_Make
 
 # Verilator flags:
 #   The following are recommended in verilator manual for best performance
@@ -48,25 +52,20 @@ EDIT_MODULE2 = mkAWSteria_HW
 #   Generate VCDs (select trace-depth according to your module hierarchy)
 #     --trace  --trace-depth 2  -CFLAGS -DVM_TRACE
 
-VERILATOR_FLAGS  = -Mdir $(VERILATOR_MAKE_DIR)
+VERILATOR_FLAGS += -Mdir $(VERILATOR_MAKE_DIR)
 VERILATOR_FLAGS += -O3 --x-assign fast --x-initial fast --noassert
 VERILATOR_FLAGS += --stats -CFLAGS -O3 -CFLAGS -DVL_DEBUG -LDFLAGS -static
 
 # VERILATOR_FLAGS += --threads 6  --threads-dpi pure
 # VERILATOR_FLAGS += --trace  --trace-depth 2  -CFLAGS -DVM_TRACE
 
-VTOP                = V$(TOPMODULE)
-VERILATOR_RESOURCES = $(AWSTERIA_INFRA_REPO)/Platform_Sim/HW/Verilator_resources
-VERILATOR_MAKE_DIR  = Verilator_Make
-
 .PHONY: simulator
 simulator:
 	@echo "----------------"
 	@echo "INFO: Preparing RTL files for verilator"
-	@echo "Copying all Verilog files from Verilog_RTL/ and all_srcs/ to Verilator_RTL"
+	@echo "Copying all Verilog files from Verilog_RTL/ to Verilator_RTL"
 	mkdir -p Verilator_RTL
 	cp -p  Verilog_RTL/*.v  Verilator_RTL/
-	cp -p  all_srcs/*.v     Verilator_RTL/
 	@echo "----------------"
 	@echo "INFO: Editing Verilog_RTL/$(TOPMODULE).v -> Verilator_RTL/$(TOPMODULE).v for DPI-C"
 	sed  -f $(VERILATOR_RESOURCES)/sed_script.txt  Verilog_RTL/$(TOPMODULE).v  > tmp1.v
@@ -85,7 +84,7 @@ simulator:
 		--cc  --exe --build -j 4 -o exe_HW_sim  $(TOPMODULE).v \
 		--top-module $(TOPMODULE) \
 		$(VERILATOR_RESOURCES)/sim_main.cpp \
-		all_srcs/C_Imported_Functions.c
+		$(AWSTERIA_INFRA_REPO)/Platform_Sim/HW/C_Imported_Functions.c
 	mv  $(VERILATOR_MAKE_DIR)/$(SIM_EXE_FILE)  .
 	@echo "----------------"
 	@echo "INFO: Created verilator executable:    $(SIM_EXE_FILE)"

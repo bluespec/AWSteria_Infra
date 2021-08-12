@@ -22,12 +22,12 @@ all: compile  simulator
 # ================================================================
 # Search path for bsc for .bsv files
 
-BSC_PATH = all_srcs:+
+BSC_PATH := $(BSC_PATH):+
 
 # ----------------
 # Top-level file and module
 
-TOPFILE   ?= all_srcs/Top_HW_Side.bsv
+TOPFILE   ?= $(PLATFORM_SIM)/HW/Top_HW_Side.bsv
 TOPMODULE ?= mkTop_HW_Side
 
 # ----------------
@@ -52,6 +52,6 @@ clean:
 
 .PHONY: full_clean
 full_clean: clean
-	rm -r -f  $(SIM_EXE_FILE)*  all_srcs  Verilog_RTL  Verilator_RTL  Verilator_Make
+	rm -r -f  $(SIM_EXE_FILE)*  Verilog_RTL  Verilator_RTL  Verilator_Make
 
 # ================================================================

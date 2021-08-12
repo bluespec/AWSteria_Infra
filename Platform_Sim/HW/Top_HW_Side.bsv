@@ -56,9 +56,10 @@ module mkTop_HW_Side (Empty) ;
    Reg #(State) rg_state <- mkReg (STATE_CONNECTING);
 
    // The top-level of the AWSteria design
-   AWSteria_HW_IFC #(AXI4_16_64_512_0_S_IFC,
-		     AXI4L_32_32_0_S_IFC,
-		     AXI4_16_64_512_0_M_IFC)  awsteria_hw <- mkAWSteria_HW (noClock, noReset);
+   AWSteria_HW_IFC #(AXI4_Slave_IFC #(16, 64, 512, 0),
+		     AXI4_Lite_Slave_IFC #(32, 32, 0),
+		     AXI4_Master_IFC #(16, 64, 512, 0))
+   awsteria_hw<- mkAWSteria_HW (noClock, noReset);
 
    // ----------------
    // Models for the four DDRs,

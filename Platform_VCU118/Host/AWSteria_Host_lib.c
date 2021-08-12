@@ -92,8 +92,11 @@ void *AWSteria_Host_init (void)
 
     // Memory-map the device
     fprintf (stdout, "    mmap'ing the AXI4-Lite device\n");
-    p_state->map_base = mmap (0, MAP_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED,
-					 p_state->pci_AXI4L_fd, 0);
+    p_state->map_base = mmap (0,
+			      MAP_SIZE,
+			      PROT_READ | PROT_WRITE, MAP_SHARED,
+			      p_state->pci_AXI4L_fd,
+			      0);
     if (p_state->map_base == (void *)-1) {
 	perror("mmap device");
 	return NULL;
@@ -186,7 +189,7 @@ int AWSteria_AXI4_read (void *opaque,
 	off_t  rc;
 
 	/* THIS SECTION IS NEEDED IF USING read() INSTEAD OF pread(), below
-	   pwrite takes an additional 'offset' arg, so seek() is not needed.
+	   pread takes an additional 'offset' arg, so seek() is not needed.
 	// Set address
 	if (verbosity_AXI4_R != 0) {
 	    fprintf (stdout, "    n_recd = 0x%0lx; seek()\n", n_recd);
