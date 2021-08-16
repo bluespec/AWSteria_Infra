@@ -427,7 +427,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="details">
 <span id="author" class="author">Rishiyur S. Nikhil, Bluespec, Inc. (c) 2021</span><br>
 <span id="revnumber">version v1.0,</span>
-<span id="revdate">2021-08-07</span>
+<span id="revdate">2021-08-16</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Contents</div>
@@ -461,24 +461,24 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_awsteria_infra_overview">1. AWSteria_Infra Overview</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>AWSteria_Infra is for apps that run jointly on a standard host
-computer and an attached FPGA board (&#8220;hardware side&#8221;).  The
+<p>AWSteria_Infra is for apps that run jointly on a standard host computer
+&#8220;host side&#8221; and an attached FPGA board (&#8220;hardware side&#8221;).  The
 infrastructure provides:</p>
 </div>
 <div class="ulist">
 <ul>
 <li>
-<p>a high-level API for the host and hardware to communicate</p>
+<p>a high-level API for the host side and hardware side to communicate</p>
 </li>
 <li>
-<p>a high-level API for the hardware to access FPGA DDR memory</p>
+<p>a high-level API for the hardware side to access FPGA DDR memory</p>
 </li>
 </ul>
 </div>
 <div class="paragraph">
-<p>and implementations for a number of platforms (host and hardware-side
-combinations), including reclocking facilities for the hardware-side
-to run at a clock speed appropriate for the design.</p>
+<p>and implementations for a number of platforms (host and hardware
+combinations) including, for some FPGAs, reclocking facilities for the
+hardware side to run at more suitable clock speeds.</p>
 </div>
 <div class="paragraph">
 <p>The APIs are specified in files in the <code>Include_API/</code> directory.</p>
@@ -645,7 +645,7 @@ them from their original locations, if desired.</p>
 <div class="literalblock">
 <div class="content">
 <pre>Your source files should invoke the C API described in
-`APIs/AWSteria_Infra_Host_Side_API.h`</pre>
+`Include_API/AWSteria_Host_lib.h`</pre>
 </div>
 </div>
 </li>
@@ -916,7 +916,7 @@ host side.</p>
 <div id="footer">
 <div id="footer-text">
 Version v1.0<br>
-Last updated 2021-08-08 12:55:35 EDT
+Last updated 2021-08-16 12:59:06 EDT
 </div>
 </div>
 </body>

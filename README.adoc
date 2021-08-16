@@ -1,7 +1,7 @@
 = AWSteria_Infra
 Rishiyur S. Nikhil, Bluespec, Inc. (c) 2021
 :revnumber: v1.0
-:revdate: 2021-08-07
+:revdate: 2021-08-16
 :sectnums:
 :toc:
 :toclevels: 5
@@ -16,16 +16,16 @@ Rishiyur S. Nikhil, Bluespec, Inc. (c) 2021
 // SECTION
 == AWSteria_Infra Overview
 
-AWSteria_Infra is for apps that run jointly on a standard host
-computer and an attached FPGA board ("`hardware side`").  The
+AWSteria_Infra is for apps that run jointly on a standard host computer
+"`host side`" and an attached FPGA board ("`hardware side`").  The
 infrastructure provides:
 
-* a high-level API for the host and hardware to communicate
-* a high-level API for the hardware to access FPGA DDR memory
+* a high-level API for the host side and hardware side to communicate
+* a high-level API for the hardware side to access FPGA DDR memory
 
-and implementations for a number of platforms (host and hardware-side
-combinations), including reclocking facilities for the hardware-side
-to run at a clock speed appropriate for the design.
+and implementations for a number of platforms (host and hardware
+combinations) including, for some FPGAs, reclocking facilities for the
+hardware side to run at more suitable clock speeds.
 
 The APIs are specified in files in the `Include_API/` directory.
 
@@ -155,7 +155,7 @@ and execute on that platform.
     them from their original locations, if desired.
 +
     Your source files should invoke the C API described in
-    `APIs/AWSteria_Infra_Host_Side_API.h`
+    `Include_API/AWSteria_Host_lib.h`
 
 2. If desired, populate the `TestApp/HW_Side/` directory with your
     hardware-side sources (e.g., BSV files).  In Steps 3 and 4 you
