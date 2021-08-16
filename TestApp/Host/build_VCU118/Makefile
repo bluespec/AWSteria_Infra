@@ -12,7 +12,7 @@ endif
 
 $(info INFO: Making executable for AWSteria TestApp host side on VCU118)
 
-EXE    = exe_host_side_VCU118
+EXE = exe_Host_VCU118
 
 # ================================================================
 

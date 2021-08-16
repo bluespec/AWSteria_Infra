@@ -13,7 +13,7 @@ build_dir:
 	mkdir -p $@
 
 .PHONY: compile
-compile: collect_srcs  build_dir
+compile: build_dir
 	@echo "INFO: Re-compiling Core (CPU, Caches)"
 	bsc -u -elab -sim  $(TMP_DIRS)  $(BSC_COMPILATION_FLAGS)  -p $(BSC_PATH)  $(TOPFILE)
 	@echo "INFO: Re-compiled  Core (CPU, Caches)"
@@ -36,7 +36,7 @@ simulator:
 		$(TMP_DIRS) \
 		-e $(TOPMODULE) -o ./$(SIM_EXE_FILE) \
 		$(BSC_C_FLAGS) \
-		all_srcs/C_Imported_Functions.c
+		$(AWSTERIA_INFRA_REPO)/Platform_Sim/HW/C_Imported_Functions.c
 	@echo "INFO: linked bsc-compiled objects into Bluesim executable"
 
 # ================================================================
