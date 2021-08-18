@@ -440,19 +440,27 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_a_small_test_application">1.4. A Small Test Application</a></li>
 </ul>
 </li>
-<li><a href="#_porting_your_application_to_use_awsteria_infra">2. Porting your application to use AWSteria_Infra</a></li>
-<li><a href="#_platform_simulation_bluesim_and_verilog">3. Platform: Simulation (Bluesim and Verilog)</a></li>
-<li><a href="#_platform_amazon_aws_f1">4. Platform: Amazon AWS F1</a></li>
-<li><a href="#_platform_xilinx_vcu118_board">5. Platform: Xilinx VCU118 board</a></li>
-<li><a href="#_test_application">6. Test Application</a>
+<li><a href="#_platform_simulation_bluesim_and_verilator">2. Platform: Simulation (Bluesim and Verilator)</a></li>
+<li><a href="#_platform_amazon_aws_f1">3. Platform: Amazon AWS F1</a></li>
+<li><a href="#_platform_xilinx_vcu118_board">4. Platform: Xilinx VCU118 board</a></li>
+<li><a href="#_test_application">5. Test Application</a>
 <ul class="sectlevel2">
-<li><a href="#_building_and_running_with_bluesim_simulation">6.1. Building and running with Bluesim simulation:</a></li>
-<li><a href="#_building_and_running_with_verilator_simulation">6.2. Building and running with Verilator simulation:</a></li>
-<li><a href="#_building_and_running_on_amazon_aws_f1">6.3. Building and running on Amazon AWS F1:</a></li>
-<li><a href="#_building_and_running_on_xilinx_vcu118">6.4. Building and running on Xilinx VCU118:</a></li>
+<li><a href="#_app_source_code_and_intended_behavior">5.1. App source code and intended behavior</a></li>
+<li><a href="#_building_and_running_with_bluesim_or_verilator_simulation">5.2. Building and running with Bluesim or Verilator simulation</a></li>
+<li><a href="#_building_and_running_on_xilinx_vcu118">5.3. Building and running on Xilinx VCU118</a>
+<ul class="sectlevel3">
+<li><a href="#_prerequisites_xilinx_xdma_and_xvsec_drivers">5.3.1. Prerequisites: Xilinx XDMA and XVSEC drivers</a></li>
+<li><a href="#_prerequisite_garnet">5.3.2. Prerequisite: Garnet</a></li>
+<li><a href="#_building_the_hardware_side">5.3.3. Building the hardware side</a></li>
+<li><a href="#_installing_the_partial_bitfile_into_the_vcu118_fpga">5.3.4. Installing the partial bitfile into the VCU118 FPGA</a></li>
+<li><a href="#_building_and_running_the_host_side">5.3.5. Building and running the host side</a></li>
 </ul>
 </li>
-<li><a href="#_future_evolution_expected_not_scheduled_yet">7. Future Evolution (expected; not scheduled yet)</a></li>
+<li><a href="#_building_and_running_on_amazon_aws_f1">5.4. Building and running on Amazon AWS F1</a></li>
+</ul>
+</li>
+<li><a href="#_porting_your_application_to_use_awsteria_infra">6. Porting your application to use AWSteria_Infra</a></li>
+<li><a href="#_possible_future_evolution">7. Possible Future Evolution</a></li>
 </ul>
 </div>
 </div>
@@ -478,10 +486,11 @@ infrastructure provides:</p>
 <div class="paragraph">
 <p>and implementations for a number of platforms (host and hardware
 combinations) including, for some FPGAs, reclocking facilities for the
-hardware side to run at more suitable clock speeds.</p>
+hardware side to run at slower clock speeds if needed.</p>
 </div>
 <div class="paragraph">
-<p>The APIs are specified in files in the <code>Include_API/</code> directory.</p>
+<p>The APIs are specified in files in the <code>Include_API/</code> directory
+(details below).</p>
 </div>
 <div class="paragraph">
 <p>The API is inspired by Xilinx XDMA facilities (at
@@ -501,32 +510,56 @@ for your app hardware.  This interface has several ports:</p>
 <p>Two sets of clock-and-reset (a default and an extra).</p>
 </li>
 <li>
-<p>An AXI4 M port (manager/master) through which the host communicates
+<p>An AXI4 M interface (manager/master) through which the host communicates
 with your hardware (wide interface, high bandwidth, typically used for moving data).</p>
 </li>
 <li>
-<p>An AXI4-Lite M port (manager/master) through which the host
+<p>An AXI4-Lite M interface (manager/master) through which the host
 communicates with your hardware (32-bit wide, typically used for control/status).</p>
 </li>
 <li>
-<p>One to four An AXI4 S ports (subordinate/slave) through which
-your hardware connects to DDR4 memories on the FPGA board.</p>
+<p>One to four An AXI4 S interface (subordinate/slave) through which
+your hardware connects to DDR memories on the FPGA board.</p>
 </li>
 <li>
-<p>A few miscellanous utility ports</p>
+<p>A few miscellanous utility ports (evironment-ready input, DUT-halted output, 4ns counter input).</p>
 </li>
 </ul>
 </div>
 <div class="paragraph">
-<p>If you are coding directly in Verilog, use the the following file as a
-starting point: it is an &#8220;empty&#8221; module with the correct module name
-and port list; you can populate the interior with your
+<p>If you are coding directly in Verilog, use the following file as a
+starting point: it is an &#8220;empty&#8221; module with the required module
+name and port list; you can populate the interior with your
 application-specific logic (including instantiating sub-modules, etc.)</p>
 </div>
 <div class="listingblock">
 <div class="content">
 <pre>    Include_API/mkAWSteria_HW_EMPTY.v</pre>
 </div>
+</div>
+<div class="paragraph">
+<p>The port list looks like this, in summary:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>    module mkAWSteria_HW (CLK,
+                          RST_N,
+                          CLK_b_CLK,
+                          RST_N_b_RST_N,
+
+                          ... AXI4 M interface ports for host communication ...
+                          ... AXI4-Lite M interface ports for host communication ...
+                          ... AXI4 S interface port(s) for DDR communication ...
+
+                          m_env_ready_env_ready,
+                          m_halted,
+                          m_glcount_glcount);</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Here, <code>CLK</code> and <code>RST_N</code> are the default clock and reset,
+and <code>CLK_b_CLK</code> and <code>RST_N_b_RST_N</code> are the extra clock-reset pair
+(your app can ignore the extra pair if they are not needed).</p>
 </div>
 <div class="paragraph">
 <p>If you are coding in BSV, use the following files as a starting point:</p>
@@ -538,9 +571,13 @@ application-specific logic (including instantiating sub-modules, etc.)</p>
 </div>
 </div>
 <div class="paragraph">
-<p>The former is an &#8220;empty&#8221; BSV module with the correct module name and
-interface.  The module header looks like this, using the interface
-specified in the latter file:</p>
+<p>The former defines an &#8220;empty&#8221; BSV module with the required module
+name and interface.  The latter defines the required interface.  When
+compiled with the Bluespec <code>bsc</code> compiler it will produce a Verilog
+module with the required module name and port list.</p>
+</div>
+<div class="paragraph">
+<p>The BSV module header looks like this:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -549,11 +586,6 @@ specified in the latter file:</p>
                           AXI4_Lite_Slave_IFC #(32, 32, 0),
                           AXI4_Master_IFC #(16, 64, 512, 0)));</pre>
 </div>
-</div>
-<div class="paragraph">
-<p>Here, <code>b_CLK</code> and <code>b_RST_N</code> are the extra clock-reset pair, beyond the
-module&#8217;s own default <code>CLK</code> and <code>RST_N</code> (your app can ignore the extra
-pair if they are not needed).</p>
 </div>
 <div class="paragraph">
 <p>If you are coding in some other HDL or using HLS, you can either
@@ -565,7 +597,7 @@ arrange for it to compile your top-level module to look like:</p>
 </div>
 </div>
 <div class="paragraph">
-<p>or manually instantiate your top-level module inside this.</p>
+<p>or manually instantiate your top-level module inside this empty module.</p>
 </div>
 <div class="paragraph">
 <p>Of course, when targeting an FPGA platform (Amazon AWS F1, Xilinx
@@ -586,10 +618,17 @@ and AXI4-Lite M ports described above.</p>
 </div>
 </div>
 <div class="paragraph">
+<p>Briefly, it contains an intialization and an shutdown call, a pair of
+read/write functions to communicate via the AXI4 M port, and a pair of
+read/write functions to communicate via the AXI4-Lite M port.</p>
+</div>
+<div class="paragraph">
 <p>Host side code can be written in any language environment.  To
-communicate with the hardware side, it should invoke the C API
-specified in <code>Include_API/AWSteria_Host_lib.h</code>.  <code>AWSteria_Infra</code>
-provides C code implementing the API for each platform.</p>
+communicate with the hardware side it should invoke the C host-side API.</p>
+</div>
+<div class="paragraph">
+<p><code>AWSteria_Infra</code> provides C code implementing the API for each
+platform.</p>
 </div>
 </div>
 <div class="sect2">
@@ -600,7 +639,7 @@ both the host and the hardware sides.  Current platforms are:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>Platform_Sim/
+<pre>Platform_Sim/    (Bluesim and Verilator sim)
 Platform_AWSF1/
 Platform_VCU118/</pre>
 </div>
@@ -622,70 +661,11 @@ implementation of <code>AWSteria_Infra</code> for a new platform.</p>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_porting_your_application_to_use_awsteria_infra">2. Porting your application to use AWSteria_Infra</h2>
+<h2 id="_platform_simulation_bluesim_and_verilator">2. Platform: Simulation (Bluesim and Verilator)</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>The small test application in the <code>TestApp/</code> directory is such an
-example, where the HW-side is written in BSV and compiled using the
-Bluespec compiler <code>bsc</code> into Verilog RTL.  When you create a new
-application, you could use this as a starting template and modify it
-for purpose (see next section for more details).</p>
-</div>
-<div class="paragraph">
-<p>Each &#8220;Platform&#8221; section below provides more details on how to build
-and execute on that platform.</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>If desired, populate the <code>TestApp/Host_Side/</code> directory with your
-host-side sources (e.g., C files).  In Steps 3 and 4 you will edit
-Makefiles to make a local copy of sources anyway, so you can copy
-them from their original locations, if desired.</p>
-<div class="literalblock">
-<div class="content">
-<pre>Your source files should invoke the C API described in
-`Include_API/AWSteria_Host_lib.h`</pre>
-</div>
-</div>
-</li>
-<li>
-<p>If desired, populate the <code>TestApp/HW_Side/</code> directory with your
-hardware-side sources (e.g., BSV files).  In Steps 3 and 4 you
-will edit Makefiles to make a local copy of sources anyway, so you
-can copy them from their original locations, if desired.</p>
-<div class="literalblock">
-<div class="content">
-<pre>Your source files should have a top-level module called
-`mkAWSteria_InfraHost_Side` with the interface `AWSteria_Infra_Host_Side_IFC`
-specfied in the file `APIs/AWSteria_Infra_Host_Side_IFC.bsv`.</pre>
-</div>
-</div>
-</li>
-<li>
-<p>Each of the <code>TestApp/HW_Side/builds/*/Copy_Sources.mk</code> files shows
-commands to copy the TestApp&#8217;s hardware-side source files into a
-local directory for a hardware-side build (Bluesim, Verilator or
-F1).  Edit <code>Copy_Sources.mk</code> to copy all your app&#8217;s hardware-side
-sources, then <code>make</code>.</p>
-</li>
-<li>
-<p>Each of the <code>TestApp/Host_Side/builds/*/Copy_Sources.mk</code> files
-shows commands to copy the TestApp&#8217;s hosgt-side source files into
-a local directory for a host-side build (Sim or F1).  Edit
-<code>Copy_Sources.mk</code> to copy all your app&#8217;s host-side sources, then
-<code>make</code>.</p>
-</li>
-</ol>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_platform_simulation_bluesim_and_verilog">3. Platform: Simulation (Bluesim and Verilog)</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>The <code>Platform_Sim/</code> directory provides an implementation of the
-AWSteria_Infra infrastructure for simulation.</p>
+<p>The <code>Platform_Sim/</code> directory provides an implementation of
+AWSteria_Infra for simulation.</p>
 </div>
 <div class="ulist">
 <ul>
@@ -700,18 +680,23 @@ simulation (it can be ported easily to other Verilog simulators).</p>
 <p>The AWSteria_Infra host-hardware communication is emulated over TCP/IP.</p>
 </li>
 <li>
-<p>The AWSteria_Infra DDR4 memory interfaces are connected to memory models.</p>
+<p>The AWSteria_Infra DDR memory interfaces are connected to memory models.</p>
 </li>
 </ul>
+</div>
+<div class="paragraph">
+<p>The &#8220;Test Application&#8221; and &#8220;Porting your application&#8221; sections
+illustrate how to build and run an application on AWSteria_Infra in
+simulation.</p>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_platform_amazon_aws_f1">4. Platform: Amazon AWS F1</h2>
+<h2 id="_platform_amazon_aws_f1">3. Platform: Amazon AWS F1</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>The <code>Platform_AWSF1/</code> directory provides an implementation of the
-AWSteria_Infra infrastructure for an Amazon AWS F1 instance (i.e., a server
+<p>The <code>Platform_AWSF1/</code> directory provides an implementation of
+AWSteria_Infra for an Amazon AWS F1 instance (i.e., a server
 in the cloud with an FPGA board attached with a PCIe bus).</p>
 </div>
 <div class="ulist">
@@ -724,25 +709,30 @@ AWS.</p>
 <li>
 <p>The hardware side plugs into the so-called &#8220;shell&#8221; in the
 <code>aws-fpga</code> HDK provided by AWS.  The shell connects the
-host-communication interfaces to the PCIe bus, and the DDR4
-interfaces to DDR4s on the FPGA board.</p>
+host-communication interfaces to the PCIe bus, and the DDR
+interfaces to DDRs on the FPGA board.</p>
 </li>
 </ul>
+</div>
+<div class="paragraph">
+<p>The &#8220;Test Application&#8221; and &#8220;Porting your application&#8221; sections
+illustrate how to build and run an application on AWSteria_Infra on
+AWS F1.</p>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_platform_xilinx_vcu118_board">5. Platform: Xilinx VCU118 board</h2>
+<h2 id="_platform_xilinx_vcu118_board">4. Platform: Xilinx VCU118 board</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>The <code>Platform_VCU118/</code> directory provides an implementation of the
-AWSteria_Infra infrastructure for a standard Debian/Ubuntu computer with a
+<p>The <code>Platform_VCU118/</code> directory provides an implementation of
+AWSteria_Infra for a standard Debian/Ubuntu computer with a
 Xilinx VCU118 FPGA board attached with a PCIe bus.</p>
 </div>
 <div class="ulist">
 <ul>
 <li>
-<p>The host side runs as a regular program on the Debian/Ubunto host.</p>
+<p>The host side runs as a regular program on the Debian/Ubuntu host.</p>
 </li>
 <li>
 <p>The hardware side runs on the FPGA board.</p>
@@ -750,88 +740,254 @@ Xilinx VCU118 FPGA board attached with a PCIe bus.</p>
 </ul>
 </div>
 <div class="paragraph">
-<p>See <a href="Platform_VCU118/README.html" class="bare">Platform_VCU118/README.html</a> for details.</p>
+<p>The &#8220;Test Application&#8221; and &#8220;Porting your application&#8221; sections
+illustrate how to build and run an application on AWSteria_Infra on
+AWS F1.</p>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_test_application">6. Test Application</h2>
+<h2 id="_test_application">5. Test Application</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>The <code>TestApp/</code> directory provides a small and simple test application.
 When you create a new application, you could use this as a starting
-template and modify it for purpose (see next section for more details).</p>
-</div>
-<div class="paragraph">
-<p>The <code>Host_Side/</code> directory contains the host side application code,
-which invokes the host side C API.</p>
-</div>
-<div class="paragraph">
-<p>The <code>HW_Side/</code> directory contains the hardware side application code,
-i.e., a top-level <code>mkAWSteria_Infra_HW_Side</code> module in the
-<code>AWSteria_Infra_HW_Side.bsv</code> file, with the standard interface
-<code>AWSteria_Infra_HW_Side_IFC</code> defined in the <code>APIs/</code> directory.</p>
-</div>
-<div class="paragraph">
-<p><em>What the app does:</em></p>
-</div>
-<div class="paragraph">
-<p>The hardware side simply connects the host AXI4 and AXI4-Lite
-interfaces to the AXI4 DDR4 interfaces, using a crossbar switch and
-suitable adapters.</p>
-</div>
-<div class="paragraph">
-<p>The host side simply writes random data to
-hardware-side DDR4s, and reads them back to verify the data.  Writes
-and reads are performed over both the host AXI4 and AXI4 Lite
-interfaces, including writing through one and reading through the
-other.  The AXI4 interface is also exercised with large writes and
-reads, to exercise the AXI4 burst capability.</p>
+template and modify it for purpose (see Section &#8220;Porting your
+application&#8221; for more details).</p>
 </div>
 <div class="sect2">
-<h3 id="_building_and_running_with_bluesim_simulation">6.1. Building and running with Bluesim simulation:</h3>
+<h3 id="_app_source_code_and_intended_behavior">5.1. App source code and intended behavior</h3>
+<div class="paragraph">
+<p><code>TestApp/Host/main.c</code> is the host-side source code; it invokes the
+host side C API <code>Include_API/AWSteria_Host_lib.h</code>.</p>
+</div>
+<div class="paragraph">
+<p><code>TestApp/HW/AWSteria_HW.bsv</code> is the hardware-side source code, filling
+out the &#8220;empty&#8221; module provided in
+<code>Include_API/AWSteria_HW_EMPTY.bsv</code>.</p>
+</div>
+<div class="paragraph">
+<p>The hardware side is simple: it connects the host AXI4-Lite interface
+to an AXI4-Lite-to-AXI4 adapter which, along with the host AXI4
+interface connects to a 2x2 AXI4 crossbar switch which, in turn,
+connects to two AXI4 DDR interfaces.</p>
+</div>
+<div class="paragraph">
+<p>The host side simply writes random data to hardware-side DDRs, and
+reads them back to verify the data.  Writes and reads are performed
+over both the host AXI4 and AXI4 Lite interfaces, including writing
+through one and reading through the other.  The AXI4 interface is also
+exercised with large writes and reads, to exercise AXI4 burst
+transfers.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_building_and_running_with_bluesim_or_verilator_simulation">5.2. Building and running with Bluesim or Verilator simulation</h3>
 <div class="ulist">
 <ul>
 <li>
-<p>Do <code>make exe</code> in <code>Host_Side/builds/Sim</code> to make an executable.</p>
+<p>In <code>TestApp/Host/build_sim</code> do <code>make</code> to create the host-side executable <code>exe_Host_sim</code>.</p>
 </li>
 <li>
-<p>Do <code>make all</code> in <code>HW_Side/builds/Bluesim</code> to make an executable.</p>
+<p>In <code>TestApp/HW/build_Bluesim</code> do <code>make all</code> to create the HW-side simulation executable <code>exe_HW_sim</code>.</p>
+<div class="paragraph">
+<p>or,</p>
+</div>
+<div class="paragraph">
+<p>in <code>TestApp/HW/build_Verilator</code> do <code>make all</code> to create the HW-side simulation executable <code>exe_HW_sim</code>.</p>
+</div>
 </li>
 <li>
-<p>Start the hardware side executable in one process (e.g., in one terminal window)
-It will await a TCP connection on a TCP port, and then execute the hardware.</p>
+<p>Run the hardware side executable in one process (e.g., in one
+terminal window) It will await a TCP connection on a TCP port from
+the host side; it will then execute the hardware.</p>
 </li>
 <li>
-<p>Start the host side executable in another process (e.g., in another terminal window)
-It will connect using TCP to the hardware side and then execute the app.</p>
+<p>Run the host side executable in another process (e.g., in another
+terminal window) It will connect using TCP to the hardware side
+and then interact with the hardware side, displaying messages
+about its actions (reading and writing to DDRs on the hardware
+side).</p>
 </li>
 </ul>
 </div>
+<div class="paragraph">
+<p>You will have to kill the HW-side process when done (e.g., using
+<code>^C</code>).  You can restore each build directory to its pristine state
+with <code>make full_clean</code>.</p>
+</div>
 </div>
 <div class="sect2">
-<h3 id="_building_and_running_with_verilator_simulation">6.2. Building and running with Verilator simulation:</h3>
+<h3 id="_building_and_running_on_xilinx_vcu118">5.3. Building and running on Xilinx VCU118</h3>
+<div class="sect3">
+<h4 id="_prerequisites_xilinx_xdma_and_xvsec_drivers">5.3.1. Prerequisites: Xilinx XDMA and XVSEC drivers</h4>
+<div class="paragraph">
+<p>Please install Xilinx&#8217;s XDMA and XVSEC drivers on your host Linux
+machine, where your VCU118 is attached using PCIe.  The drivers can be
+found at: <a href="https://github.com/Xilinx/dma_ip_drivers.git" class="bare">https://github.com/Xilinx/dma_ip_drivers.git</a>.</p>
+</div>
+<div class="paragraph">
+<p>The XVSEC installation will install the <code>xvssecctl</code> tool and driver,
+which is used for &#8220;partial reconfiguration&#8221; of the FPGA with a
+partial bitfile.  After intallation you&#8217;ll see files like this
+<code>/dev/xvsec*</code> on your Linux host, and the following executable tool:
+<code>/usr/local/sbin/xvsecctl</code>.</p>
+</div>
+<div class="paragraph">
+<p>The XDMA installation will install the <code>xdma</code> driver in your Linux
+kernel.  After intallation you&#8217;ll see files like this <code>/dev/xdma*</code> on
+your Linux host.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_prerequisite_garnet">5.3.2. Prerequisite: Garnet</h4>
+<div class="paragraph">
+<p>The Garnet repo (author: Jessica Clarke, Cambridge University, UK) can
+be cloned from <a href="https://github.com/CTSRD-CHERI/garnet" class="bare">https://github.com/CTSRD-CHERI/garnet</a>.</p>
+</div>
+<div class="paragraph">
+<p>Garnet provides PCIe and DDR infrastructure for VCU118, and a 250 MHz
+clock and reset.  Please download Garnet and follow the instructions
+there to build and run the provided simple example.</p>
+</div>
+<div class="paragraph">
+<p>The Garnet flow installs two separate bitfiles on the VCU118, using
+Xilinx&#8217;s &#8220;partial reconfiguration&#8221; mechanism.  The first bitfile is
+for a component called the &#8220;shell&#8221; and contains the fixed,
+unchanging support for PCIe and DDR4s.  This component needs to be
+loaded just once</p>
+</div>
+<div class="paragraph">
+<p>The second bitfile, a &#8220;partial bitfile&#8221;, contains the the logic for
+the provided example, i.e., the application-specific logic.  This
+component can be replaced with partial reconfiguration, as we change
+or replace the example.</p>
+</div>
+<div class="paragraph">
+<p>RTL for AWSteria_Infra plugs into the Garnet &#8220;shell&#8221; environment,
+i.e., it is an alternative partial bitfile to the Garnet-provided
+example.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_building_the_hardware_side">5.3.3. Building the hardware side</h4>
+<div class="paragraph">
+<p>Building the hardware side for VCU118 involves some steps locally in
+the AWSteria_Infra repo, followed by a step in the &#8220;Garnet&#8221; repo.</p>
+</div>
+<div class="paragraph">
+<p>An app in AWSteria_Infra can either run at Garnet&#8217;s full speed (250
+MHz), or it can run at a slower clock speed; AWSteria_Infra provides
+the slower clock, and suitable clock-crossing logic.</p>
+</div>
+<div class="paragraph">
+<p>We describe first the flow for a full speed app, and then the slight
+variation for a slower speed app.</p>
+</div>
+<div class="paragraph">
+<p>The following steps are performed in the AWSteria_Infra repo (the two
+<code>make</code> commands combined into one):</p>
+</div>
 <div class="ulist">
 <ul>
 <li>
-<p>Do <code>make exe</code> in <code>Host_Side/builds/Sim</code> to make an executable.</p>
+<p>In <code>TestApp/HW/build_VCU118</code> do <code>make compile</code>. This will create
+a directory <code>RTL/</code> and populate it with Verilog RTL generated
+from the BSV source code by the Bluespec <code>bsc</code> compiler.</p>
 </li>
 <li>
-<p>Do <code>make all</code> in <code>HW_Side/builds/Verilator</code> to make an executable.</p>
-</li>
-<li>
-<p>Start the hardware side executable in one process (e.g., in one terminal window)
-It will await a TCP connection on a TCP port, and then execute the hardware.</p>
-</li>
-<li>
-<p>Start the host side executable in another process (e.g., in another terminal window)
-It will connect using TCP to the hardware side and then execute the app.</p>
+<p>In <code>TestApp/HW/build_VCU118</code> do <code>make for_garnet</code>.  This will
+create a directory <code>example_TestApp/</code> that is ready to run
+through the Garnet flow.</p>
 </li>
 </ul>
 </div>
+<div class="paragraph">
+<p>Copy the <code>example_TestApp/</code> directory into the top-level of the
+Garnet repo; change to that directory, and <code>make</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>    ... copy example_TestApp directory to garnet repo ...
+    $ cd garnet/example_TestApp
+    $ make</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Garnet will run Vivado on TestApp RTL, eventually producing a &#8220;partial bitfile&#8221;:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>    garnet/example_TestApp/build/AWSteria_pblock_partition_partial.bit</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>To build TestApp to run at the slower clock speed (100 MHz), the steps are analogous:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>In <code>TestApp/HW/build_VCU118</code> do <code>make for_garnet_reclocked</code>.  This will
+create a directory <code>example_TestApp_reclocked/</code> that is ready to run
+through the Garnet flow.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Copy the <code>example_TestApp_reclocked/</code> directory into the top-level of the
+Garnet repo; change to that directory, and <code>make</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>    ... copy example_TestApp_reclocked directory to garnet repo ...
+    $ cd garnet/example_TestApp
+    $ make</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Garnet will run Vivado on TestApp RTL, eventually producing a &#8220;partial bitfile&#8221;:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>    garnet/example_TestApp_reclocked/build/AWSteria_pblock_partition_partial.bit</pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_installing_the_partial_bitfile_into_the_vcu118_fpga">5.3.4. Installing the partial bitfile into the VCU118 FPGA</h4>
+<div class="paragraph">
+<p>This uses the <code>xvsecctl</code> tool and <code>xvsec</code> driver (see Xilinx Prerequisites section earlier).</p>
+</div>
+<div class="paragraph">
+<p>Example Makefile fragment to perform the parital bitfile reconfiguration:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>BUS           = 0x07
+DEVICE_NO     = 0x0
+CAPABILITY_ID = 0x1
+BITFILE       = garnet/example_TestApp/build/AWSteria_pblock_partition_partial.bit
+
+reconfig:
+        sudo xvsecctl -b $(BUS) -F $(DEVICE_NO) -c $(CAPABILITY_ID) -p $(BITFILE)</pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_building_and_running_the_host_side">5.3.5. Building and running the host side</h4>
+<div class="paragraph">
+<p>In <code>TestApp/Host/build_VCU118</code> do <code>make</code> to create the host-side
+executable <code>exe_Host_VCU118</code>.</p>
+</div>
+<div class="paragraph">
+<p>Then, run the executable.  It will interact with the hardware on the
+FPGA.  The console output should be exactly the same as running in
+simulation (described earlier).</p>
+</div>
+</div>
 </div>
 <div class="sect2">
-<h3 id="_building_and_running_on_amazon_aws_f1">6.3. Building and running on Amazon AWS F1:</h3>
+<h3 id="_building_and_running_on_amazon_aws_f1">5.4. Building and running on Amazon AWS F1</h3>
 <div class="ulist">
 <ul>
 <li>
@@ -862,17 +1018,47 @@ the AFI into the FPGA (your app&#8217;s hardware side).</p>
 </ul>
 </div>
 </div>
-<div class="sect2">
-<h3 id="_building_and_running_on_xilinx_vcu118">6.4. Building and running on Xilinx VCU118:</h3>
-<div class="paragraph">
-<p><strong><em>(This section to be written.  Code is still under development as of
-July 8, 2021.  It is expected to be available in the next few weeks)</em></strong></p>
 </div>
+</div>
+<div class="sect1">
+<h2 id="_porting_your_application_to_use_awsteria_infra">6. Porting your application to use AWSteria_Infra</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The small <code>TestApp</code> example and its build-and-run flow provides a
+template for coding, building and running your app.  The
+<code>Include_API/</code> files provide &#8220;empty&#8221; Verilog and BSV modules for
+convenience, which you can use as your starting point.</p>
+</div>
+<div class="paragraph">
+<p>Create your own app directory as a sibling to <code>TestApp</code>, with the same
+structure (you can omit any of these platform-directories that you
+don&#8217;t need):</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>    MyApp/
+        Host/
+            build_sim/
+            build_VCU118/
+            build_AWSF1/
+        HW/
+            build_Bluesim/
+            build_Verilator/
+            build_VCU118/
+            build_AWSF1/</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Create Makefiles in each directory, using those in the corresponding
+directories in TestApp as a starting template.</p>
+</div>
+<div class="paragraph">
+<p>Follow the build-and-run flows described for TestApp.</p>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_future_evolution_expected_not_scheduled_yet">7. Future Evolution (expected; not scheduled yet)</h2>
+<h2 id="_possible_future_evolution">7. Possible Future Evolution</h2>
 <div class="sectionbody">
 <div class="ulist">
 <ul>
@@ -886,8 +1072,7 @@ uses TCP/IP as a transport.</p>
 </ul>
 </div>
 <div class="paragraph">
-<p>The <code>TestApp</code> has components useful for other functions, which we may
-add as time and energy permits:</p>
+<p><code>TestApp</code> can be augmented easily for other uses:</p>
 </div>
 <div class="ulist">
 <ul>
@@ -896,17 +1081,17 @@ add as time and energy permits:</p>
 communication, for DUT-Memory access, etc.</p>
 </li>
 <li>
-<p>&#8220;Unloading&#8221; DDR4 after some DUT has run in AWSteria_Infra, e.g.,
-application performance counters stored in DDR4 (for platforms
-where DDR4 contents are preserved across bitfile reloads).  This
-merely needs alternate C code on the host side.</p>
+<p>&#8220;Unload&#8221; DDR after some DUT has run in AWSteria_Infra, e.g.,
+application performance counters stored in DDR (for platforms
+where DDR contents are preserved across bitfile reloads).
+This would be a minor change to host side C code.</p>
 </li>
 <li>
-<p>&#8220;Preloading&#8221; DDR4 before some DUT has run in AWSteria_Infra, e.g., a
-section of DDR4 used by the DUT as a ROM, or as initialized memory
-(for platforms where DDR4 contents are preserved across bitfile
-reloads).  This merely needs alternate C code on the
-host side.</p>
+<p>&#8220;Preload&#8221; DDR before some DUT has run in AWSteria_Infra, e.g., a
+section of DDR used by the DUT as a ROM, or as initialized memory
+(for platforms where DDR contents are preserved across bitfile
+reloads).
+This would be a minor change to host side C code.</p>
 </li>
 </ul>
 </div>
@@ -916,7 +1101,7 @@ host side.</p>
 <div id="footer">
 <div id="footer-text">
 Version v1.0<br>
-Last updated 2021-08-16 12:59:06 EDT
+Last updated 2021-08-17 22:10:09 EDT
 </div>
 </div>
 </body>

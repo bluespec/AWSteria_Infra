@@ -36,20 +36,11 @@ set_msg_config -id {Synth 8-3917} -suppress
 # Many inputs deliberately left unused
 set_msg_config -id {Synth 8-3331} -suppress
 
-add_files [list \
-  "$project_dir/src/top_garnet.v" \
-]
+# Boilerplate RTL
+add_files [list "$project_dir/src/top_garnet.v" ]
 
-# Note: The following sources are for the hierarchy below
-# mkAWSteria_HW, and will be different for different AWSteria designs.
-
-add_files [list \
-  "$project_dir/src/mkAWSteria_HW.v" \
-  "$project_dir/src/mkAXI4_16_64_512_0_Fabric_2_N.v" \
-  "$project_dir/src/mkAXI4L_S_to_AXI4_M_Adapter_synth.v" \
-  "$project_dir/src/SizedFIFO.v" \
-  "$project_dir/src/FIFO2.v" \
-]
+# Project source RTL
+add_files [list "$project_dir/src"]
 
 garnet_synth_design
 close_project

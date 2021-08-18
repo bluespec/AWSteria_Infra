@@ -25,9 +25,10 @@ infrastructure provides:
 
 and implementations for a number of platforms (host and hardware
 combinations) including, for some FPGAs, reclocking facilities for the
-hardware side to run at more suitable clock speeds.
+hardware side to run at slower clock speeds if needed.
 
-The APIs are specified in files in the `Include_API/` directory.
+The APIs are specified in files in the `Include_API/` directory
+(details below).
 
 The API is inspired by Xilinx XDMA facilities (at
 https://github.com/Xilinx/dma_ip_drivers[]) and the "`shell`" in the
@@ -42,22 +43,46 @@ AWSteria_Infra defines the top-level Verilog or Bluespec BSV interface
 for your app hardware.  This interface has several ports:
 
 * Two sets of clock-and-reset (a default and an extra).
-* An AXI4 M port (manager/master) through which the host communicates
-    with your hardware (wide interface, high bandwidth, typically used for moving data).
-* An AXI4-Lite M port (manager/master) through which the host
-    communicates with your hardware (32-bit wide, typically used for control/status).
-* One to four An AXI4 S ports (subordinate/slave) through which
-    your hardware connects to DDR4 memories on the FPGA board.
-* A few miscellanous utility ports
 
-If you are coding directly in Verilog, use the the following file as a
-starting point: it is an "`empty`" module with the correct module name
-and port list; you can populate the interior with your
+* An AXI4 M interface (manager/master) through which the host communicates
+    with your hardware (wide interface, high bandwidth, typically used for moving data).
+
+* An AXI4-Lite M interface (manager/master) through which the host
+    communicates with your hardware (32-bit wide, typically used for control/status).
+
+* One to four An AXI4 S interface (subordinate/slave) through which
+    your hardware connects to DDR memories on the FPGA board.
+
+* A few miscellanous utility ports (evironment-ready input, DUT-halted output, 4ns counter input).
+
+If you are coding directly in Verilog, use the following file as a
+starting point: it is an "`empty`" module with the required module
+name and port list; you can populate the interior with your
 application-specific logic (including instantiating sub-modules, etc.)
 
 ----
     Include_API/mkAWSteria_HW_EMPTY.v
 ----
+
+The port list looks like this, in summary:
+----
+    module mkAWSteria_HW (CLK,
+                          RST_N,
+                          CLK_b_CLK,
+                          RST_N_b_RST_N,
+
+                          ... AXI4 M interface ports for host communication ...
+                          ... AXI4-Lite M interface ports for host communication ...
+                          ... AXI4 S interface port(s) for DDR communication ...
+
+                          m_env_ready_env_ready,
+                          m_halted,
+                          m_glcount_glcount);
+----
+
+Here, `CLK` and `RST_N` are the default clock and reset,
+and `CLK_b_CLK` and `RST_N_b_RST_N` are the extra clock-reset pair
+(your app can ignore the extra pair if they are not needed).
 
 If you are coding in BSV, use the following files as a starting point:
 
@@ -66,9 +91,12 @@ If you are coding in BSV, use the following files as a starting point:
     Include_API/AWSteria_HW_IFC.bsv
 ----
 
-The former is an "`empty`" BSV module with the correct module name and
-interface.  The module header looks like this, using the interface
-specified in the latter file:
+The former defines an "`empty`" BSV module with the required module
+name and interface.  The latter defines the required interface.  When
+compiled with the Bluespec `bsc` compiler it will produce a Verilog
+module with the required module name and port list.
+
+The BSV module header looks like this:
 
 ----
     module mkAWSteria_HW #(Clock b_CLK, Reset b_RST_N)
@@ -77,10 +105,6 @@ specified in the latter file:
                           AXI4_Master_IFC #(16, 64, 512, 0)));
 ----
 
-Here, `b_CLK` and `b_RST_N` are the extra clock-reset pair, beyond the
-module's own default `CLK` and `RST_N` (your app can ignore the extra
-pair if they are not needed).
-
 If you are coding in some other HDL or using HLS, you can either
 arrange for it to compile your top-level module to look like:
 
@@ -88,7 +112,7 @@ arrange for it to compile your top-level module to look like:
     Include_API/mkAWSteria_HW_EMPTY.v
 ----
 
-or manually instantiate your top-level module inside this.
+or manually instantiate your top-level module inside this empty module.
 
 Of course, when targeting an FPGA platform (Amazon AWS F1, Xilinx
 VCU118, ...)  your Verilog RTL should be acceptable to the synthesis
@@ -106,10 +130,15 @@ and AXI4-Lite M ports described above.
     Include_API/AWSteria_Host_lib.h
 ----
 
+Briefly, it contains an intialization and an shutdown call, a pair of
+read/write functions to communicate via the AXI4 M port, and a pair of
+read/write functions to communicate via the AXI4-Lite M port.
+
 Host side code can be written in any language environment.  To
-communicate with the hardware side, it should invoke the C API
-specified in `Include_API/AWSteria_Host_lib.h`.  `AWSteria_Infra`
-provides C code implementing the API for each platform.
+communicate with the hardware side it should invoke the C host-side API.
+
+`AWSteria_Infra` provides C code implementing the API for each
+platform.
 
 // ----------------------------------------------------------------
 // SUBSECTION
@@ -119,7 +148,7 @@ Each `Platform_XXX/` directory is an implementation of these APIs, for
 both the host and the hardware sides.  Current platforms are:
 
 ----
-Platform_Sim/
+Platform_Sim/    (Bluesim and Verilator sim)
 Platform_AWSF1/
 Platform_VCU118/
 ----
@@ -138,65 +167,27 @@ implementation of `AWSteria_Infra` for a new platform.
 
 // ================================================================
 // SECTION
-== Porting your application to use AWSteria_Infra
+== Platform: Simulation (Bluesim and Verilator)
 
-The small test application in the `TestApp/` directory is such an
-example, where the HW-side is written in BSV and compiled using the
-Bluespec compiler `bsc` into Verilog RTL.  When you create a new
-application, you could use this as a starting template and modify it
-for purpose (see next section for more details).
-
-Each "`Platform`" section below provides more details on how to build
-and execute on that platform.
-
-1. If desired, populate the `TestApp/Host_Side/` directory with your
-    host-side sources (e.g., C files).  In Steps 3 and 4 you will edit
-    Makefiles to make a local copy of sources anyway, so you can copy
-    them from their original locations, if desired.
-+
-    Your source files should invoke the C API described in
-    `Include_API/AWSteria_Host_lib.h`
-
-2. If desired, populate the `TestApp/HW_Side/` directory with your
-    hardware-side sources (e.g., BSV files).  In Steps 3 and 4 you
-    will edit Makefiles to make a local copy of sources anyway, so you
-    can copy them from their original locations, if desired.
-+
-    Your source files should have a top-level module called
-    `mkAWSteria_InfraHost_Side` with the interface `AWSteria_Infra_Host_Side_IFC`
-    specfied in the file `APIs/AWSteria_Infra_Host_Side_IFC.bsv`.
-
-3. Each of the `TestApp/HW_Side/builds/*/Copy_Sources.mk` files shows
-    commands to copy the TestApp's hardware-side source files into a
-    local directory for a hardware-side build (Bluesim, Verilator or
-    F1).  Edit `Copy_Sources.mk` to copy all your app's hardware-side
-    sources, then `make`.
-
-4. Each of the `TestApp/Host_Side/builds/*/Copy_Sources.mk` files
-    shows commands to copy the TestApp's hosgt-side source files into
-    a local directory for a host-side build (Sim or F1).  Edit
-    `Copy_Sources.mk` to copy all your app's host-side sources, then
-    `make`.
-
-// ================================================================
-// SECTION
-== Platform: Simulation (Bluesim and Verilog)
-
-The `Platform_Sim/` directory provides an implementation of the
-AWSteria_Infra infrastructure for simulation.
+The `Platform_Sim/` directory provides an implementation of
+AWSteria_Infra for simulation.
 
 * The host side and hardware side run as two processes on a standard computer.
 * The hardware side runs in simulation, Bluesim or Verilator
     simulation (it can be ported easily to other Verilog simulators).
 * The AWSteria_Infra host-hardware communication is emulated over TCP/IP.
-* The AWSteria_Infra DDR4 memory interfaces are connected to memory models.
+* The AWSteria_Infra DDR memory interfaces are connected to memory models.
+
+The "`Test Application`" and "`Porting your application`" sections
+illustrate how to build and run an application on AWSteria_Infra in
+simulation.
 
 // ================================================================
 // SECTION
 == Platform: Amazon AWS F1
 
-The `Platform_AWSF1/` directory provides an implementation of the
-AWSteria_Infra infrastructure for an Amazon AWS F1 instance (i.e., a server
+The `Platform_AWSF1/` directory provides an implementation of
+AWSteria_Infra for an Amazon AWS F1 instance (i.e., a server
 in the cloud with an FPGA board attached with a PCIe bus).
 
 * The host side runs as a regular program on the Amazon AWS F1
@@ -205,22 +196,28 @@ in the cloud with an FPGA board attached with a PCIe bus).
     
 * The hardware side plugs into the so-called "`shell`" in the
     `aws-fpga` HDK provided by AWS.  The shell connects the
-    host-communication interfaces to the PCIe bus, and the DDR4
-    interfaces to DDR4s on the FPGA board.
+    host-communication interfaces to the PCIe bus, and the DDR
+    interfaces to DDRs on the FPGA board.
+
+The "`Test Application`" and "`Porting your application`" sections
+illustrate how to build and run an application on AWSteria_Infra on
+AWS F1.
 
 // ================================================================
 // SECTION
 == Platform: Xilinx VCU118 board
 
-The `Platform_VCU118/` directory provides an implementation of the
-AWSteria_Infra infrastructure for a standard Debian/Ubuntu computer with a
+The `Platform_VCU118/` directory provides an implementation of
+AWSteria_Infra for a standard Debian/Ubuntu computer with a
 Xilinx VCU118 FPGA board attached with a PCIe bus.
 
-* The host side runs as a regular program on the Debian/Ubunto host.
+* The host side runs as a regular program on the Debian/Ubuntu host.
     
 * The hardware side runs on the FPGA board.
 
-See link:Platform_VCU118/README.html[] for details.
+The "`Test Application`" and "`Porting your application`" sections
+illustrate how to build and run an application on AWSteria_Infra on
+AWS F1.
 
 // ================================================================
 // SECTION
@@ -228,54 +225,196 @@ See link:Platform_VCU118/README.html[] for details.
 
 The `TestApp/` directory provides a small and simple test application.
 When you create a new application, you could use this as a starting
-template and modify it for purpose (see next section for more details).
-
-The `Host_Side/` directory contains the host side application code,
-which invokes the host side C API.
-
-The `HW_Side/` directory contains the hardware side application code,
-i.e., a top-level `mkAWSteria_Infra_HW_Side` module in the
-`AWSteria_Infra_HW_Side.bsv` file, with the standard interface
-`AWSteria_Infra_HW_Side_IFC` defined in the `APIs/` directory.
-
-_What the app does:_
-
-The hardware side simply connects the host AXI4 and AXI4-Lite
-interfaces to the AXI4 DDR4 interfaces, using a crossbar switch and
-suitable adapters.
-
-The host side simply writes random data to
-hardware-side DDR4s, and reads them back to verify the data.  Writes
-and reads are performed over both the host AXI4 and AXI4 Lite
-interfaces, including writing through one and reading through the
-other.  The AXI4 interface is also exercised with large writes and
-reads, to exercise the AXI4 burst capability.
+template and modify it for purpose (see Section "`Porting your
+application`" for more details).
 
 // ----------------------------------------------------------------
 // SUBSECTION
-=== Building and running with Bluesim simulation:
+=== App source code and intended behavior
 
-* Do `make exe` in `Host_Side/builds/Sim` to make an executable.
-* Do `make all` in `HW_Side/builds/Bluesim` to make an executable.
-* Start the hardware side executable in one process (e.g., in one terminal window)
-    It will await a TCP connection on a TCP port, and then execute the hardware.
-* Start the host side executable in another process (e.g., in another terminal window)
-    It will connect using TCP to the hardware side and then execute the app.
+`TestApp/Host/main.c` is the host-side source code; it invokes the
+host side C API `Include_API/AWSteria_Host_lib.h`.
+
+`TestApp/HW/AWSteria_HW.bsv` is the hardware-side source code, filling
+out the "`empty`" module provided in
+`Include_API/AWSteria_HW_EMPTY.bsv`.
+
+The hardware side is simple: it connects the host AXI4-Lite interface
+to an AXI4-Lite-to-AXI4 adapter which, along with the host AXI4
+interface connects to a 2x2 AXI4 crossbar switch which, in turn,
+connects to two AXI4 DDR interfaces.
+
+The host side simply writes random data to hardware-side DDRs, and
+reads them back to verify the data.  Writes and reads are performed
+over both the host AXI4 and AXI4 Lite interfaces, including writing
+through one and reading through the other.  The AXI4 interface is also
+exercised with large writes and reads, to exercise AXI4 burst
+transfers.
 
 // ----------------------------------------------------------------
 // SUBSECTION
-=== Building and running with Verilator simulation:
+=== Building and running with Bluesim or Verilator simulation
 
-* Do `make exe` in `Host_Side/builds/Sim` to make an executable.
-* Do `make all` in `HW_Side/builds/Verilator` to make an executable.
-* Start the hardware side executable in one process (e.g., in one terminal window)
-    It will await a TCP connection on a TCP port, and then execute the hardware.
-* Start the host side executable in another process (e.g., in another terminal window)
-    It will connect using TCP to the hardware side and then execute the app.
+* In `TestApp/Host/build_sim` do `make` to create the host-side executable `exe_Host_sim`.
+
+* In `TestApp/HW/build_Bluesim` do `make all` to create the HW-side simulation executable `exe_HW_sim`.
++
+or,
++
+in `TestApp/HW/build_Verilator` do `make all` to create the HW-side simulation executable `exe_HW_sim`.
+
+* Run the hardware side executable in one process (e.g., in one
+    terminal window) It will await a TCP connection on a TCP port from
+    the host side; it will then execute the hardware.
+
+* Run the host side executable in another process (e.g., in another
+    terminal window) It will connect using TCP to the hardware side
+    and then interact with the hardware side, displaying messages
+    about its actions (reading and writing to DDRs on the hardware
+    side).
+
+You will have to kill the HW-side process when done (e.g., using
+`^C`).  You can restore each build directory to its pristine state
+with `make full_clean`.
 
 // ----------------------------------------------------------------
 // SUBSECTION
-=== Building and running on Amazon AWS F1:
+=== Building and running on Xilinx VCU118
+
+// ----------------
+// SUBSUBSECTION
+==== Prerequisites: Xilinx XDMA and XVSEC drivers
+
+Please install Xilinx's XDMA and XVSEC drivers on your host Linux
+machine, where your VCU118 is attached using PCIe.  The drivers can be
+found at: https://github.com/Xilinx/dma_ip_drivers.git[].
+
+The XVSEC installation will install the `xvssecctl` tool and driver,
+which is used for "`partial reconfiguration`" of the FPGA with a
+partial bitfile.  After intallation you'll see files like this
+`/dev/xvsec*` on your Linux host, and the following executable tool:
+`/usr/local/sbin/xvsecctl`.
+
+The XDMA installation will install the `xdma` driver in your Linux
+kernel.  After intallation you'll see files like this `/dev/xdma*` on
+your Linux host.
+
+// ----------------
+// SUBSUBSECTION
+==== Prerequisite: Garnet
+
+The Garnet repo (author: Jessica Clarke, Cambridge University, UK) can
+be cloned from https://github.com/CTSRD-CHERI/garnet[].
+
+Garnet provides PCIe and DDR infrastructure for VCU118, and a 250 MHz
+clock and reset.  Please download Garnet and follow the instructions
+there to build and run the provided simple example.
+
+The Garnet flow installs two separate bitfiles on the VCU118, using
+Xilinx's "`partial reconfiguration`" mechanism.  The first bitfile is
+for a component called the "`shell`" and contains the fixed,
+unchanging support for PCIe and DDR4s.  This component needs to be
+loaded just once
+
+The second bitfile, a "`partial bitfile`", contains the the logic for
+the provided example, i.e., the application-specific logic.  This
+component can be replaced with partial reconfiguration, as we change
+or replace the example.
+
+RTL for AWSteria_Infra plugs into the Garnet "`shell`" environment,
+i.e., it is an alternative partial bitfile to the Garnet-provided
+example.
+
+// ----------------
+// SUBSUBSECTION
+==== Building the hardware side
+
+Building the hardware side for VCU118 involves some steps locally in
+the AWSteria_Infra repo, followed by a step in the "`Garnet`" repo.
+
+An app in AWSteria_Infra can either run at Garnet's full speed (250
+MHz), or it can run at a slower clock speed; AWSteria_Infra provides
+the slower clock, and suitable clock-crossing logic.
+
+We describe first the flow for a full speed app, and then the slight
+variation for a slower speed app.
+
+The following steps are performed in the AWSteria_Infra repo (the two
+`make` commands combined into one):
+
+* In `TestApp/HW/build_VCU118` do `make compile`. This will create
+    a directory `RTL/` and populate it with Verilog RTL generated
+    from the BSV source code by the Bluespec `bsc` compiler.
+
+* In `TestApp/HW/build_VCU118` do `make for_garnet`.  This will
+    create a directory `example_TestApp/` that is ready to run
+    through the Garnet flow.
+
+Copy the `example_TestApp/` directory into the top-level of the
+Garnet repo; change to that directory, and `make`:
+
+----
+    ... copy example_TestApp directory to garnet repo ...
+    $ cd garnet/example_TestApp
+    $ make
+----
+Garnet will run Vivado on TestApp RTL, eventually producing a "`partial bitfile`":
+----
+    garnet/example_TestApp/build/AWSteria_pblock_partition_partial.bit
+----
+
+To build TestApp to run at the slower clock speed (100 MHz), the steps are analogous:
+
+* In `TestApp/HW/build_VCU118` do `make for_garnet_reclocked`.  This will
+    create a directory `example_TestApp_reclocked/` that is ready to run
+    through the Garnet flow.
+
+Copy the `example_TestApp_reclocked/` directory into the top-level of the
+Garnet repo; change to that directory, and `make`:
+
+----
+    ... copy example_TestApp_reclocked directory to garnet repo ...
+    $ cd garnet/example_TestApp
+    $ make
+----
+Garnet will run Vivado on TestApp RTL, eventually producing a "`partial bitfile`":
+----
+    garnet/example_TestApp_reclocked/build/AWSteria_pblock_partition_partial.bit
+----
+This takes about 1 hour on a 12-core, 1.1 GHz, Intel Core i7-10710U CPU.
+
+// ----------------
+// SUBSUBSECTION
+==== Installing the partial bitfile into the VCU118 FPGA
+
+This uses the `xvsecctl` tool and `xvsec` driver (see Xilinx Prerequisites section earlier).
+
+Example Makefile fragment to perform the parital bitfile reconfiguration:
+
+----
+BUS           = 0x07
+DEVICE_NO     = 0x0
+CAPABILITY_ID = 0x1
+BITFILE       = garnet/example_TestApp/build/AWSteria_pblock_partition_partial.bit
+
+reconfig:
+        sudo xvsecctl -b $(BUS) -F $(DEVICE_NO) -c $(CAPABILITY_ID) -p $(BITFILE)
+----
+
+// ----------------
+// SUBSUBSECTION
+==== Building and running the host side
+
+In `TestApp/Host/build_VCU118` do `make` to create the host-side
+executable `exe_Host_VCU118`.
+
+Then, run the executable.  It will interact with the hardware on the
+FPGA.  The console output should be exactly the same as running in
+simulation (described earlier).
+
+// ----------------------------------------------------------------
+// SUBSECTION
+=== Building and running on Amazon AWS F1
 
 * Do `make exe` in `Host_Side/builds/F1` to make an executable.
     ** Note: this needs the AWS F1 `aws-fpga` SDK to be installed and ready.
@@ -292,15 +431,40 @@ reads, to exercise the AXI4 burst capability.
 
 * On the Amazon AWS F1 instance, run the host side executable.
 
-// ----------------------------------------------------------------
-// SUBSECTION
-=== Building and running on Xilinx VCU118:
+// ================================================================
+// SECTION
+== Porting your application to use AWSteria_Infra
 
-*_(This section to be written.  Code is still under development as of
-July 8, 2021.  It is expected to be available in the next few weeks)_*
+The small `TestApp` example and its build-and-run flow provides a
+template for coding, building and running your app.  The
+`Include_API/` files provide "`empty`" Verilog and BSV modules for
+convenience, which you can use as your starting point.
+
+Create your own app directory as a sibling to `TestApp`, with the same
+structure (you can omit any of these platform-directories that you
+don't need):
+
+----
+    MyApp/
+        Host/
+            build_sim/
+            build_VCU118/
+            build_AWSF1/
+        HW/
+            build_Bluesim/
+            build_Verilator/
+            build_VCU118/
+            build_AWSF1/
+----
+
+Create Makefiles in each directory, using those in the corresponding
+directories in TestApp as a starting template.
+
+Follow the build-and-run flows described for TestApp.
 
 // ================================================================
-== Future Evolution (expected; not scheduled yet)
+// SECTION
+== Possible Future Evolution
 
 * Port AWSteria_Infra to more platforms (more FPGA boards).  Note the
     host-FPGA communication does not have to be over PCIe; it could
@@ -308,21 +472,20 @@ July 8, 2021.  It is expected to be available in the next few weeks)_*
     with slower performance).  Indeed `Platform_Sim` described above
     uses TCP/IP as a transport.
 
-The `TestApp` has components useful for other functions, which we may
-add as time and energy permits:
+`TestApp` can be augmented easily for other uses:
 
 * Measure AWSteria_Infra performance: latencies and bandwidths for host-FPGA
     communication, for DUT-Memory access, etc.
 
-* "`Unloading`" DDR4 after some DUT has run in AWSteria_Infra, e.g.,
-    application performance counters stored in DDR4 (for platforms
-    where DDR4 contents are preserved across bitfile reloads).  This
-    merely needs alternate C code on the host side.
+* "`Unload`" DDR after some DUT has run in AWSteria_Infra, e.g.,
+    application performance counters stored in DDR (for platforms
+    where DDR contents are preserved across bitfile reloads).
+    This would be a minor change to host side C code.
 
-* "`Preloading`" DDR4 before some DUT has run in AWSteria_Infra, e.g., a
-    section of DDR4 used by the DUT as a ROM, or as initialized memory
-    (for platforms where DDR4 contents are preserved across bitfile
-    reloads).  This merely needs alternate C code on the
-    host side.
+* "`Preload`" DDR before some DUT has run in AWSteria_Infra, e.g., a
+    section of DDR used by the DUT as a ROM, or as initialized memory
+    (for platforms where DDR contents are preserved across bitfile
+    reloads).
+    This would be a minor change to host side C code.
 
 // ================================================================

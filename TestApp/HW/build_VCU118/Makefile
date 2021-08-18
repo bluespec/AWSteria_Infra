@@ -7,12 +7,12 @@
 .PHONY: help
 help:
 	@echo "Usage:"
-	@echo "    make compile       Create dir RTL_from_bsc/ and compile/copy"
+	@echo "    make compile       Create dir RTL/ and compile/copy"
 	@echo "                           sources to RTL there."
 	@echo "    make clean         Remove build_dir (for intermediate files)."
 	@echo "    make full_clean    Restore to pristine state."
 	@echo ""
-	@echo "  The RTL in RTL_from_bsc/ can then be copied to a Garnet example build dir."
+	@echo "  The RTL in RTL/ can then be copied to a Garnet example build dir."
 	@echo "  Current DDR compiler flag: $(INCLUDE_DDRS)"
 
 # ================================================================
@@ -78,15 +78,15 @@ BSC_PATH := $(BSC_PATH):+
 # ================================================================
 # Generate Verilog RTL from BSV sources (needs Bluespec 'bsc' compiler)
 
-RTL_GEN_DIRS = -vdir RTL_from_bsc  -bdir build_dir  -info-dir build_dir
+RTL_GEN_DIRS = -vdir RTL  -bdir build_dir  -info-dir build_dir
 
 .PHONY: compile
 compile:
 	mkdir -p  build_dir
-	mkdir -p  RTL_from_bsc
+	mkdir -p  RTL
 	@echo  "INFO: RTL generation ..."
 	bsc -u -elab -verilog  $(RTL_GEN_DIRS)  $(BSC_COMPILATION_FLAGS)  -p $(BSC_PATH)  $(TOPFILE)
-	@echo  "INFO: RTL generation finished: RTL_from_bsc/ is ready for FPGA build."
+	@echo  "INFO: RTL generation finished: RTL/ is ready for FPGA build."
 
 # ================================================================
 # For VCU118: collect all RTL needed for garnet flow
@@ -94,22 +94,22 @@ compile:
 .PHONY: for_garnet
 for_garnet:
 	@echo "INFO: Creating and populating garnet example dir (no reclocking)"
-	cp -p -R $(AWSTERIA_INFRA_REPO)/Platform_VCU118/HW/example_AWSteria_HW  .
-	cp -p    RTL_from_bsc/*.v  example_AWSteria_HW/src/
-	make GARNET_RTL=example_AWSteria_HW/src/  bsc_RTL_for_garnet
-	@echo "INFO: garnet example dir is ready: example_AWSteria_HW/"
+	cp -p -R $(AWSTERIA_INFRA_REPO)/Platform_VCU118/HW/example_AWSteria_HW  ./example_TestApp
+	cp -p    RTL/*.v  example_TestApp/src/
+	make GARNET_RTL=example_TestApp/src/  copy_bsc_RTL_for_garnet
+	@echo "INFO: garnet example dir is ready: example_TestApp/"
 
 .PHONY: for_garnet_reclocked
 for_garnet_reclocked:
 	@echo "INFO: Creating and populating garnet example dir (reclocked)"
-	cp -p -R $(AWSTERIA_INFRA_REPO)/Platform_VCU118/HW/example_AWSteria_HW_reclocked  .
-	cp -p    $(AWSTERIA_INFRA_REPO)/Platform_VCU118/HW/synchronizers.v  example_AWSteria_HW_reclocked/src/
-	cp -p    RTL_from_bsc/*.v  example_AWSteria_HW_reclocked/src/
-	make GARNET_RTL=example_AWSteria_HW_reclocked/src/  bsc_RTL_for_garnet
-	@echo "INFO: garnet example (reclocked) dir is ready: example_AWSteria_HW_reclocked/"
+	cp -p -R $(AWSTERIA_INFRA_REPO)/Platform_VCU118/HW/example_AWSteria_HW_reclocked  ./example_TestApp_reclocked
+	cp -p    $(AWSTERIA_INFRA_REPO)/Platform_VCU118/HW/synchronizers.v  example_TestApp_reclocked/src/
+	cp -p    RTL/*.v  example_TestApp_reclocked/src/
+	make GARNET_RTL=example_TestApp_reclocked/src/  copy_bsc_RTL_for_garnet
+	@echo "INFO: garnet example (reclocked) dir is ready: example_TestApp_reclocked/"
 
-.PHONY: bsc_RTL_for_garnet
-bsc_RTL_for_garnet:
+.PHONY: copy_bsc_RTL_for_garnet
+copy_bsc_RTL_for_garnet:
 	@echo "Copying RTL from BLUESPEC_HOME = $(BLUESPEC_HOME)"
 	cp -p  $(BLUESPEC_HOME)/lib/Verilog/FIFO2.v        $(GARNET_RTL)
 	cp -p  $(BLUESPEC_HOME)/lib/Verilog/SizedFIFO.v    $(GARNET_RTL)
@@ -122,6 +122,6 @@ clean:
 
 .PHONY: full_clean
 full_clean: clean
-	rm -r -f  *~  tmp_all_srcs  build_dir  RTL_from_bsc  example_AWSteria_HW  example_AWSteria_HW_reclocked
+	rm -r -f  *~  tmp_all_srcs  build_dir  RTL  example_TestApp  example_TestApp_reclocked
 
 # ================================================================

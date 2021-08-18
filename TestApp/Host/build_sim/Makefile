@@ -12,7 +12,7 @@ endif
 
 $(info INFO: Making executable for Bluesim/verilator sim)
 
-EXE    = exe_Host_sim
+EXE = exe_Host_sim
 
 # ================================================================
 
