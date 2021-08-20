@@ -2,6 +2,15 @@
 
 # Copyright (c) 2020-2021 Bluespec, Inc.  All Rights Reserved
 
+# ================================================================
+
+.PHONY: help
+help:
+	@echo "Usage:"
+	@echo "    make $(EXE)        create the host-side executable"
+	@echo "    make clean         keep excutable; delete temporary build dir 'tmpdir'"
+	@echo "    make full_clean    delete excutable and temporary build dir 'tmpdir'"
+
 #================================================================
 
 ifndef AWSTERIA_INFRA_REPO
@@ -10,14 +19,14 @@ else
   $(info  INFO: AWSTERIA_INFRA_REPO = $(AWSTERIA_INFO_REPO))
 endif
 
-$(info INFO: Making executable for AWSteria TestApp host side on VCU118)
-
 EXE = exe_Host_VCU118
+
+$(info INFO: Making executable $(EXE) for AWSteria TestApp host side on VCU118)
 
 # ================================================================
 
-CFLAGS += -std=gnu11 -g -Wall -Werror \
-	-I $(AWSTERIA_INFRA_REPO)/Include_API
+CFLAGS += -I $(AWSTERIA_INFRA_REPO)/Include_API
+CFLAGS += -std=gnu11 -g -Wall -Werror
 
 CC     = gcc $(CFLAGS)
 
@@ -32,6 +41,7 @@ SRCS_C = ../main.c \
 
 $(EXE): $(SRCS_H) $(SRCS_C)
 	$(CC) -g  -o $(EXE) $(SRCS_C)
+	@echo "INFO: created '$(EXE)'"
 
 # ================================================================
 

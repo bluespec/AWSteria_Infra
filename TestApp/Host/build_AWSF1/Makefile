@@ -4,60 +4,63 @@
 
 # ================================================================
 
-ifndef BLUPONT_REPO
-  $(error ERROR: please define BLUPONT_REPO)
+.PHONY: help
+help:
+	@echo "Usage:"
+	@echo "    make $(EXE)        create the host-side executable"
+	@echo "    make clean         keep excutable; delete temporary build dir 'tmpdir'"
+	@echo "    make full_clean    delete excutable and temporary build dir 'tmpdir'"
+
+#================================================================
+
+ifndef AWSTERIA_INFRA_REPO
+  $(error ERROR: please define AWSTERIA_INFRA_REPO (path to AWSteria_Infra repo))
+else
+  $(info  INFO: AWSTERIA_INFRA_REPO = $(AWSTERIA_INFO_REPO))
 endif
 
 ifndef SDK_DIR
-  $(error ERROR: please define SDK_DIR (path to aws-fpga repo))
+  $(error ERROR: please initialize aws-fpga repo with sdk_setup.sh, which also defines SDK_DIR)
+else
+  $(info  INFO: SDK_DIR = $(SDK_DIR))
 endif
 
 EXE = exe_Host_Side_AWSF1
 
-.PHONY: help
-help:
-	@echo "Usage:"
-	@echo "    make exe           create the host-side executable '$(EXE)'"
-	@echo "    make clean         keep excutable; delete temporary build dir 'tmpdir'"
-	@echo "    make full_clean    delete excutable and temporary build dir 'tmpdir'"
+$(info INFO: Making executable $(EXE) for AWSteria TestApp host side on AWS F1)
 
 # ================================================================
-# Create 'tmpdir' for local copy of all relevant source files and all
-# intermediate object files.  Copy all sources.
-
-include Copy_Sources.mk
-
-# ================================================================
-
-INCLUDES = -I$(SDK_DIR)/userspace/include
 
 CFLAGS += -D IN_AWSF1
-CFLAGS += -I tmpdir  $(INCLUDES)
+CFLAGS += -I $(SDK_DIR)/userspace/include
+CFLAGS += -I $(AWSTERIA_INFRA_REPO)/Include_API
 CFLAGS += -std=gnu11 -g -Wall -Werror
-
-OBJS   += tmpdir/main.o
-OBJS   += tmpdir/BluPont_Host_Side_API.o
 
 LDLIBS = -lfpga_mgmt -lcrypto -lpthread
 
-CC     = gcc
+CC     = gcc $(CFLAGS)
+
+SRCS_H = \
+	$(AWSTERIA_INFRA_REPO)/Include_API/AWSteria_Host_lib.h \
+
+SRCS_C = ../main.c \
+	$(AWSTERIA_INFRA_REPO)/Platform_AWSF1/Host/AWSteria_Host_lib.c \
 
 # ================================================================
-# Top-level command to build EXE
+# Top-level target: the executable
 
-.PHONY: exe
-exe: rsync_tmpdir  $(OBJS)
-	$(CC) -g  -o $(EXE) $(OBJS) $(LDLIBS)
+$(EXE): $(SRCS_H) $(SRCS_C)
+	$(CC) -g  -o $(EXE) $(SRCS_C) $(LDLIBS)
 	@echo "INFO: created '$(EXE)'"
 
 # ================================================================
 
 .PHONY: clean
 clean:
-	rm -r -f  *.*~  Makefile*~  tmpdir
+	rm -f  *.*~  Makefile*~  *.o
 
 .PHONY: full_clean
 full_clean:
-	rm -r -f  *.*~  Makefile*~  tmpdir  exe_*
+	rm -f  *.*~  Makefile*~  *.o  exe_*
 
 # ================================================================
