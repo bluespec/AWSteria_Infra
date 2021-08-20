@@ -44,7 +44,7 @@ BSC_PATH := $(BSC_PATH):$(AWSTERIA_INFRA_REPO)/TestApp/HW
 
 # From AWSteria
 BSC_PATH := $(BSC_PATH):$(AWSTERIA_INFRA_REPO)/Include_API
-BSC_PATH := $(BSC_PATH):$(AWSTERIA_INFRA_REPO)/Platform_VCU118/HW
+BSC_PATH := $(BSC_PATH):$(AWSTERIA_INFRA_REPO)/Platform_AWSF1/HW
 
 # From Flute (utils, AXI4)
 BSC_PATH := $(BSC_PATH):$(FLUTE_REPO)/src_Core/BSV_Additional_Libs
@@ -88,30 +88,20 @@ compile:
 	@echo  "INFO: RTL generation finished: RTL/ is ready for FPGA build."
 
 # ================================================================
-# For VCU118: collect all RTL needed for garnet flow
+# For AWSF1: collect all RTL needed for aws-fpga HDK flow
 
-.PHONY: for_garnet
-for_garnet:
-	@echo "INFO: Creating and populating garnet example dir (no reclocking)"
-	cp -p -R $(AWSTERIA_INFRA_REPO)/Platform_VCU118/HW/example_AWSteria_HW  ./example_TestApp
-	cp -p    RTL/*.v  example_TestApp/src/
-	make GARNET_RTL=example_TestApp/src/  copy_bsc_RTL_for_garnet
-	@echo "INFO: garnet example dir is ready: example_TestApp/"
-
-.PHONY: for_garnet_reclocked
-for_garnet_reclocked:
-	@echo "INFO: Creating and populating garnet example dir (reclocked)"
-	cp -p -R $(AWSTERIA_INFRA_REPO)/Platform_VCU118/HW/example_AWSteria_HW_reclocked  ./example_TestApp_reclocked
-	cp -p    $(AWSTERIA_INFRA_REPO)/Platform_VCU118/HW/synchronizers.v  example_TestApp_reclocked/src/
-	cp -p    RTL/*.v  example_TestApp_reclocked/src/
-	make GARNET_RTL=example_TestApp_reclocked/src/  copy_bsc_RTL_for_garnet
-	@echo "INFO: garnet example (reclocked) dir is ready: example_TestApp_reclocked/"
-
-.PHONY: copy_bsc_RTL_for_garnet
-copy_bsc_RTL_for_garnet:
-	@echo "Copying RTL from BLUESPEC_HOME = $(BLUESPEC_HOME)"
-	cp -p  $(BLUESPEC_HOME)/lib/Verilog/FIFO2.v        $(GARNET_RTL)
-	cp -p  $(BLUESPEC_HOME)/lib/Verilog/SizedFIFO.v    $(GARNET_RTL)
+.PHONY: for_AWSF1_HDK
+for_AWSF1_HDK:
+	@echo "INFO: Creating and populating aws-fpga HDK custom-logic dir"
+# RTL for App
+	mkdir -p cl_TestApp
+	cp -p    RTL/*.v  cl_TestApp
+# RTL for Platform_AWSF1 support
+	cp -p  $(AWSTERIA_INFRA_REPO)/Platform_AWSF1/HW/*  cl_TestApp
+# RTL from bsc library
+	cp -p  $(BLUESPEC_HOME)/lib/Verilog/FIFO2.v        cl_TestApp
+	cp -p  $(BLUESPEC_HOME)/lib/Verilog/SizedFIFO.v    cl_TestApp
+	@echo "INFO: aws-fpga HDK custom-logic dir is ready: cl_TestApp/"
 
 # ================================================================
 
@@ -121,6 +111,6 @@ clean:
 
 .PHONY: full_clean
 full_clean: clean
-	rm -r -f  *~  tmp_all_srcs  build_dir  RTL  example_TestApp  example_TestApp_reclocked
+	rm -r -f  *~  tmp_all_srcs  build_dir  RTL  cl_TestApp
 
 # ================================================================

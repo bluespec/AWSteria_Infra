@@ -5,8 +5,6 @@
 # It assumes you have build the tools in:
 #    https://github.com/Xilinx/dma_ip_drivers.git
 #        XDMA/linux-kernel/tools
-# and the Xilinx partial-reconfig driver in:
-#        XVSEC/
 
 # Some of these tests require a dataA.txt or dataB.txt as input data
 # to be written to the FPGA.  Any files will do, or you can generate
@@ -24,21 +22,6 @@ RDATA  ?= rdata.txt
 WDATA  ?= wdata.txt
 
 # ================================================================
-# Partial-reconfig bitfiles
-
-# Original garnet repo example
-# BITFILE ?= /home/nikhil/git_clones/CTSRD-CHERI_garnet/example/build/example_pblock_partition_partial.bit
-
-# AWSteria_HW (no reclocking) with TestApp
-# BITFILE ?= ~/git_clones/CTSRD-CHERI_garnet/example_AWSteria_HW/build/AWSteria_pblock_partition_partial.bit
-
-# AWSteria_HW_reclocked (reclocked) with TestApp
-# BITFILE ?= ~/git_clones/CTSRD-CHERI_garnet/example_AWSteria_HW_reclocked/build/AWSteria_pblock_partition_partial.bit
-
-# AWSteria RISCV reclocked
-BITFILE=~/git_clones/CTSRD-CHERI_garnet/example_RISCV_AWSteria_HW_reclocked/build/AWSteria_pblock_partition_partial.bit
-
-# ================================================================
 
 .PHONY: help
 help:
@@ -50,7 +33,6 @@ help:
 	@echo "    make load_xvsec   Installs XVSEC kernel driver"
 	@echo "    make load_shell   Writes bitfile for shell, with empty example module"
 	@echo "  Current settings"
-	@echo "    BITFILE  = $(BITFILE)"
 	@echo "    BASE     = $(BASE)"
 	@echo "    SIZE     = $(SIZE)"
 	@echo "    DATA_A   = $(DATA_A)"
@@ -58,39 +40,11 @@ help:
 	@echo "    DATAFROM = $(RDATA)"
 
 # ================================================================
-# Checking the VCU118 card
-
-.PHONY: probe
-probe:
-	sudo lspci -d 10ee:903f  $(V)
-
-# ================================================================
-# Programming the bitfile and partial reconfig
-
-BUS           = 0x07
-DEVICE_NO     = 0x0
-CAPABILITY_ID = 0x1
-
-.PHONY: reconfig
-reconfig:
-	@echo "Reconfiguring partition with $(BITFILE)"
-	sudo xvsecctl -b $(BUS) -F $(DEVICE_NO) -c $(CAPABILITY_ID) -p $(BITFILE)
-
-.PHONY: load_xvsec
-load_xvsec:
-	sudo modprobe xvsec
-
-.PHONY: load_shell
-load_shell:
-	~/bin/program_fpga  $(GARNET_REPO)/shell/prebuilt/empty.bit
-
-# ================================================================
 # Exercising the AXI4 port (DMA_PCIS)
 
 .PHONY: dmaw
 dmaw:
-	sudo $(DMA_IP_DRIVERS_TOOLS)/dma_to_device \
-	    -a $(BASE) -s $(SIZE) -f $(DATA_A)  -w $(WDATA)
+	sudo $(DMA_IP_DRIVERS_TOOLS)/dma_to_device -a $(BASE) -s $(SIZE) -f $(DATA_A)  -w $(WDATA)
 	ls -als $(WDATA)
 
 .PHONY: dmar

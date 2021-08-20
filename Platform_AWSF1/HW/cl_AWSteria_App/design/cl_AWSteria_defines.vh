@@ -13,11 +13,11 @@
 // implied. See the License for the specific language governing permissions and
 // limitations under the License.
 
-`ifndef CL_DRAM_DMA_DEFINES
-`define CL_DRAM_DMA_DEFINES
+`ifndef CL_AWSTERIA_DEFINES
+`define CL_AWSTERIA_DEFINES
 
 //Put module name of the CL design here.  This is used to instantiate in top.sv
-`define CL_NAME cl_dram_dma
+`define CL_NAME cl_AWSteria
 
 //Highly recommeneded.  For lib FIFO block, uses less async reset (take advantage of
 // FPGA flop init capability).  This will help with routing resources.
@@ -31,11 +31,11 @@
 //`define DISABLE_VJTAG_DEBUG
 
 // AXI Master Block Registers
-`define CL_DRAM_DMA_AXI_MSTR_CCR_ADDR   32'h0000_0000
-`define CL_DRAM_DMA_AXI_MSTR_CAHR_ADDR  32'h0000_0004
-`define CL_DRAM_DMA_AXI_MSTR_CALR_ADDR  32'h0000_0008
-`define CL_DRAM_DMA_AXI_MSTR_CWDR_ADDR  32'h0000_000C
-`define CL_DRAM_DMA_AXI_MSTR_CRDR_ADDR  32'h0000_0010
+`define CL_AWSTERIA_AXI_MSTR_CCR_ADDR   32'h0000_0000
+`define CL_AWSTERIA_AXI_MSTR_CAHR_ADDR  32'h0000_0004
+`define CL_AWSTERIA_AXI_MSTR_CALR_ADDR  32'h0000_0008
+`define CL_AWSTERIA_AXI_MSTR_CWDR_ADDR  32'h0000_000C
+`define CL_AWSTERIA_AXI_MSTR_CRDR_ADDR  32'h0000_0010
 
 // Defining local macros that will instantiate the desired DDR controllers in
 // the CL.
