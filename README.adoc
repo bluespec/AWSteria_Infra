@@ -18,10 +18,11 @@ Rishiyur S. Nikhil, Bluespec, Inc. (c) 2021
 
 AWSteria_Infra is for apps that run jointly on a standard host
 computer "`host side`" and an attached FPGA board ("`hardware side`").
-The goal is for an app written against this API to be ported trivially
-across a variety of supported platforms (host/FPGA pairings).
+The goal is that an app, when written against this API, will port
+trivially across a variety of supported platforms (host/FPGA
+pairings).
 
-The initial set of platforms are (more likely in future):
+The initial set of platforms are (more in future):
 
 * Simulation in Bluesim and Verilator simulation (infrastructure is in `Platform_Sim/`).
 
@@ -154,9 +155,8 @@ read/write functions to communicate via the AXI4 M port, and a pair of
 read/write functions to communicate via the AXI4-Lite M port.
 
 Host side code can be written in any language environment.  To
-communicate with the hardware side it should invoke the C host-side API.
-
-`AWSteria_Infra` provides C code implementing the API for each
+communicate with the hardware side it should invoke the C host-side
+API.  `AWSteria_Infra` provides C code implementing the API for each
 platform.
 
 // ================================================================
@@ -185,12 +185,18 @@ application-build.
 == Platform: VCU118 board (from Xilinx)
 
 The `Platform_VCU118/` directory provides an implementation of
-AWSteria_Infra for a standard Debian/Ubuntu computer with a
-Xilinx VCU118 FPGA board attached with a PCIe bus.
+AWSteria_Infra for a standard Debian/Ubuntu computer with a Xilinx
+VCU118 FPGA board attached with a PCIe bus.  It uses the "`Garnet`"
+repository from University of Cambridge (https://github.com/CTSRD-CHERI/garnet[]).
+
+The implementation offers an option where your hardware-side app runs
+at the Garnet default clock speed of 250 MHz, and an option where your
+hardware runs at a slower clock speed of 100 MHz.  The latter option
+is achieved through a "`reclocking`" layer.
 
 The "`Test Application`" and "`Porting your application`" sections
-illustrate how to build and run an application on AWSteria_Infra on
-VCU118.
+illustrate how to build and run an application on AWSteria_Infra and
+Garnet on VCU118.
 
 In general, you won't have to modify anything in this directory or
 build anything in this directory; it just provides resources for your
@@ -207,12 +213,11 @@ communicate with the FPGA.
 `Host/Cmd_Line_Tests.mk` shows examples of using command-line
 tools provided in the Xilinx XDMA driver repo to read and write
 through the AXI4 and AXI4-Lite buses into the hardware side:
-`dma_from_device`, 
 `dma_to_device`, 
+`dma_from_device`, and
 `reg_rw`.
-
 The `dma_to_device` tool optionally takes data from a file, to be written to the FPGA.
-`Host/gen_test_data.c` is a small program to generate such a file.
+`Host/gen_test_data.c` is a small program to generate such a test data file.
 
 // ----------------------------------------------------------------
 // SUBSECTION
@@ -236,7 +241,7 @@ allows the app to run at slower clock speeds than the Garnet-supplied
 
 This allows the user's design (inner app module instance) to run at a slower clock.
 
-In Vivado, the "Generate Block Deign" action creates and populates the
+In Vivado, the "Generate Block Design" action creates and populates the
 following directory:
 
 ----
@@ -245,11 +250,12 @@ following directory:
 
 which is copied into `example_AWSteria_HW_reclocked/src/bd` (see below).
 
-TODO: Instead of copying `.bd/` it should be possible to copy just a Tcl script that encodes the Block Design.
-
-Unless you want to change the clock speed configurations, or change
-the interfaces, this Block Design project step does not have to be
+The Block Design creation has already been has already been done, in
+Vivado.  Unless you want to change the clock speed configurations, or
+change the interfaces, this Block Design project does not have to be
 repeated.
+
+TODO: Instead of copying `.bd/` it should be possible to copy just a Tcl script that encodes the Block Design.
 
 `HW/example_AWSteria_HW/` and `HW/example_AWSteria_HW_reclocked/` are
 template directories for Garnet, and are copied into the app's build
@@ -388,8 +394,8 @@ have a Vivado license that includes synthesis for the VCU118.
 // SUBSUBSECTION
 ==== Prerequisite: Garnet
 
-The Garnet repo (author: Jessica Clarke, Cambridge University, UK) can
-be cloned from https://github.com/CTSRD-CHERI/garnet[].
+The Garnet repo from Cambridge University, UK, can be cloned from
+https://github.com/CTSRD-CHERI/garnet[].
 
 Garnet provides PCIe and DDR infrastructure for VCU118, and a 250 MHz
 clock and reset.  Please download Garnet and follow the instructions
@@ -449,6 +455,22 @@ Garnet will run Vivado on TestApp RTL, eventually producing a "`partial bitfile`
 ----
 This takes about 1 hour on a 12-core, 1.1 GHz, Intel Core i7-10710U CPU.
 
+You should check that your design has met timing:
+----
+    $ grep ^Slack  build/timing_summary.rpt 
+----
+A line like this, showing "`negative slack`" indicates the design _did not_ meet timing:
+----
+    Slack (VIOLATED) : -0.592ns  (required time - arrival time)
+----
+If so, you need to fix your design and repeat the hardware-build steps
+to this point, until your design meets timing.
+
+
+// ----------------
+// SUBSUBSECTION
+===== Building the hardware side with a slower clock
+
 To build TestApp to run at the slower clock speed (100 MHz), the steps are analogous:
 
 * In `TestApp/HW/build_VCU118` do `make for_garnet_reclocked`.  This will
@@ -467,6 +489,16 @@ Garnet will run Vivado on TestApp RTL, eventually producing a "`partial bitfile`
 ----
     garnet/example_TestApp_reclocked/build/AWSteria_pblock_partition_partial.bit
 ----
+You should check that your design has met timing:
+----
+    $ grep ^Slack  build/timing_summary.rpt 
+----
+A line like this, showing "`negative slack`" indicates the design _did not_ meet timing:
+----
+    Slack (VIOLATED) : -0.592ns  (required time - arrival time)
+----
+If so, you need to fix your design and repeat the hardware-build steps
+to this point, until your design meets timing.
 
 // ----------------
 // SUBSUBSECTION
@@ -601,7 +633,6 @@ The DCP build for the default clock recipe (A0, 125 MHz) takes about
 z1d.2xlarge machine.
 
 You should check that your design has met timing for the selected clock recipe:
-
 ----
     $ cd  aws-fpga/hdk/cl/developer_designs/cl_AWSteria_TestApp/build/scripts
     $ grep ^Slack ../reports/21_08_20-020656.timing_summary_route_design.rpt
@@ -742,31 +773,34 @@ Your AFI is now ready to load onto an AWS F1 FPGA and run, interacting with your
 // SUBSUBSECTION
 ==== Building the host side app software
 
-In `TestApp/Host/build_AWSF1` do `make` to create the host-side
-executable `exe_Host_AWSF1`.
+On an Amazon AWS F1 instance, load your AFI (your app's hardware side)
+into the FPGA as follows:
 
-* On an Amazon AWS F1 instance, use AWS' fpga management tools to load
-    the AFI into the FPGA (your app's hardware side).
+----
+    $ sudo fpga-load-local-image -S 0 -I "agfi-0a4fd4a251c7e8690"
+----
 
-* On the Amazon AWS F1 instance, run the host side executable.  It
-    will interact with the hardware on the FPGA.  The console output
-    should be exactly the same as running in simulation (described
-    earlier).
+The `fpga-load-local-image` program becomes available when cloned the
+aws-fpga repo and sourced `sdk_setup.sh` (see Prerequisites section
+above).
 
-// ----------------
-// SUBSUBSECTION
-==== Running the host and hardware sides
+You can check on the status of your loaded AFI in the FPGA using
+either of the following commands (the latter is much more verbose):
 
-In `TestApp/Host/build_AWSF1` do `make` to create the host-side
-executable `exe_Host_AWSF1`.
+----
+    $ sudo fpga-describe-local-image -S 0 -R -H
+    $ sudo fpga-describe-local-image -S 0 -R -H -M
+----
 
-* On an Amazon AWS F1 instance, use AWS' fpga management tools to load
-    the AFI into the FPGA (your app's hardware side).
+Finally, you can run your host-side executable:
 
-* On the Amazon AWS F1 instance, run the host side executable.  It
-    will interact with the hardware on the FPGA.  The console output
-    should be exactly the same as running in simulation (described
-    earlier).
+----
+    $ sudo ./exe_Host_AWSF1
+----
+
+It will interact with the hardware on the FPGA.  The console output
+should be exactly the same as running in simulation (described
+earlier).
 
 // ================================================================
 // SECTION
@@ -801,15 +835,15 @@ Follow the build-and-run flows described for TestApp.
 
 // ================================================================
 // SECTION
-== Possible Future Evolution
+== Possible Futures
 
-* Port AWSteria_Infra to more platforms (more FPGA boards).  Note the
-    host-FPGA communication does not have to be over PCIe; it could
-    run over other transports such as Ethernet, USB, JTAG, ... (albeit
-    with slower performance).  Indeed `Platform_Sim` described above
-    uses TCP/IP as a transport.
+We may Port AWSteria_Infra to more platforms (more host/FPGA board
+pairings).  Note the host-FPGA communication does not have to be over
+PCIe; it could run over other transports such as Ethernet, USB, JTAG,
+... (albeit with slower performance).  Indeed `Platform_Sim` described
+above uses TCP/IP as a transport.
 
-`TestApp` can be augmented easily for other uses:
+We may augment `TestApp` for other uses:
 
 * Measure AWSteria_Infra performance: latencies and bandwidths for host-FPGA
     communication, for DUT-Memory access, etc.

@@ -460,7 +460,11 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <ul class="sectlevel3">
 <li><a href="#_prerequisites_xilinx_xdma_and_xvsec_drivers_and_vivado_tool_suite">6.3.1. Prerequisites: Xilinx XDMA and XVSEC drivers, and Vivado tool suite</a></li>
 <li><a href="#_prerequisite_garnet">6.3.2. Prerequisite: Garnet</a></li>
-<li><a href="#_building_the_hardware_side">6.3.3. Building the hardware side</a></li>
+<li><a href="#_building_the_hardware_side">6.3.3. Building the hardware side</a>
+<ul class="sectlevel4">
+<li><a href="#_building_the_hardware_side_with_a_slower_clock">Building the hardware side with a slower clock</a></li>
+</ul>
+</li>
 <li><a href="#_installing_the_partial_bitfile_into_the_vcu118_fpga">6.3.4. Installing the partial bitfile into the VCU118 FPGA</a></li>
 <li><a href="#_building_and_running_the_host_side">6.3.5. Building and running the host side</a></li>
 </ul>
@@ -476,13 +480,12 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </ul>
 </li>
 <li><a href="#_building_the_host_side_app_software">6.4.3. Building the host side app software</a></li>
-<li><a href="#_running_the_host_and_hardware_sides">6.4.4. Running the host and hardware sides</a></li>
 </ul>
 </li>
 </ul>
 </li>
 <li><a href="#_porting_your_application_to_use_awsteria_infra">7. Porting your application to use AWSteria_Infra</a></li>
-<li><a href="#_possible_future_evolution">8. Possible Future Evolution</a></li>
+<li><a href="#_possible_futures">8. Possible Futures</a></li>
 </ul>
 </div>
 </div>
@@ -493,11 +496,12 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="paragraph">
 <p>AWSteria_Infra is for apps that run jointly on a standard host
 computer &#8220;host side&#8221; and an attached FPGA board (&#8220;hardware side&#8221;).
-The goal is for an app written against this API to be ported trivially
-across a variety of supported platforms (host/FPGA pairings).</p>
+The goal is that an app, when written against this API, will port
+trivially across a variety of supported platforms (host/FPGA
+pairings).</p>
 </div>
 <div class="paragraph">
-<p>The initial set of platforms are (more likely in future):</p>
+<p>The initial set of platforms are (more in future):</p>
 </div>
 <div class="ulist">
 <ul>
@@ -675,10 +679,8 @@ read/write functions to communicate via the AXI4-Lite M port.</p>
 </div>
 <div class="paragraph">
 <p>Host side code can be written in any language environment.  To
-communicate with the hardware side it should invoke the C host-side API.</p>
-</div>
-<div class="paragraph">
-<p><code>AWSteria_Infra</code> provides C code implementing the API for each
+communicate with the hardware side it should invoke the C host-side
+API.  <code>AWSteria_Infra</code> provides C code implementing the API for each
 platform.</p>
 </div>
 </div>
@@ -725,13 +727,20 @@ application-build.</p>
 <div class="sectionbody">
 <div class="paragraph">
 <p>The <code>Platform_VCU118/</code> directory provides an implementation of
-AWSteria_Infra for a standard Debian/Ubuntu computer with a
-Xilinx VCU118 FPGA board attached with a PCIe bus.</p>
+AWSteria_Infra for a standard Debian/Ubuntu computer with a Xilinx
+VCU118 FPGA board attached with a PCIe bus.  It uses the &#8220;Garnet&#8221;
+repository from University of Cambridge (<a href="https://github.com/CTSRD-CHERI/garnet" class="bare">https://github.com/CTSRD-CHERI/garnet</a>).</p>
+</div>
+<div class="paragraph">
+<p>The implementation offers an option where your hardware-side app runs
+at the Garnet default clock speed of 250 MHz, and an option where your
+hardware runs at a slower clock speed of 100 MHz.  The latter option
+is achieved through a &#8220;reclocking&#8221; layer.</p>
 </div>
 <div class="paragraph">
 <p>The &#8220;Test Application&#8221; and &#8220;Porting your application&#8221; sections
-illustrate how to build and run an application on AWSteria_Infra on
-VCU118.</p>
+illustrate how to build and run an application on AWSteria_Infra and
+Garnet on VCU118.</p>
 </div>
 <div class="paragraph">
 <p>In general, you won&#8217;t have to modify anything in this directory or
@@ -749,13 +758,11 @@ communicate with the FPGA.</p>
 <p><code>Host/Cmd_Line_Tests.mk</code> shows examples of using command-line
 tools provided in the Xilinx XDMA driver repo to read and write
 through the AXI4 and AXI4-Lite buses into the hardware side:
-<code>dma_from_device</code>,
 <code>dma_to_device</code>,
-<code>reg_rw</code>.</p>
-</div>
-<div class="paragraph">
-<p>The <code>dma_to_device</code> tool optionally takes data from a file, to be written to the FPGA.
-<code>Host/gen_test_data.c</code> is a small program to generate such a file.</p>
+<code>dma_from_device</code>, and
+<code>reg_rw</code>.
+The <code>dma_to_device</code> tool optionally takes data from a file, to be written to the FPGA.
+<code>Host/gen_test_data.c</code> is a small program to generate such a test data file.</p>
 </div>
 </div>
 <div class="sect2">
@@ -794,7 +801,7 @@ two sets of clock-and-reset, at 100 MHz and 50 MHz, respectively,</p>
 <p>This allows the user&#8217;s design (inner app module instance) to run at a slower clock.</p>
 </div>
 <div class="paragraph">
-<p>In Vivado, the "Generate Block Deign" action creates and populates the
+<p>In Vivado, the "Generate Block Design" action creates and populates the
 following directory:</p>
 </div>
 <div class="listingblock">
@@ -806,12 +813,13 @@ following directory:</p>
 <p>which is copied into <code>example_AWSteria_HW_reclocked/src/bd</code> (see below).</p>
 </div>
 <div class="paragraph">
-<p>TODO: Instead of copying <code>.bd/</code> it should be possible to copy just a Tcl script that encodes the Block Design.</p>
+<p>The Block Design creation has already been has already been done, in
+Vivado.  Unless you want to change the clock speed configurations, or
+change the interfaces, this Block Design project does not have to be
+repeated.</p>
 </div>
 <div class="paragraph">
-<p>Unless you want to change the clock speed configurations, or change
-the interfaces, this Block Design project step does not have to be
-repeated.</p>
+<p>TODO: Instead of copying <code>.bd/</code> it should be possible to copy just a Tcl script that encodes the Block Design.</p>
 </div>
 <div class="paragraph">
 <p><code>HW/example_AWSteria_HW/</code> and <code>HW/example_AWSteria_HW_reclocked/</code> are
@@ -973,8 +981,8 @@ have a Vivado license that includes synthesis for the VCU118.</p>
 <div class="sect3">
 <h4 id="_prerequisite_garnet">6.3.2. Prerequisite: Garnet</h4>
 <div class="paragraph">
-<p>The Garnet repo (author: Jessica Clarke, Cambridge University, UK) can
-be cloned from <a href="https://github.com/CTSRD-CHERI/garnet" class="bare">https://github.com/CTSRD-CHERI/garnet</a>.</p>
+<p>The Garnet repo from Cambridge University, UK, can be cloned from
+<a href="https://github.com/CTSRD-CHERI/garnet" class="bare">https://github.com/CTSRD-CHERI/garnet</a>.</p>
 </div>
 <div class="paragraph">
 <p>Garnet provides PCIe and DDR infrastructure for VCU118, and a 250 MHz
@@ -1056,6 +1064,28 @@ Garnet repo; change to that directory, and <code>make</code>:</p>
 <p>This takes about 1 hour on a 12-core, 1.1 GHz, Intel Core i7-10710U CPU.</p>
 </div>
 <div class="paragraph">
+<p>You should check that your design has met timing:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>    $ grep ^Slack  build/timing_summary.rpt</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>A line like this, showing &#8220;negative slack&#8221; indicates the design <em>did not</em> meet timing:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>    Slack (VIOLATED) : -0.592ns  (required time - arrival time)</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If so, you need to fix your design and repeat the hardware-build steps
+to this point, until your design meets timing.</p>
+</div>
+<div class="sect4">
+<h5 id="_building_the_hardware_side_with_a_slower_clock">Building the hardware side with a slower clock</h5>
+<div class="paragraph">
 <p>To build TestApp to run at the slower clock speed (100 MHz), the steps are analogous:</p>
 </div>
 <div class="ulist">
@@ -1084,6 +1114,27 @@ Garnet repo; change to that directory, and <code>make</code>:</p>
 <div class="listingblock">
 <div class="content">
 <pre>    garnet/example_TestApp_reclocked/build/AWSteria_pblock_partition_partial.bit</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You should check that your design has met timing:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>    $ grep ^Slack  build/timing_summary.rpt</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>A line like this, showing &#8220;negative slack&#8221; indicates the design <em>did not</em> meet timing:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>    Slack (VIOLATED) : -0.592ns  (required time - arrival time)</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If so, you need to fix your design and repeat the hardware-build steps
+to this point, until your design meets timing.</p>
 </div>
 </div>
 </div>
@@ -1386,7 +1437,7 @@ immmediately print out two unique IDs for this AFI:</p>
 </div>
 </div>
 <div class="paragraph">
-<p>After about 55-60 minutes, your AFI will be ready, and the output of
+<p>After about 50-60 minutes, your AFI will be ready, and the output of
 the command will change to the following.  Note, State will be
 &#8220;available&#8221; and the UpdateTime will have been updated to the AFI
 creation time.</p>
@@ -1428,43 +1479,41 @@ completion by sending you an email, instead of manual monitoring.</p>
 <div class="sect3">
 <h4 id="_building_the_host_side_app_software">6.4.3. Building the host side app software</h4>
 <div class="paragraph">
-<p>In <code>TestApp/Host/build_AWSF1</code> do <code>make</code> to create the host-side
-executable <code>exe_Host_AWSF1</code>.</p>
+<p>On an Amazon AWS F1 instance, load your AFI (your app&#8217;s hardware side)
+into the FPGA as follows:</p>
 </div>
-<div class="ulist">
-<ul>
-<li>
-<p>On an Amazon AWS F1 instance, use AWS' fpga management tools to load
-the AFI into the FPGA (your app&#8217;s hardware side).</p>
-</li>
-<li>
-<p>On the Amazon AWS F1 instance, run the host side executable.  It
-will interact with the hardware on the FPGA.  The console output
-should be exactly the same as running in simulation (described
-earlier).</p>
-</li>
-</ul>
+<div class="listingblock">
+<div class="content">
+<pre>    $ sudo fpga-load-local-image -S 0 -I "agfi-0a4fd4a251c7e8690"</pre>
 </div>
 </div>
-<div class="sect3">
-<h4 id="_running_the_host_and_hardware_sides">6.4.4. Running the host and hardware sides</h4>
 <div class="paragraph">
-<p>In <code>TestApp/Host/build_AWSF1</code> do <code>make</code> to create the host-side
-executable <code>exe_Host_AWSF1</code>.</p>
+<p>The <code>fpga-load-local-image</code> program becomes available when cloned the
+aws-fpga repo and sourced <code>sdk_setup.sh</code> (see Prerequisites section
+above).</p>
 </div>
-<div class="ulist">
-<ul>
-<li>
-<p>On an Amazon AWS F1 instance, use AWS' fpga management tools to load
-the AFI into the FPGA (your app&#8217;s hardware side).</p>
-</li>
-<li>
-<p>On the Amazon AWS F1 instance, run the host side executable.  It
-will interact with the hardware on the FPGA.  The console output
+<div class="paragraph">
+<p>You can check on the status of your loaded AFI in the FPGA using
+either of the following commands (the latter is much more verbose):</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>    $ sudo fpga-describe-local-image -S 0 -R -H
+    $ sudo fpga-describe-local-image -S 0 -R -H -M</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Finally, you can run your host-side executable:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>    $ sudo ./exe_Host_AWSF1</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>It will interact with the hardware on the FPGA.  The console output
 should be exactly the same as running in simulation (described
 earlier).</p>
-</li>
-</ul>
 </div>
 </div>
 </div>
@@ -1508,21 +1557,17 @@ directories in TestApp as a starting template.</p>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_possible_future_evolution">8. Possible Future Evolution</h2>
+<h2 id="_possible_futures">8. Possible Futures</h2>
 <div class="sectionbody">
-<div class="ulist">
-<ul>
-<li>
-<p>Port AWSteria_Infra to more platforms (more FPGA boards).  Note the
-host-FPGA communication does not have to be over PCIe; it could
-run over other transports such as Ethernet, USB, JTAG, &#8230;&#8203; (albeit
-with slower performance).  Indeed <code>Platform_Sim</code> described above
-uses TCP/IP as a transport.</p>
-</li>
-</ul>
+<div class="paragraph">
+<p>We may Port AWSteria_Infra to more platforms (more host/FPGA board
+pairings).  Note the host-FPGA communication does not have to be over
+PCIe; it could run over other transports such as Ethernet, USB, JTAG,
+&#8230;&#8203; (albeit with slower performance).  Indeed <code>Platform_Sim</code> described
+above uses TCP/IP as a transport.</p>
 </div>
 <div class="paragraph">
-<p><code>TestApp</code> can be augmented easily for other uses:</p>
+<p>We may augment <code>TestApp</code> for other uses:</p>
 </div>
 <div class="ulist">
 <ul>
@@ -1551,7 +1596,7 @@ This would be a minor change to host side C code.</p>
 <div id="footer">
 <div id="footer-text">
 Version v1.0<br>
-Last updated 2021-08-20 14:56:23 EDT
+Last updated 2021-08-20 18:01:11 EDT
 </div>
 </div>
 </body>
