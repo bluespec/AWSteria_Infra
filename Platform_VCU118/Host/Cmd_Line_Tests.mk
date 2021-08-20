@@ -30,13 +30,13 @@ WDATA  ?= wdata.txt
 # BITFILE ?= /home/nikhil/git_clones/CTSRD-CHERI_garnet/example/build/example_pblock_partition_partial.bit
 
 # AWSteria_HW (no reclocking) with TestApp
-# BITFILE ?= ~/git_clones/CTSRD-CHERI_garnet/example_AWSteria_HW/build/AWSteria_pblock_partition_partial.bit
+BITFILE ?= ~/git_clones/CTSRD-CHERI_garnet/example_TestApp/build/AWSteria_pblock_partition_partial.bit
 
 # AWSteria_HW_reclocked (reclocked) with TestApp
 # BITFILE ?= ~/git_clones/CTSRD-CHERI_garnet/example_AWSteria_HW_reclocked/build/AWSteria_pblock_partition_partial.bit
 
 # AWSteria RISCV reclocked
-BITFILE=~/git_clones/CTSRD-CHERI_garnet/example_RISCV_AWSteria_HW_reclocked/build/AWSteria_pblock_partition_partial.bit
+# BITFILE=~/git_clones/CTSRD-CHERI_garnet/example_RISCV_AWSteria_HW_reclocked/build/AWSteria_pblock_partition_partial.bit
 
 # ================================================================
 
