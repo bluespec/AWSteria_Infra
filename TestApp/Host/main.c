@@ -32,8 +32,11 @@
 #include <sys/syscall.h>
 
 int getentropy (void *buf, size_t buflen) {
+    if (buflen > 256) return -1;
+
     unsigned int flags = 0;
-    return syscall (SYS_getrandom, buf, buflen, flags);
+    int n = syscall (SYS_getrandom, buf, buflen, flags);
+    return ((n == buflen) ? 0 : -1);
 }
 #endif
 

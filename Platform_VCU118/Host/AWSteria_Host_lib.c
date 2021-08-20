@@ -1,7 +1,7 @@
 // Copyright (c) 2020-2021 Bluespec, Inc.  All Rights Reserved
 
 // This library implements the AWSteria host-side API routines
-// Bluesim and Verilator sim.
+// for VCU118.
 
 // ================================================================
 // C lib includes

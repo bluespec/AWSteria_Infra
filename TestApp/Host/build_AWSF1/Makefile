@@ -8,8 +8,8 @@
 help:
 	@echo "Usage:"
 	@echo "    make $(EXE)        create the host-side executable"
-	@echo "    make clean         keep excutable; delete temporary build dir 'tmpdir'"
-	@echo "    make full_clean    delete excutable and temporary build dir 'tmpdir'"
+	@echo "    make clean         keep excutable; delete temporary files"
+	@echo "    make full_clean    delete excutable and temporary files"
 
 #================================================================
 
@@ -20,12 +20,13 @@ else
 endif
 
 ifndef SDK_DIR
-  $(error ERROR: please initialize aws-fpga repo with sdk_setup.sh, which also defines SDK_DIR)
+  $(error ERROR: SDK_DIR not defined)
+  $(error In aws-fpga repo, source sdk_setup.sh, which also defines SDK_DIR)
 else
   $(info  INFO: SDK_DIR = $(SDK_DIR))
 endif
 
-EXE = exe_Host_Side_AWSF1
+EXE = exe_Host_AWSF1
 
 $(info INFO: Making executable $(EXE) for AWSteria TestApp host side on AWS F1)
 
