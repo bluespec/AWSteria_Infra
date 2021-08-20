@@ -30,13 +30,6 @@
 // Uncomment to disable Virtual JTAG
 //`define DISABLE_VJTAG_DEBUG
 
-// AXI Master Block Registers
-`define CL_AWSTERIA_AXI_MSTR_CCR_ADDR   32'h0000_0000
-`define CL_AWSTERIA_AXI_MSTR_CAHR_ADDR  32'h0000_0004
-`define CL_AWSTERIA_AXI_MSTR_CALR_ADDR  32'h0000_0008
-`define CL_AWSTERIA_AXI_MSTR_CWDR_ADDR  32'h0000_000C
-`define CL_AWSTERIA_AXI_MSTR_CRDR_ADDR  32'h0000_0010
-
 // Defining local macros that will instantiate the desired DDR controllers in
 // the CL.
 `ifndef DDR_A_ABSENT

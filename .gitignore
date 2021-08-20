@@ -17,6 +17,8 @@ Verilator_RTL
 # Xilinx vivado logs etc
 vivado_*
 vivado.*
+*.wdf
+*.xml
 
 # Executables
 *.exe

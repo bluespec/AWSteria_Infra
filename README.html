@@ -468,9 +468,15 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_building_and_running_on_amazon_aws_f1">6.4. Building and running on Amazon AWS F1</a>
 <ul class="sectlevel3">
 <li><a href="#_prerequisites_aws_fpga_sdk_and_hdk_and_vivado">6.4.1. Prerequisites: aws-fpga SDK and HDK, and Vivado</a></li>
-<li><a href="#_building_the_hardware_side_2">6.4.2. Building the hardware side</a></li>
-<li><a href="#_from_dcp_to_afi">6.4.3. From DCP to AFI</a></li>
-<li><a href="#_building_and_running_the_host_side_2">6.4.4. Building and running the host side</a></li>
+<li><a href="#_building_the_hardware_side_2">6.4.2. Building the hardware side</a>
+<ul class="sectlevel4">
+<li><a href="#_generate_prepare_your_app_rtl">Generate/prepare your app RTL</a></li>
+<li><a href="#_aws_hdk_step_to_create_a_dcp">AWS HDK step to create a DCP</a></li>
+<li><a href="#_aws_hdk_step_to_create_an_afi_from_the_dcp">AWS HDK step to create an AFI from the DCP</a></li>
+</ul>
+</li>
+<li><a href="#_building_the_host_side_app_software">6.4.3. Building the host side app software</a></li>
+<li><a href="#_running_the_host_and_hardware_sides">6.4.4. Running the host and hardware sides</a></li>
 </ul>
 </li>
 </ul>
@@ -1119,24 +1125,42 @@ simulation (described earlier).</p>
 <div class="sect3">
 <h4 id="_prerequisites_aws_fpga_sdk_and_hdk_and_vivado">6.4.1. Prerequisites: aws-fpga SDK and HDK, and Vivado</h4>
 <div class="paragraph">
-<p>Please clone Amazon&#8217;s aws-fpga SDK and HDK, which can be found at
-<a href="https://github.com/aws/aws-fpga.git" class="bare">https://github.com/aws/aws-fpga.git</a>, and initialize them as
-described in its README (sourcing <code>hdk_setup.sh</code> and <code>sdk_setup.sh</code>).</p>
+<p>You can perform the builds on your own computers (&#8220;on premisies&#8221;),
+but you may find it more convenient to build on the Amazon AWS cloud,
+using an &#8220;FPGA Developer&#8221; AMI (Amazon Machine Instance) because it
+has the prerequisite tools and licenses already installed.</p>
 </div>
 <div class="paragraph">
-<p>If you are building on your own computer (&#8220;own premises&#8221;), you will
-also need to have installed Xilinx&#8217;s Vivado tool suite and have a
+<p>If you are building on your own computers:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Please clone Amazon&#8217;s aws-fpga repo, which can be found at
+<a href="https://github.com/aws/aws-fpga.git" class="bare">https://github.com/aws/aws-fpga.git</a>.  Initialize them as
+described in its README, sourcing <code>hdk_setup.sh</code> and
+<code>sdk_setup.sh</code>.  The former is needed for the hardware build,
+below, and the latter is needed for the host-side software build.</p>
+</li>
+<li>
+<p>Please install the Amazon AWS Command Line Interface <code>aws</code> as described in
+<a href="https://aws.amazon.com/cli/" class="bare">https://aws.amazon.com/cli/</a>.</p>
+</li>
+<li>
+<p>You need to have installed Xilinx&#8217;s Vivado tool suite and have a
 Vivado license for synthesis for the FPGA part that is on AWS F1
-instances.  Alternatively, you can do your builds on the Amazon cloud
-using an &#8220;FPGA Developer&#8221; AMI (Amazon Machine Instance), which comes
-with Vivado tools and licenses pre-installed.</p>
+instances.</p>
+</li>
+</ul>
 </div>
 </div>
 <div class="sect3">
 <h4 id="_building_the_hardware_side_2">6.4.2. Building the hardware side</h4>
+<div class="sect4">
+<h5 id="_generate_prepare_your_app_rtl">Generate/prepare your app RTL</h5>
 <div class="paragraph">
-<p>The following steps are performed in the AWSteria_Infra repo (the two
-<code>make</code> commands combined into one):</p>
+<p>The following steps are performed in the AWSteria_Infra repo (these two
+<code>make</code> commands can be given as one):</p>
 </div>
 <div class="ulist">
 <ul>
@@ -1146,48 +1170,284 @@ a directory <code>RTL/</code> and populate it with Verilog RTL generated
 from the BSV source code by the Bluespec <code>bsc</code> compiler.</p>
 </li>
 <li>
-<p>Do <code>make compile</code> in <code>HW_Side/builds/F1</code> to generate all the RTL in
-the <code>HW_Side/builds/F1/Verilog_RTL</code> directory.  Run that RTL
-through the standard Amazon AWS F1 HDK flow: build DCP (Design
-Checkpoint), create AFI (Amazon F1 Instance).</p>
+<p>In <code>TestApp/HW/build_AWSF1</code> do <code>make for_AWSF1</code>.  This will create a
+directory <code>cl_AWSteria_TestApp/</code> that is ready to run through the
+aws-fpga HDK flow.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_aws_hdk_step_to_create_a_dcp">AWS HDK step to create a DCP</h5>
+<div class="paragraph">
+<p>(The Amazon AWS aws-fpga repo has more detailed documentation, if you need it.)</p>
+</div>
+<div class="paragraph">
+<p>Copy the <code>cl_AWSteria_TestApp/</code> directory into the aws-fpga repo at this position:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>    aws-fpga/hdk/cl/developer_designs/cl_AWSteria_TestApp/</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Perform the &#8220;create DCP&#8221; (Design Checkpoint) action:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>    $ cd  aws-fpga/hdk/cl/developer_designs/cl_AWSteria_TestApp/
+    $ export CL_DIR=$(pwd)
+    $ cd build/scripts
+    $ ./aws_build_dcp_from_cl.sh  -ignore_memory_requirement</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This will create a background process that runs Vivado on the AWSteria
+TestApp RTL, eventually producing a &#8220;Design Checkpoint&#8221; (DCP).  The
+console output of the background process and the Vivado run are
+continuously logged in files whose names have this pattern, i.e., the
+prefix is the timestamp of when command was started:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>    21_08_20-020656.nohup.out
+    21_08_20-020656.vivado.log</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can monitor Vivado&#8217;s progress by watching these log files, e.g.,</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>    tail -f 21_08_20-020656.vivado.log</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <code>aws_build_dcp_from_cl.sh</code> step optionally can take an
+aws-fpga &#8220;clock recipe&#8221; argument:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>    $ ./aws_build_dcp_from_cl.sh  -ignore_memory_requirement  -clock_recipe_a A1
+    $ ./aws_build_dcp_from_cl.sh  -ignore_memory_requirement  -clock_recipe_a A2</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The default clock recipe is A0, and builds for 125 MHz; A1 is for 250
+MHz, and A2 is for 16.67 MHz.  Details about clock recipes can be found at:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>    https://github.com/aws/aws-fpga/blob/master/hdk/docs/clock_recipes.csv</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The DCP build for the default clock recipe (A0, 125 MHz) takes about
+1:40 hours running in an &#8220;FPGA Developer&#8221; AMI on an Amazon
+z1d.2xlarge machine.</p>
+</div>
+<div class="paragraph">
+<p>You should check that your design has met timing for the selected clock recipe:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>    $ cd  aws-fpga/hdk/cl/developer_designs/cl_AWSteria_TestApp/build/scripts
+    $ grep ^Slack ../reports/21_08_20-020656.timing_summary_route_design.rpt</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>A line like this, showing &#8220;negative slack&#8221; indicates the design <em>did not</em> meet timing:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>    Slack (VIOLATED) : -0.592ns  (required time - arrival time)</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If so, you need to fix your design and repeat the hardware-build steps
+to this point, until your design meets timing.</p>
+</div>
+<div class="paragraph">
+<p>Your DCP should be available in a tarfile here (the timestamp will differ):</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>    aws-fpga/hdk/cl/developer_designs/cl_AWSteria_TestApp/build/
+        checkpoints/to_aws/21_08_20-020656.Developer_CL.tar</pre>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_aws_hdk_step_to_create_an_afi_from_the_dcp">AWS HDK step to create an AFI from the DCP</h5>
+<div class="paragraph">
+<p>Once your DCP is ready, you need to upload it into a folder in an
+Amazon S3 cloud storage &#8220;bucket&#8221;.  If you don&#8217;t already have a
+bucket-and-folder, you can create it and list its contents like this
+(this is a one-time step; you can reuse this bucket/folder in
+subsequent builds):</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>    $ aws s3 mb  s3://my_bucket/my_folder/
+    $ aws s3 ls  s3://my_bucket/my_folder/</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Copy your DCP tarfile into the S3 folder:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>    TO_AWS_DIR  = aws-fpga/hdk/cl/developer_designs/cl_AWSteria_TestApp/build/checkpoints/to_aws
+    DCP_TARFILE = 21_08_20-020656.Developer_CL.tar
+    $ aws s3 cp  $(TO_AWS_DIR)/$(DCP_TARFILE)  s3://my_bucket/my_folder/
+    $ aws s3 ls  s3://my_bucket/my_folder/</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Note: AWS requires you to have &#8220;permission&#8221; to create folders and
+upload files; it may complain &#8220;Unable to locate credentials&#8221;.
+You&#8217;ll need to follow the usual steps for this:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Go to your Amazon AWS Management Console in your brower;</p>
 </li>
 <li>
-<p>In <code>TestApp/HW/build_AWSF1</code> do <code>make for_AWSF1</code>.  This will
-create a directory <code>example_TestApp/</code> that is ready to run
-through the aws-fpga HDK flow.</p>
+<p>Select &#8220;Command Line or Programmatic Access&#8221; which pops up a window
+&#8220;Get credentials for AWSPowerUserAccess&#8221;, and</p>
+</li>
+<li>
+<p>Follow one of the options there for establishing your credentials
+(e.g., copy the environment variable defs to your clipboard and
+paste them into your command shell).</p>
 </li>
 </ul>
 </div>
 <div class="paragraph">
-<p>Copy the <code>example_TestApp/</code> directory into the aws-fpga repo.</p>
+<p>Once uploaded, you can issue the command to create an AWS AFI (AWS F1
+Image).  You must provide a name for your AFI and a brief description,
+and specify the Amazon AWS cloud "region" in which you work. Example:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>    ... copy example_TestApp directory to garnet repo ...
-    $ cd garnet/example_TestApp
-    $ make</pre>
+<pre>    $ aws ec2 create-fpga-image \
+        --region us-west-2 \
+        --name AWSteria_TestApp \
+        --description "Testapp for AWSteria Infrastructure on AWS F1" \
+        --input-storage-location Bucket=my_bucket,Key=my_folder/$(DCP_TARFILE) \
+        --logs-storage-location Bucket=my_bucket,Key=my_folder</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>This will run Vivado on TestApp RTL, eventually producing a "`Design Checkpoint `" (DCP).</p>
+<p>This will submit (to some mysterious process in the AWS cloud), a
+request to create your AFI from your DCP checkpoint, but it will
+immmediately print out two unique IDs for this AFI:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>    ...</pre>
+<pre>{
+    "FpgaImageId": "afi-0bf39b6143abf492c",
+    "FpgaImageGlobalId": "agfi-0a4fd4a251c7e8690"
+}</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>This takes about &#8230;&#8203; time on a 12-core, 1.1 GHz, Intel Core i7-10710U CPU.</p>
+<p><em>Please make a careful note of these IDs, as you will need it for subsequent steps!</em></p>
 </div>
-</div>
-<div class="sect3">
-<h4 id="_from_dcp_to_afi">6.4.3. From DCP to AFI</h4>
 <div class="paragraph">
-<p>We have successfully built and run it with AWS' &#8220;clock recipe A1&#8221; (250 MHz).</p>
+<p>You can monitor progress of your AFI creation with:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>    $ aws ec2 describe-fpga-images --fpga-image-ids  "afi-0bf39b6143abf492c"</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>whose initial output will look like this (note that State is
+&#8220;pending&#8221;, and UpdateTime is the same as CreateTime):</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>        {
+            "UpdateTime": "2021-08-20T17:18:16.000Z",
+            "Name": "RSNAWSteriaTestApp",
+            "Tags": [],
+            "FpgaImageGlobalId": "agfi-0a4fd4a251c7e8690",
+            "Public": false,
+            "State": {
+                "Code": "pending"
+            },
+            "OwnerId": "845509001885",
+            "FpgaImageId": "afi-0bf39b6143abf492c",
+            "CreateTime": "2021-08-20T17:18:16.000Z",
+            "Description": "ASWteria TestApp 125 MHz"
+        }</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>After about 55-60 minutes, your AFI will be ready, and the output of
+the command will change to the following.  Note, State will be
+&#8220;available&#8221; and the UpdateTime will have been updated to the AFI
+creation time.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>        {
+            "UpdateTime": "2021-08-20T18:10:49.000Z",
+            "Name": "RSNAWSteriaTestApp",
+            "Tags": [],
+            "PciId": {
+                "SubsystemVendorId": "0xfedc",
+                "VendorId": "0x1d0f",
+                "DeviceId": "0xf001",
+                "SubsystemId": "0x1d51"
+            },
+            "FpgaImageGlobalId": "agfi-0a4fd4a251c7e8690",
+            "Public": false,
+            "State": {
+                "Code": "available"
+            },
+            "ShellVersion": "0x04261818",
+            "OwnerId": "845509001885",
+            "FpgaImageId": "afi-0bf39b6143abf492c",
+            "CreateTime": "2021-08-20T17:18:16.000Z",
+            "Description": "ASWteria TestApp 125 MHz"
+        }</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Note: the <code>aws ec2 create-fpga-image</code> command has options to notify
+completion by sending you an email, instead of manual monitoring.</p>
+</div>
+<div class="paragraph">
+<p>Your AFI is now ready to load onto an AWS F1 FPGA and run, interacting with your host-side app software.</p>
+</div>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_building_and_running_the_host_side_2">6.4.4. Building and running the host side</h4>
+<h4 id="_building_the_host_side_app_software">6.4.3. Building the host side app software</h4>
+<div class="paragraph">
+<p>In <code>TestApp/Host/build_AWSF1</code> do <code>make</code> to create the host-side
+executable <code>exe_Host_AWSF1</code>.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>On an Amazon AWS F1 instance, use AWS' fpga management tools to load
+the AFI into the FPGA (your app&#8217;s hardware side).</p>
+</li>
+<li>
+<p>On the Amazon AWS F1 instance, run the host side executable.  It
+will interact with the hardware on the FPGA.  The console output
+should be exactly the same as running in simulation (described
+earlier).</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_running_the_host_and_hardware_sides">6.4.4. Running the host and hardware sides</h4>
 <div class="paragraph">
 <p>In <code>TestApp/Host/build_AWSF1</code> do <code>make</code> to create the host-side
 executable <code>exe_Host_AWSF1</code>.</p>
@@ -1291,7 +1551,7 @@ This would be a minor change to host side C code.</p>
 <div id="footer">
 <div id="footer-text">
 Version v1.0<br>
-Last updated 2021-08-19 16:14:40 EDT
+Last updated 2021-08-20 14:56:23 EDT
 </div>
 </div>
 </body>

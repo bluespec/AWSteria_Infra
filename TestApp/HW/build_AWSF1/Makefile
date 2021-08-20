@@ -93,15 +93,15 @@ compile:
 .PHONY: for_AWSF1_HDK
 for_AWSF1_HDK:
 	@echo "INFO: Creating and populating aws-fpga HDK custom-logic dir"
-# RTL for App
-	mkdir -p cl_TestApp
-	cp -p    RTL/*.v  cl_TestApp
 # RTL for Platform_AWSF1 support
-	cp -p  $(AWSTERIA_INFRA_REPO)/Platform_AWSF1/HW/*  cl_TestApp
+	rm -r -f cl_AWSteria_TestApp
+	cp -p -R $(AWSTERIA_INFRA_REPO)/Platform_AWSF1/HW/cl_AWSteria  cl_AWSteria_TestApp
+# RTL for App
+	cp -p  RTL/*.v  cl_AWSteria_TestApp/design/
 # RTL from bsc library
-	cp -p  $(BLUESPEC_HOME)/lib/Verilog/FIFO2.v        cl_TestApp
-	cp -p  $(BLUESPEC_HOME)/lib/Verilog/SizedFIFO.v    cl_TestApp
-	@echo "INFO: aws-fpga HDK custom-logic dir is ready: cl_TestApp/"
+	cp -p  $(BLUESPEC_HOME)/lib/Verilog/FIFO2.v        cl_AWSteria_TestApp/design/
+	cp -p  $(BLUESPEC_HOME)/lib/Verilog/SizedFIFO.v    cl_AWSteria_TestApp/design/
+	@echo "INFO: aws-fpga HDK custom-logic dir is ready: cl_AWSteria_TestApp/"
 
 # ================================================================
 
