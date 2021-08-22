@@ -1,20 +1,20 @@
 = AWSteria_Infra
 Rishiyur S. Nikhil, Bluespec, Inc. (c) 2021
 :revnumber: v1.0
-:revdate: 2021-08-16
+:revdate: 2021-08-22
 :sectnums:
 :toc:
 :toclevels: 5
 :toc: left
 :toc-title: Contents
 :description: Infrastructure for host+FPGA apps, and an example test app.
-:keywords: AWS, F1, Shell, Instance AFI, AMI, DCP, Design Checkpoint, Custom Logic
-:imagesdir: Figures
+:keywords: AWS, F1, Shell, Instance AFI, AMI, DCP, Design Checkpoint, Custom Logic, Garnet
+:imagesdir: Doc
 :data-uri:
 
 // ================================================================
 // SECTION
-== AWSteria_Infra Overview
+== Introduction and Overview
 
 AWSteria_Infra is for apps that run jointly on a standard host
 computer "`host side`" and an attached FPGA board ("`hardware side`").
@@ -48,12 +48,18 @@ also useful during development of support for new platforms.
 // SECTION
 == APIs (i.e., interface specs for apps)
 
-The APIs are specified in files in the `Include_API/` directory.
+The APIs are specified in files in the `Include_API/` directory.  The
+following diagram illustrates the architecture of the
+user-application, AWSteria_Infra, and the APIs.
+
+image::Fig_010_AWSteria_Infra_Architecture.png[align="center", width=600]
+
+AWSteria_Infra Implementations are provided for HDL simulation, for
+Xilinx VCU118 boards, and for Amazon AWS F1.
 
 The API is inspired by Xilinx XDMA facilities (at
 https://github.com/Xilinx/dma_ip_drivers[]) and the "`shell`" in the
 Amazon AWS F1 HDK/SDK (at https://github.com/aws/aws-fpga.git[]).
-Implementations are provided on XDMA and on AWS F1.
 
 // ----------------------------------------------------------------
 // SUBSECTION
@@ -172,9 +178,13 @@ AWSteria_Infra for simulation.
 * The AWSteria_Infra host-hardware communication is emulated over TCP/IP.
 * The AWSteria_Infra DDR memory interfaces are connected to memory models.
 
+This is illustrated in the following diagram:
+
+image::Fig_020_AWSteria_Infra_Simulation.png[align="center", width=600]
+
 The "`Test Application`" and "`Porting your application`" sections
-illustrate how to build and run an application on AWSteria_Infra in
-simulation.
+below illustrate how to build and run an application on AWSteria_Infra
+in simulation.
 
 In general, you won't have to modify anything in this directory or
 build anything in this directory; it just provides resources for your
@@ -194,9 +204,13 @@ at the Garnet default clock speed of 250 MHz, and an option where your
 hardware runs at a slower clock speed of 100 MHz.  The latter option
 is achieved through a "`reclocking`" layer.
 
+These are illustrated in the following diagram:
+
+image::Fig_030_AWSteria_Infra_VCU118.png[align="center", width=650]
+
 The "`Test Application`" and "`Porting your application`" sections
-illustrate how to build and run an application on AWSteria_Infra and
-Garnet on VCU118.
+below illustrate how to build and run an application on AWSteria_Infra
+and Garnet on VCU118.
 
 In general, you won't have to modify anything in this directory or
 build anything in this directory; it just provides resources for your
@@ -281,9 +295,13 @@ The `Platform_AWSF1/` directory provides an implementation of
 AWSteria_Infra for an Amazon AWS F1 instance (i.e., a server
 in the cloud with an FPGA board attached with a PCIe bus).
 
+These are illustrated in the following diagram:
+
+image::Fig_040_AWSteria_Infra_AWSF1.png[align="center", width=650]
+
 The "`Test Application`" and "`Porting your application`" sections
-illustrate how to build and run an application on AWSteria_Infra on
-AWS F1.
+below illustrate how to build and run an application on AWSteria_Infra
+on AWS F1.
 
 In general, you won't have to modify anything in this directory or
 build anything in this directory; it just provides resources for your
@@ -339,6 +357,10 @@ through one and reading through the other.  The AXI4 interface is also
 exercised with large writes and reads, to exercise AXI4 burst
 transfers.
 
+This is illustrated in the following diagram:
+
+image::Fig_050_AWSteria_Infra_TestApp.png[align="center", width=650]
+
 // ----------------------------------------------------------------
 // SUBSECTION
 === Building and running with Bluesim or Verilator simulation
@@ -371,7 +393,7 @@ with `make full_clean`.
 
 // ----------------
 // SUBSUBSECTION
-==== Prerequisites: Xilinx XDMA and XVSEC drivers, and Vivado tool suite
+==== Prerequisites: Xilinx XDMA and XVSEC drivers, Vivado tool suite, and Garnet
 
 Please install Xilinx's XDMA and XVSEC drivers on your host Linux
 machine, where your VCU118 is attached using PCIe.  The drivers can be
@@ -388,11 +410,8 @@ kernel.  After intallation you'll see files like this `/dev/xdma*` on
 your Linux host.
 
 You will also need to have installed Xilinx's Vivado tool suite, and
-have a Vivado license that includes synthesis for the VCU118.
-
-// ----------------
-// SUBSUBSECTION
-==== Prerequisite: Garnet
+have a Vivado license that includes synthesis for the FPGA on the
+VCU118.
 
 The Garnet repo from Cambridge University, UK, can be cloned from
 https://github.com/CTSRD-CHERI/garnet[].
@@ -502,7 +521,7 @@ to this point, until your design meets timing.
 
 // ----------------
 // SUBSUBSECTION
-==== Installing the partial bitfile into the VCU118 FPGA
+==== Loading the partial bitfile into the VCU118 FPGA
 
 This uses the `xvsecctl` tool and `xvsec` driver (see Xilinx Prerequisites section earlier).
 
@@ -520,7 +539,7 @@ reconfig:
 
 // ----------------
 // SUBSUBSECTION
-==== Building and running the host side
+==== Building and running the host side on VCU118
 
 In `TestApp/Host/build_VCU118` do `make` to create the host-side
 executable `exe_Host_VCU118`.
@@ -535,7 +554,7 @@ simulation (described earlier).
 
 // ----------------
 // SUBSUBSECTION
-==== Prerequisites: aws-fpga SDK and HDK, and Vivado
+==== Prerequisites: aws-fpga (SDK and HDK) and Vivado tool suite
 
 You can perform the builds on your own computers ("`on premisies`"),
 but you may find it more convenient to build on the Amazon AWS cloud,
@@ -580,18 +599,20 @@ The following steps are performed in the AWSteria_Infra repo (these two
 // SUBSUBSUBSECTION
 ===== AWS HDK step to create a DCP
 
-(The Amazon AWS aws-fpga repo has more detailed documentation, if you need it.)
+This step is performed on a machine where you have installed the
+Amazon AWS aws-fpga repo, in particular its HDK (see Prerequisites
+section above). You should have initialized the HDK by sourcing
+`hdk_setup.sh` (which will also define the environment variable
+`HDK_DIR`).  The repo has more detailed documentation, if you need it.
 
-Copy the `cl_AWSteria_TestApp/` directory into the aws-fpga repo at this position:
-
-----
-    aws-fpga/hdk/cl/developer_designs/cl_AWSteria_TestApp/
-----
+If you created `cl_AWSteria_TestApp/` directory (previous section) on
+a different machine, please copy it to the machine with aws-fpga
+machine.
 
 Perform the "`create DCP`" (Design Checkpoint) action:
 
 ----
-    $ cd  aws-fpga/hdk/cl/developer_designs/cl_AWSteria_TestApp/
+    $ cd  <wherever>/cl_AWSteria_TestApp/
     $ export CL_DIR=$(pwd)
     $ cd build/scripts
     $ ./aws_build_dcp_from_cl.sh  -ignore_memory_requirement
@@ -615,7 +636,7 @@ You can monitor Vivado's progress by watching these log files, e.g.,
 ----
 
 The `aws_build_dcp_from_cl.sh` step optionally can take an
-aws-fpga "`clock recipe`" argument:
+aws-fpga "`clock recipe`" argument.  Examples:
 
 ----
     $ ./aws_build_dcp_from_cl.sh  -ignore_memory_requirement  -clock_recipe_a A1
@@ -634,7 +655,7 @@ z1d.2xlarge machine.
 
 You should check that your design has met timing for the selected clock recipe:
 ----
-    $ cd  aws-fpga/hdk/cl/developer_designs/cl_AWSteria_TestApp/build/scripts
+    $ cd  <wherever>/cl_AWSteria_TestApp/build/scripts
     $ grep ^Slack ../reports/21_08_20-020656.timing_summary_route_design.rpt
 ----
 A line like this, showing "`negative slack`" indicates the design _did not_ meet timing:
@@ -646,8 +667,7 @@ to this point, until your design meets timing.
 
 Your DCP should be available in a tarfile here (the timestamp will differ):
 ----
-    aws-fpga/hdk/cl/developer_designs/cl_AWSteria_TestApp/build/
-        checkpoints/to_aws/21_08_20-020656.Developer_CL.tar
+    <wherever>/cl_AWSteria_TestApp/build/checkpoints/to_aws/21_08_20-020656.Developer_CL.tar
 ----
 
 // ----------------
@@ -667,7 +687,7 @@ subsequent builds):
 
 Copy your DCP tarfile into the S3 folder:
 ----
-    TO_AWS_DIR  = aws-fpga/hdk/cl/developer_designs/cl_AWSteria_TestApp/build/checkpoints/to_aws
+    TO_AWS_DIR  = <wherever>/cl_AWSteria_TestApp/build/checkpoints/to_aws
     DCP_TARFILE = 21_08_20-020656.Developer_CL.tar
     $ aws s3 cp  $(TO_AWS_DIR)/$(DCP_TARFILE)  s3://my_bucket/my_folder/
     $ aws s3 ls  s3://my_bucket/my_folder/
@@ -771,7 +791,7 @@ Your AFI is now ready to load onto an AWS F1 FPGA and run, interacting with your
 
 // ----------------
 // SUBSUBSECTION
-==== Building the host side app software
+==== Loading the AFI (with bitfile) into the AWS F1 FPGA
 
 On an Amazon AWS F1 instance, load your AFI (your app's hardware side)
 into the FPGA as follows:
@@ -792,7 +812,14 @@ either of the following commands (the latter is much more verbose):
     $ sudo fpga-describe-local-image -S 0 -R -H -M
 ----
 
-Finally, you can run your host-side executable:
+// ----------------
+// SUBSUBSECTION
+==== Building and running the host side on AWSF1
+
+In `TestApp/Host/build_AWSF1` do `make` to create the host-side
+executable `exe_Host_AWSF1`.
+
+Then, run the executable.
 
 ----
     $ sudo ./exe_Host_AWSF1
@@ -818,18 +845,20 @@ don't need):
 ----
     MyApp/
         Host/
+            ... your source files ...
             build_sim/
             build_VCU118/
             build_AWSF1/
         HW/
+            ... your source files ...
             build_Bluesim/
             build_Verilator/
             build_VCU118/
             build_AWSF1/
 ----
 
-Create Makefiles in each directory, using those in the corresponding
-directories in TestApp as a starting template.
+Create Makefiles in each `build_xxx` directory, using those in the
+corresponding directories in TestApp as a starting template.
 
 Follow the build-and-run flows described for TestApp.
 

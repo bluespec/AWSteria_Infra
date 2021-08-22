@@ -8,8 +8,8 @@
 help:
 	@echo "Usage:"
 	@echo "    make $(EXE)        create the host-side executable"
-	@echo "    make clean         keep excutable; delete temporary build dir 'tmpdir'"
-	@echo "    make full_clean    delete excutable and temporary build dir 'tmpdir'"
+	@echo "    make clean         delete temporary files/dirs but keep the executable"
+	@echo "    make full_clean    delete temporary files/dirs and delete the executable"
 
 #================================================================
 
@@ -19,22 +19,32 @@ else
   $(info  INFO: AWSTERIA_INFRA_REPO = $(AWSTERIA_INFO_REPO))
 endif
 
-EXE = exe_Host_VCU118
-
 $(info INFO: Making executable $(EXE) for AWSteria TestApp host side on VCU118)
 
 # ================================================================
+# Source files
+
+# ----------------
+# App host side
+
+SRCS_C = $(AWSTERIA_INFRA_REPO)/TestApp/Host/main.c
+
+# ----------------
+# AWSteria infra
+
+SRCS_H += $(AWSTERIA_INFRA_REPO)/Include_API/AWSteria_Host_lib.h
+
+SRCS_C += $(AWSTERIA_INFRA_REPO)/Platform_VCU118/Host/AWSteria_Host_lib.c
+
+# ================================================================
+
+CFLAGS += -std=gnu11 -g -Wall -Werror
 
 CFLAGS += -I $(AWSTERIA_INFRA_REPO)/Include_API
-CFLAGS += -std=gnu11 -g -Wall -Werror
 
 CC     = gcc $(CFLAGS)
 
-SRCS_H = \
-	$(AWSTERIA_INFRA_REPO)/Include_API/AWSteria_Host_lib.h \
-
-SRCS_C = ../main.c \
-	$(AWSTERIA_INFRA_REPO)/Platform_VCU118/Host/AWSteria_Host_lib.c \
+EXE    = exe_Host_VCU118
 
 # ================================================================
 # Top-level target: the executable
