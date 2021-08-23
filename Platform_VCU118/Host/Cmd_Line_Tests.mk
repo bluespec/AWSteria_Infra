@@ -22,21 +22,6 @@ RDATA  ?= rdata.txt
 WDATA  ?= wdata.txt
 
 # ================================================================
-# Partial-reconfig bitfiles
-
-# Original garnet repo example
-# BITFILE ?= /home/nikhil/git_clones/CTSRD-CHERI_garnet/example/build/example_pblock_partition_partial.bit
-
-# AWSteria_HW (no reclocking) with TestApp
-BITFILE ?= ~/git_clones/CTSRD-CHERI_garnet/example_TestApp/build/AWSteria_pblock_partition_partial.bit
-
-# AWSteria_HW_reclocked (reclocked) with TestApp
-# BITFILE ?= ~/git_clones/CTSRD-CHERI_garnet/example_AWSteria_HW_reclocked/build/AWSteria_pblock_partition_partial.bit
-
-# AWSteria RISCV reclocked
-# BITFILE=~/git_clones/CTSRD-CHERI_garnet/example_RISCV_AWSteria_HW_reclocked/build/AWSteria_pblock_partition_partial.bit
-
-# ================================================================
 
 .PHONY: help
 help:
@@ -44,9 +29,6 @@ help:
 	@echo "    make dmaw         Does an AXI4 (DMA) write test"
 	@echo "    make dmar         Does an AXI4 (DMA) read  test"
 	@echo "    make peek_poke    Does an AXI4 Lite (OCL) read and write  test"
-	@echo "    make reconfig     Partial reconfig"
-	@echo "    make load_xvsec   Installs XVSEC kernel driver"
-	@echo "    make load_shell   Writes bitfile for shell, with empty example module"
 	@echo "  Current settings"
 	@echo "    BASE     = $(BASE)"
 	@echo "    SIZE     = $(SIZE)"
