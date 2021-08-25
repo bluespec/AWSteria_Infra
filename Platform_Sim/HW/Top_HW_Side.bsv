@@ -363,15 +363,17 @@ module mkTop_HW_Side (Empty) ;
    // ================================================================
    // Misc. other connections to awsteria_hw
 
-   Reg #(Bit #(64)) rg_counter   <- mkReg (0);
+   Reg #(Bit #(64)) rg_counter <- mkReg (0);
 
    rule rl_status_signals;
       // The AWSteria environment asserts this to inform the DUT that it is ready
       awsteria_hw.m_env_ready (True);
 
       // The DUT asserts this to inform the AWSteria environment that it has "halted"
-      if (awsteria_hw.m_halted)
-	 $display ("Top_HW_Side.awsteria_hw: halted");
+      if (awsteria_hw.m_halted) begin
+	 $display ("Top_HW_Side: awsteria_hw.m_halted == True");
+	 $finish (0);
+      end
 
       // ================
       // Real-time counter (here, just using the simulation's top-level clock)
