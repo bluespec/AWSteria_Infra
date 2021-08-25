@@ -339,11 +339,11 @@
      showgrid="false"
      units="in"
      inkscape:showpageshadow="false"
-     inkscape:window-width="1786"
-     inkscape:window-height="1015"
-     inkscape:window-x="38"
-     inkscape:window-y="6"
-     inkscape:window-maximized="0"
+     inkscape:window-width="1920"
+     inkscape:window-height="1043"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
      inkscape:document-rotation="0"
      inkscape:snap-global="false"
      inkscape:pagecheckerboard="0" />
@@ -364,7 +364,7 @@
      id="layer1"
      transform="translate(0,-17.6)">
     <rect
-       style="fill:#e6e6e6;stroke:none;stroke-width:0.25;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0"
+       style="fill:#fff6d5;stroke:none;stroke-width:0.25;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0"
        id="rect1141"
        width="151.60196"
        height="29.342386"
