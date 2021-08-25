@@ -16,7 +16,7 @@ help:
 ifndef AWSTERIA_INFRA_REPO
   $(error ERROR: please define AWSTERIA_INFRA_REPO (path to AWSteria_Infra repo))
 else
-  $(info  INFO: AWSTERIA_INFRA_REPO = $(AWSTERIA_INFO_REPO))
+  $(info  INFO: AWSTERIA_INFRA_REPO = $(AWSTERIA_INFRA_REPO))
 endif
 
 $(info INFO: Making executable $(EXE) for AWSteria TestApp host side for Bluesim/Verilator sim)
