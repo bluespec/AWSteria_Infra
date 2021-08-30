@@ -44,6 +44,12 @@ We also provide a small Test Application (in `TestApp/`) to test that
 the infrastructure is working properly on each platform.  TestApp is
 also useful during development of support for new platforms.
 
+About the name "`AWSteria`": pronounced like the Italian word
+"`Osteria`" which is a tavern or pub (and rhymes with
+"`pizzeria`"). "`AWS`" of course is from "`Amazon AWS`".  "`AWSteria`"
+can also be read as a new word meaning a workplace or studio where one
+develops AWS apps.
+
 // ================================================================
 // SECTION
 == APIs (i.e., interface specs for apps)
