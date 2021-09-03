@@ -27,7 +27,7 @@ BSC_PATH := $(BSC_PATH):+
 # ----------------
 # Top-level file and module
 
-TOPFILE   ?= $(PLATFORM_SIM)/HW/Top_HW_Side.bsv
+TOPFILE   ?= $(AWSTERIA_INFRA_REPO)/Platform_Sim/HW/Top_HW_Side.bsv
 TOPMODULE ?= mkTop_HW_Side
 
 # ----------------
