@@ -46,12 +46,15 @@ typedef struct {
     int  pci_write_fd;    // For DMA over AXI4
 } AWSteria_Host_State;
 
+static int verbosity = 0;
+
 // ================================================================
 // Initialization
 
 void *AWSteria_Host_init (void)
 {
-    fprintf (stdout, "%s: AWSteria_Host_init\n", __FUNCTION__);
+    if (verbosity > 0)
+	fprintf (stdout, "--> %s\n", __FUNCTION__);
 
     AWSteria_Host_State *p_state = (AWSteria_Host_State *) malloc (sizeof (AWSteria_Host_State));
     if (p_state == NULL) {
@@ -75,8 +78,10 @@ void *AWSteria_Host_init (void)
 		 __FUNCTION__, rc);
 	return NULL;
     }
-    fprintf (stdout, "%s: fpga_mgmt_init() done\n", __FUNCTION__);
-    fprintf (stdout, "    pci_slot_id = %0d\n", p_state->pci_slot_id);
+    if (verbosity > 0) {
+	fprintf (stdout, "%s: fpga_mgmt_init() done\n", __FUNCTION__);
+	fprintf (stdout, "    pci_slot_id = %0d\n", p_state->pci_slot_id);
+    }
 
     // ----------------
     // Open file descriptor for DMA read over AXI4
@@ -89,8 +94,10 @@ void *AWSteria_Host_init (void)
 		 __FUNCTION__);
 	return NULL;
     }
-    fprintf (stdout, "%s: opened PCI read-dma queue; pci_read_fd = %0d\n",
-	     __FUNCTION__, p_state->pci_read_fd);
+
+    if (verbosity > 0)
+	fprintf (stdout, "%s: opened PCI read-dma queue; pci_read_fd = %0d\n",
+		 __FUNCTION__, p_state->pci_read_fd);
 
     // ----------------
     // Open file descriptor for DMA write over AXI4
@@ -103,20 +110,23 @@ void *AWSteria_Host_init (void)
 		 __FUNCTION__);
 	return NULL;
     }
-    fprintf (stdout, "%s: opened PCI write-dma queue; pci_write_fd = %0d\n",
-	     __FUNCTION__, p_state->pci_write_fd);
+
+    if (verbosity > 0)
+	fprintf (stdout, "%s: opened PCI write-dma queue; pci_write_fd = %0d\n",
+		 __FUNCTION__, p_state->pci_write_fd);
 
     // ----------------
     // Attach to PCI for peek/poke calls
 
     int fpga_pci_attach_flags = 0;
 
-    fprintf (stdout,
-	     "%s: fpga_pci_attach: pci_pf_id %0d, pci_bar_id %0d, pci_bar_handle %0x\n",
-	     __FUNCTION__,
-	     p_state->pci_pf_id,
-	     p_state->pci_bar_id,
-	     p_state->pci_bar_handle);
+    if (verbosity > 0)
+	fprintf (stdout,
+		 "%s: fpga_pci_attach: pci_pf_id %0d, pci_bar_id %0d, pci_bar_handle %0x\n",
+		 __FUNCTION__,
+		 p_state->pci_pf_id,
+		 p_state->pci_bar_id,
+		 p_state->pci_bar_handle);
 
     rc = fpga_pci_attach (p_state->pci_slot_id,
 			  p_state->pci_pf_id,
@@ -127,7 +137,8 @@ void *AWSteria_Host_init (void)
 	fprintf (stdout, "    FAILED: rc = %0d\n", rc);
 	return NULL;
     }
-    fprintf (stdout, "     => pci_bar_handle %0d\n", p_state->pci_bar_handle);
+    if (verbosity > 0)
+	fprintf (stdout, "     => pci_bar_handle %0d\n", p_state->pci_bar_handle);
 
     // ----------------
     return p_state;
