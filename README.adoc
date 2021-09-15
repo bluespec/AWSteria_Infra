@@ -597,7 +597,7 @@ The following steps are performed in the AWSteria_Infra repo (these two
     a directory `RTL/` and populate it with Verilog RTL generated
     from the BSV source code by the Bluespec `bsc` compiler.
 
-* In `TestApp/HW/build_AWSF1` do `make for_AWSF1`.  This will create a
+* In `TestApp/HW/build_AWSF1` do `make for_AWSF1_HDK`.  This will create a
     directory `cl_AWSteria_TestApp/` that is ready to run through the
     aws-fpga HDK flow.
 
