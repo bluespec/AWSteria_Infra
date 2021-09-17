@@ -12,7 +12,6 @@
 # the amount of data you write/read to the FPGA.
 
 DMA_IP_DRIVERS_TOOLS = ~/git_clones/Xilinx/dma_ip_drivers/XDMA/linux-kernel/tools
-GARNET_REPO = ~/git_clones/CTSRD-CHERI_garnet
 
 BASE   ?= 0
 SIZE   ?= 64
