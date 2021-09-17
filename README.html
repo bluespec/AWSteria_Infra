@@ -1006,26 +1006,58 @@ with <code>make full_clean</code>.</p>
 <div class="sect3">
 <h4 id="_prerequisites_xilinx_xdma_and_xvsec_drivers_vivado_tool_suite_and_garnet">6.3.1. Prerequisites: Xilinx XDMA and XVSEC drivers, Vivado tool suite, and Garnet</h4>
 <div class="paragraph">
+<p>You will also need to have installed Xilinx&#8217;s Vivado tool suite, and
+have a Vivado license that includes synthesis for the FPGA on the
+VCU118.</p>
+</div>
+<div class="paragraph">
+<p>You should be able to see your all your PCIe devices with:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>    $ lspci</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>By providing vendor and device ID, you can restrict it to the Xilinx VCU118:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>    $ lspci -d 10ee:903f
+    07:00.0 Serial controller: Xilinx Corporation Device 903f</pre>
+</div>
+</div>
+<div class="paragraph">
 <p>Please install Xilinx&#8217;s XDMA and XVSEC drivers on your host Linux
 machine, where your VCU118 is attached using PCIe.  The drivers can be
 found at: <a href="https://github.com/Xilinx/dma_ip_drivers.git" class="bare">https://github.com/Xilinx/dma_ip_drivers.git</a>.</p>
+</div>
+<div class="paragraph">
+<p>The XDMA installation will install the <code>xdma</code> driver in your Linux
+kernel.  After intallation you&#8217;ll see files like this <code>/dev/xdma*</code> on
+your Linux host.  See instructions at:</p>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="https://github.com/Xilinx/dma_ip_drivers/tree/master/XDMA/linux-kernel" class="bare">https://github.com/Xilinx/dma_ip_drivers/tree/master/XDMA/linux-kernel</a></p>
+</div>
+</div>
 </div>
 <div class="paragraph">
 <p>The XVSEC installation will install the <code>xvssecctl</code> tool and driver,
 which is used for &#8220;partial reconfiguration&#8221; of the FPGA with a
 partial bitfile.  After intallation you&#8217;ll see files like this
 <code>/dev/xvsec*</code> on your Linux host, and the following executable tool:
-<code>/usr/local/sbin/xvsecctl</code>.</p>
+<code>/usr/local/sbin/xvsecctl</code>.
+See instructions at:</p>
 </div>
+<div class="sidebarblock">
+<div class="content">
 <div class="paragraph">
-<p>The XDMA installation will install the <code>xdma</code> driver in your Linux
-kernel.  After intallation you&#8217;ll see files like this <code>/dev/xdma*</code> on
-your Linux host.</p>
+<p><a href="https://github.com/Xilinx/dma_ip_drivers/tree/master/XVSEC/linux-kernel/docs" class="bare">https://github.com/Xilinx/dma_ip_drivers/tree/master/XVSEC/linux-kernel/docs</a></p>
 </div>
-<div class="paragraph">
-<p>You will also need to have installed Xilinx&#8217;s Vivado tool suite, and
-have a Vivado license that includes synthesis for the FPGA on the
-VCU118.</p>
+</div>
 </div>
 <div class="paragraph">
 <p>The Garnet repo from Cambridge University, UK, can be cloned from
@@ -1053,6 +1085,21 @@ or replace the example.</p>
 <p>RTL for AWSteria_Infra plugs into the Garnet &#8220;shell&#8221; environment,
 i.e., it is an alternative partial bitfile to the Garnet-provided
 example.</p>
+</div>
+<div class="paragraph">
+<p><em>One-time step:</em> load the fixed part of the bitfile from Garnet, which
+contains the PCIe interface logic and DDR interface logic.  (I am not
+sure where we got the <code>program_fpga</code> executable, but it loads a
+bitfile into the FPGA.)</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>    $ program_fpga  $(GARNET_REPO)/shell/prebuilt/empty.bit</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This step does not have to be repeated as we load new partial bitfiles
+for applications.</p>
 </div>
 </div>
 <div class="sect3">
@@ -1188,7 +1235,12 @@ to this point, until your design meets timing.</p>
 <div class="sect3">
 <h4 id="_loading_the_partial_bitfile_into_the_vcu118_fpga">6.3.3. Loading the partial bitfile into the VCU118 FPGA</h4>
 <div class="paragraph">
-<p>This uses the <code>xvsecctl</code> tool and <code>xvsec</code> driver (see Xilinx Prerequisites section earlier).</p>
+<p>We should have already loaded the fixed part of the bitfile from
+Garnet (see Section Prerequisites above).</p>
+</div>
+<div class="paragraph">
+<p>Loading the partial bitfile for TestApp uses the <code>xvsecctl</code> tool and
+<code>xvsec</code> driver (see Section Prerequisites above).</p>
 </div>
 <div class="paragraph">
 <p>Example Makefile fragment to perform the parital bitfile reconfiguration:</p>
@@ -1652,7 +1704,7 @@ This would be a minor change to host side C code.</p>
 <div id="footer">
 <div id="footer-text">
 Version v1.0<br>
-Last updated 2021-09-07 21:48:14 EDT
+Last updated 2021-09-16 23:59:30 EDT
 </div>
 </div>
 </body>
