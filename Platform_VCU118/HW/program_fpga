@@ -1,0 +1,22 @@
+#!/bin/sh
+# -*- mode: tcl -*-
+# A Tcl comment, whose contents don't matter \
+if command -v vivado; then CMD=vivado; else CMD=vivado_lab; fi && exec $CMD -nolog -nojournal -mode batch -source "$0" -tclargs "$@"
+
+if { [expr $argc < 1] } {
+    error "usage: program_fpga <bitfile>"
+}
+
+set f [lindex $argv 0]
+
+# index of board, if there are more than one
+set index {0}
+
+open_hw
+connect_hw_server
+open_hw_target
+current_hw_device [lindex [get_hw_devices] $index]
+refresh_hw_device -update_hw_probes false [current_hw_device]
+set_property PROBES.FILE {} [current_hw_device]
+set_property PROGRAM.FILE $f [current_hw_device]
+program_hw_devices [current_hw_device]
