@@ -427,7 +427,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="details">
 <span id="author" class="author">Rishiyur S. Nikhil, Bluespec, Inc. (c) 2021</span><br>
 <span id="revnumber">version v1.0,</span>
-<span id="revdate">2021-08-22</span>
+<span id="revdate">2021-09-22</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Contents</div>
@@ -458,14 +458,14 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_building_and_running_with_bluesim_or_verilator_simulation">6.2. Building and running with Bluesim or Verilator simulation</a></li>
 <li><a href="#_building_and_running_on_xilinx_vcu118">6.3. Building and running on Xilinx VCU118</a>
 <ul class="sectlevel3">
-<li><a href="#_prerequisites_xilinx_xdma_and_xvsec_drivers_vivado_tool_suite_and_garnet">6.3.1. Prerequisites: Xilinx XDMA and XVSEC drivers, Vivado tool suite, and Garnet</a></li>
-<li><a href="#_building_the_hardware_side">6.3.2. Building the hardware side</a>
+<li><a href="#_building_the_hardware_side">6.3.1. Building the hardware side</a>
 <ul class="sectlevel4">
 <li><a href="#_building_the_hardware_side_with_a_slower_clock">Building the hardware side with a slower clock</a></li>
 </ul>
 </li>
-<li><a href="#_loading_the_partial_bitfile_into_the_vcu118_fpga">6.3.3. Loading the partial bitfile into the VCU118 FPGA</a></li>
-<li><a href="#_building_and_running_the_host_side_on_vcu118">6.3.4. Building and running the host side on VCU118</a></li>
+<li><a href="#_loading_the_partial_bitfile_into_the_vcu118_fpga">6.3.2. Loading the partial bitfile into the VCU118 FPGA</a></li>
+<li><a href="#_building_the_host_side_on_vcu118">6.3.3. Building the host side on VCU118</a></li>
+<li><a href="#_running_the_application">6.3.4. Running the application</a></li>
 </ul>
 </li>
 <li><a href="#_building_and_running_on_amazon_aws_f1">6.4. Building and running on Amazon AWS F1</a>
@@ -485,7 +485,18 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </ul>
 </li>
 <li><a href="#_porting_your_application_to_use_awsteria_infra">7. Porting your application to use AWSteria_Infra</a></li>
-<li><a href="#_possible_futures">8. Possible Futures</a></li>
+<li><a href="#_prerequsites_for_xilinx_pcie_based_fpga_boards_xdma_and_xvsec_drivers_and_garnet">8. Prerequsites for Xilinx PCIe-based FPGA boards: XDMA and XVSEC drivers and Garnet</a>
+<ul class="sectlevel2">
+<li><a href="#_xilinx_xdma_and_xvsec_drivers">8.1. Xilinx XDMA and XVSEC drivers</a>
+<ul class="sectlevel3">
+<li><a href="#_useful_utilities_for_querying_and_installing_drivers">8.1.1. Useful utilities for querying and installing drivers</a></li>
+</ul>
+</li>
+<li><a href="#_garnet">8.2. Garnet</a></li>
+<li><a href="#_steps_for_running_awsteria_infra_on_garnet_on_xilinx_pcie_based_boards">8.3. Steps for running AWSteria_Infra on Garnet on Xilinx PCIe-based boards</a></li>
+</ul>
+</li>
+<li><a href="#_possible_futures">9. Possible Futures</a></li>
 </ul>
 </div>
 </div>
@@ -1003,109 +1014,18 @@ with <code>make full_clean</code>.</p>
 </div>
 <div class="sect2">
 <h3 id="_building_and_running_on_xilinx_vcu118">6.3. Building and running on Xilinx VCU118</h3>
-<div class="sect3">
-<h4 id="_prerequisites_xilinx_xdma_and_xvsec_drivers_vivado_tool_suite_and_garnet">6.3.1. Prerequisites: Xilinx XDMA and XVSEC drivers, Vivado tool suite, and Garnet</h4>
 <div class="paragraph">
-<p>You will also need to have installed Xilinx&#8217;s Vivado tool suite, and
-have a Vivado license that includes synthesis for the FPGA on the
-VCU118.</p>
-</div>
-<div class="paragraph">
-<p>You should be able to see your all your PCIe devices with:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre>    $ lspci</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>By providing vendor and device ID, you can restrict it to the Xilinx VCU118:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre>    $ lspci -d 10ee:903f
-    07:00.0 Serial controller: Xilinx Corporation Device 903f</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Please install Xilinx&#8217;s XDMA and XVSEC drivers on your host Linux
-machine, where your VCU118 is attached using PCIe.  The drivers can be
-found at: <a href="https://github.com/Xilinx/dma_ip_drivers.git" class="bare">https://github.com/Xilinx/dma_ip_drivers.git</a>.</p>
-</div>
-<div class="paragraph">
-<p>The XDMA installation will install the <code>xdma</code> driver in your Linux
-kernel.  After intallation you&#8217;ll see files like this <code>/dev/xdma*</code> on
-your Linux host.  See instructions at:</p>
-</div>
-<div class="sidebarblock">
-<div class="content">
-<div class="paragraph">
-<p><a href="https://github.com/Xilinx/dma_ip_drivers/tree/master/XDMA/linux-kernel" class="bare">https://github.com/Xilinx/dma_ip_drivers/tree/master/XDMA/linux-kernel</a></p>
-</div>
-</div>
-</div>
-<div class="paragraph">
-<p>The XVSEC installation will install the <code>xvssecctl</code> tool and driver,
-which is used for &#8220;partial reconfiguration&#8221; of the FPGA with a
-partial bitfile.  After intallation you&#8217;ll see files like this
-<code>/dev/xvsec*</code> on your Linux host, and the following executable tool:
-<code>/usr/local/sbin/xvsecctl</code>.
-See instructions at:</p>
-</div>
-<div class="sidebarblock">
-<div class="content">
-<div class="paragraph">
-<p><a href="https://github.com/Xilinx/dma_ip_drivers/tree/master/XVSEC/linux-kernel/docs" class="bare">https://github.com/Xilinx/dma_ip_drivers/tree/master/XVSEC/linux-kernel/docs</a></p>
-</div>
-</div>
-</div>
-<div class="paragraph">
-<p>The Garnet repo from Cambridge University, UK, can be cloned from
-<a href="https://github.com/CTSRD-CHERI/garnet" class="bare">https://github.com/CTSRD-CHERI/garnet</a>.</p>
-</div>
-<div class="paragraph">
-<p>Garnet provides PCIe and DDR infrastructure for VCU118, and a 250 MHz
-clock and reset.  Please download Garnet and follow the instructions
-there to build and run the provided simple example.</p>
-</div>
-<div class="paragraph">
-<p>The Garnet flow installs two separate bitfiles on the VCU118, using
-Xilinx&#8217;s &#8220;partial reconfiguration&#8221; mechanism.  The first bitfile is
-for a component called the &#8220;shell&#8221; and contains the fixed,
-unchanging support for PCIe and DDR4s.  This component needs to be
-loaded just once</p>
-</div>
-<div class="paragraph">
-<p>The second bitfile, a &#8220;partial bitfile&#8221;, contains the the logic for
-the provided example, i.e., the application-specific logic.  This
-component can be replaced with partial reconfiguration, as we change
-or replace the example.</p>
-</div>
-<div class="paragraph">
-<p>RTL for AWSteria_Infra plugs into the Garnet &#8220;shell&#8221; environment,
-i.e., it is an alternative partial bitfile to the Garnet-provided
-example.</p>
-</div>
-<div class="paragraph">
-<p><em>One-time step:</em> load the fixed part of the bitfile from Garnet, which
-contains the PCIe interface logic and DDR interface logic.  (I am not
-sure where we got the <code>program_fpga</code> executable, but it loads a
-bitfile into the FPGA.)</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre>    $ program_fpga  $(GARNET_REPO)/shell/prebuilt/empty.bit</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>This step does not have to be repeated as we load new partial bitfiles
-for applications.</p>
-</div>
+<p>AWSteria_Infra support for Xilinx PCIe-based boards (e.g., VCU118) is
+built on top of the &#8220;Garnet&#8221; system.  Please see Section
+&#8220;Prerequsites for Xilinx PCIe-based FPGA boards&#8221; for background and
+details.</p>
 </div>
 <div class="sect3">
-<h4 id="_building_the_hardware_side">6.3.2. Building the hardware side</h4>
+<h4 id="_building_the_hardware_side">6.3.1. Building the hardware side</h4>
 <div class="paragraph">
-<p>Building the hardware side for VCU118 involves some steps locally in
+<p>You will need to have installed Xilinx&#8217;s Vivado tool suite, and have a
+Vivado license that includes synthesis for the FPGA on the VCU118.
+Building the hardware side for VCU118 involves some steps locally in
 the AWSteria_Infra repo, followed by a step in the &#8220;Garnet&#8221; repo.</p>
 </div>
 <div class="paragraph">
@@ -1233,17 +1153,15 @@ to this point, until your design meets timing.</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_loading_the_partial_bitfile_into_the_vcu118_fpga">6.3.3. Loading the partial bitfile into the VCU118 FPGA</h4>
+<h4 id="_loading_the_partial_bitfile_into_the_vcu118_fpga">6.3.2. Loading the partial bitfile into the VCU118 FPGA</h4>
 <div class="paragraph">
-<p>We should have already loaded the fixed part of the bitfile from
-Garnet (see Section Prerequisites above).</p>
+<p>We should have already loaded the Garnet fixed bitfile (the Garnet
+&#8220;shell&#8221;).  Loading the partial bitfile for TestApp requires the
+<code>xvsecctl</code> tool and <code>xvsec</code> driver.  (See Section &#8220;Prerequsites for
+Xilinx PCIe-based FPGA boards&#8221;).</p>
 </div>
 <div class="paragraph">
-<p>Loading the partial bitfile for TestApp uses the <code>xvsecctl</code> tool and
-<code>xvsec</code> driver (see Section Prerequisites above).</p>
-</div>
-<div class="paragraph">
-<p>Example Makefile fragment to perform the parital bitfile reconfiguration:</p>
+<p>Example Makefile fragment to perform the partial bitfile reconfiguration:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -1256,12 +1174,40 @@ reconfig:
         sudo xvsecctl -b $(BUS) -F $(DEVICE_NO) -c $(CAPABILITY_ID) -p $(BITFILE)</pre>
 </div>
 </div>
+<div class="paragraph">
+<p>The file <code>AWSteria_Infra/TestApp/HW/build_VCU118/Reconfig.mk</code> is a
+makefile showing this command for various partial bitfiles (Garnet
+example, TestApp 250 MHz and 100 MHz, etc.).</p>
+</div>
 </div>
 <div class="sect3">
-<h4 id="_building_and_running_the_host_side_on_vcu118">6.3.4. Building and running the host side on VCU118</h4>
+<h4 id="_building_the_host_side_on_vcu118">6.3.3. Building the host side on VCU118</h4>
 <div class="paragraph">
-<p>In <code>TestApp/Host/build_VCU118</code> do <code>make</code> to create the host-side
-executable <code>exe_Host_VCU118</code>.</p>
+<p>In <code>TestApp/Host/build_VCU118</code> do</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>    make  exe_Host_VCU118</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>to create the host-side executable <code>exe_Host_VCU118</code>.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_running_the_application">6.3.4. Running the application</h4>
+<div class="admonitionblock important">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Important</div>
+</td>
+<td class="content">
+please be familiar with Section &#8220;Prerequsites for Xilinx
+PCIe-based FPGA boards&#8221; below and ensure everything is in place.
+</td>
+</tr>
+</table>
 </div>
 <div class="paragraph">
 <p>Then, run the executable.  It will interact with the hardware on the
@@ -1665,7 +1611,208 @@ corresponding directories in TestApp as a starting template.</p>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_possible_futures">8. Possible Futures</h2>
+<h2 id="_prerequsites_for_xilinx_pcie_based_fpga_boards_xdma_and_xvsec_drivers_and_garnet">8. Prerequsites for Xilinx PCIe-based FPGA boards: XDMA and XVSEC drivers and Garnet</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_xilinx_xdma_and_xvsec_drivers">8.1. Xilinx XDMA and XVSEC drivers</h3>
+<div class="paragraph">
+<p>Please install Xilinx&#8217;s XDMA and XVSEC drivers on your host Linux
+machine, where your Xilinx PCIe-based board (e.g., VCU118) is
+attached.  The drivers, build and installation instructions are at:
+<a href="https://github.com/Xilinx/dma_ip_drivers.git" class="bare">https://github.com/Xilinx/dma_ip_drivers.git</a>.</p>
+</div>
+<div class="paragraph">
+<p>XDMA installation will install the <code>xdma</code> driver in your Linux kernel.
+After intallation you&#8217;ll see files like this <code>/dev/xdma*</code> on your
+Linux host.  See instructions at:</p>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="https://github.com/Xilinx/dma_ip_drivers/tree/master/XDMA/linux-kernel" class="bare">https://github.com/Xilinx/dma_ip_drivers/tree/master/XDMA/linux-kernel</a></p>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>XVSEC installation will install the <code>xvssecctl</code> tool and driver, which
+is used for &#8220;partial reconfiguration&#8221; of the FPGA with a partial
+bitfile.  After intallation you&#8217;ll see files like this <code>/dev/xvsec*</code>
+on your Linux host, and the following executable tool:
+<code>/usr/local/sbin/xvsecctl</code>.  See instructions at:</p>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="https://github.com/Xilinx/dma_ip_drivers/tree/master/XVSEC/linux-kernel/docs" class="bare">https://github.com/Xilinx/dma_ip_drivers/tree/master/XVSEC/linux-kernel/docs</a></p>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>VSEC (Vendor Specific Extended Capability) is a feature of PCIe.</p>
+</div>
+<div class="sect3">
+<h4 id="_useful_utilities_for_querying_and_installing_drivers">8.1.1. Useful utilities for querying and installing drivers</h4>
+<div class="paragraph">
+<p>List PCI devices on system:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>    $ lspci                              List all devices on PCI
+    $ man lspci                          for help on lspci
+
+    $ lspci -d 10ee:903f                 List Xilinx devices on PCI (vendoe, device id)
+    07:00.0 Serial controller: Xilinx Corporation Device 903f</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Check which drivers are currently loaded in the OS kernel:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>    $ lsmod                              List all loaded drivers
+    $ lsmod | grep -e xdma -e xvsec      Filter for xdma and xvsec</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Loading a driver from the OS kernel (starting):</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>    $ sudo modprobe xvsec</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>When xdma and xvsec drivers are loaded, we can see related &#8220;devices&#8221; like this:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>    $ ls /dev/xdma*  /dev/xvsec*</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We can see which version of a driver was loaded by examining host system messages, or using <code>modinfo</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>    $ sudo dmesg | grep -i xdma
+    ...
+    [    4.533329] xdma:xdma_mod_init: Xilinx XDMA Reference Driver xdma v2020.1.8
+    ...
+
+    $ sudo modinfo xvsec
+    ...
+    version:        2020.2.0
+    ...</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Unloading a driver from the OS kernel (removing/stopping):</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>    $ sudo rmmod -s xvsec</pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_garnet">8.2. Garnet</h3>
+<div class="paragraph">
+<p>AWSteria_Infra support for Xilinx PCIe-based boards (e.g., VCU118) is
+built on top of the &#8220;Garnet&#8221; system, and thus follows Garnet-build
+flows.  The Garnet repo from Cambridge University, UK is at:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>    https://github.com/CTSRD-CHERI/garnet[]</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Garnet provides PCIe and DDR infrastructure for VCU118, and a 250 MHz
+clock and reset.  Please clone Garnet and follow the instructions
+there to build and run the provided simple example.</p>
+</div>
+<div class="paragraph">
+<p>The Garnet flow installs two separate bitfiles on the VCU118, in two
+separate steps.  The first bitfile is for a component called the
+&#8220;shell&#8221; and contains fixed, unchanging support for PCIe and DDR4s.
+This component needs to be loaded just onc, using standard
+bitfile-loading mechanisms (USB, jtag, Flash, &#8230;&#8203;).</p>
+</div>
+<div class="paragraph">
+<p>The second bitfile is a &#8220;partial bitfile&#8221; containing the application
+logic.  This partial bitfile is loaded using Xilinx&#8217;s &#8220;partial
+reconfiguration&#8221; mechanism, which uses Xilinx&#8217;s XVSEC driver.</p>
+</div>
+<div class="paragraph">
+<p>The second bitfile can be repeatedly re-loaded with different
+application design iterations, or with different applications, without
+having to reload the &#8220;shell&#8221; bitfile.</p>
+</div>
+<div class="paragraph">
+<p>The flow for AWSteria_Infra results in such a partial bitfile which
+plugs into the Garnet &#8220;shell&#8221; environment.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_steps_for_running_awsteria_infra_on_garnet_on_xilinx_pcie_based_boards">8.3. Steps for running AWSteria_Infra on Garnet on Xilinx PCIe-based boards</h3>
+<div class="paragraph">
+<p><strong>One-time steps:</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Load the Xilinx XDMA driver into the host&#8217;s OS kernel if not already
+running.  We recommend configuring the host OS so that XDMA is
+automatically started on each reboot.</p>
+</li>
+<li>
+<p>Load the the Garnet &#8220;shell&#8221; (fixed bitfile) into the FPGA using
+normal bitfile-loading procedures.  This does not require PCIe or
+XDMA or XVSEC drivers; it&#8217;s usually done over USB or jtag.  Example:</p>
+<div class="listingblock">
+<div class="content">
+<pre>    $cd  $(AWSTERIA_INFRA_REPO)/Platform_VCU118/HW
+    $ ./program_fpga  $(GARNET_REPO)/shell/prebuilt/empty.bit</pre>
+</div>
+</div>
+<div class="paragraph">
+<p><code>program_fpga</code> is a Tcl script for Vivado to program the FPGA using
+USB.  As a convenience, this command is also in the <code>Load_Shell.mk</code>
+makefile, so you can just say <code>make load_shell</code> (edit the path to the
+Garnet shell bitfile, if needed).</p>
+</div>
+</li>
+<li>
+<p>Reboot the host, so that the host&#8217;s PCI probing and XDMA recognize
+the PCI IP in the just-loaded FPGA bitfile.</p>
+</li>
+<li>
+<p>Load the Xilinx XVSEC driver into the OS kernel if not already running.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><strong>Repeated steps</strong> for each new application, or each design iteration of an appilication:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Use the Xilinx <code>xvsecctl</code> command-line tool to load the
+AWSteria_Infra application&#8217;s FPGA-side <em>partial bitfile</em>.
+<code>xvsecctl</code> performs &#8220;partial reconfiguration&#8221; using the Xilinx XVSEC driver.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Then, the application&#8217;s host-side can interact with the
+FPGA-side. This communication uses the Xilinx XDMA driver.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_possible_futures">9. Possible Futures</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>We may Port AWSteria_Infra to more platforms (more host/FPGA board
@@ -1704,7 +1851,7 @@ This would be a minor change to host side C code.</p>
 <div id="footer">
 <div id="footer-text">
 Version v1.0<br>
-Last updated 2021-09-16 23:59:30 EDT
+Last updated 2021-09-22 14:37:09 EDT
 </div>
 </div>
 </body>
