@@ -36,11 +36,8 @@ set_msg_config -id {Synth 8-3917} -suppress
 # Many inputs deliberately left unused
 set_msg_config -id {Synth 8-3331} -suppress
 
-# Boilerplate RTL
-add_files [list "$project_dir/src/top_garnet.v" ]
-
-# Project source RTL
-add_files [list "$project_dir/src"]
+# Project source RTL + a bit of boilerplate
+add_files -norecurse "$project_dir/src"
 
 garnet_synth_design
 close_project

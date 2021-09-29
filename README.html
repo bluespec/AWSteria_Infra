@@ -787,8 +787,8 @@ below illustrate how to build and run an application on AWSteria_Infra
 and Garnet on VCU118.</p>
 </div>
 <div class="paragraph">
-<p>In general, you won&#8217;t have to modify anything in this directory or
-build anything in this directory; it just provides resources for your
+<p>In general, you won&#8217;t have to modify anything or build anything in in
+<code>Platform_VCU118/</code>; it just provides resources for your
 application-build.</p>
 </div>
 <div class="sect2">
@@ -1039,7 +1039,7 @@ variation for a slower speed app.</p>
 </div>
 <div class="paragraph">
 <p>The following steps are performed in the AWSteria_Infra repo (the two
-<code>make</code> commands combined into one):</p>
+<code>make</code> targets can be provided together):</p>
 </div>
 <div class="ulist">
 <ul>
@@ -1333,9 +1333,11 @@ aws-fpga &#8220;clock recipe&#8221; argument.  Examples:</p>
 <p>The default clock recipe is A0, and builds for 125 MHz; A1 is for 250
 MHz, and A2 is for 16.67 MHz.  Details about clock recipes can be found at:</p>
 </div>
-<div class="listingblock">
+<div class="sidebarblock">
 <div class="content">
-<pre>    https://github.com/aws/aws-fpga/blob/master/hdk/docs/clock_recipes.csv</pre>
+<div class="paragraph">
+<p><a href="https://github.com/aws/aws-fpga/blob/master/hdk/docs/clock_recipes.csv" class="bare">https://github.com/aws/aws-fpga/blob/master/hdk/docs/clock_recipes.csv</a></p>
+</div>
 </div>
 </div>
 <div class="paragraph">
@@ -1720,11 +1722,17 @@ on your Linux host, and the following executable tool:
 <div class="paragraph">
 <p>AWSteria_Infra support for Xilinx PCIe-based boards (e.g., VCU118) is
 built on top of the &#8220;Garnet&#8221; system, and thus follows Garnet-build
-flows.  The Garnet repo from Cambridge University, UK is at:</p>
+flows.  The Garnet repo from Cambridge University, UK is at
+<a href="https://github.com/CTSRD-CHERI/garnet" class="bare">https://github.com/CTSRD-CHERI/garnet</a>.</p>
+</div>
+<div class="paragraph">
+<p>Once cloned, we need to perform the following one-time step in the
+top-level directory to prepare some components that are used by
+AWSteria_Infra apps:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>    https://github.com/CTSRD-CHERI/garnet[]</pre>
+<pre>    $ make ip</pre>
 </div>
 </div>
 <div class="paragraph">
@@ -1851,7 +1859,7 @@ This would be a minor change to host side C code.</p>
 <div id="footer">
 <div id="footer-text">
 Version v1.0<br>
-Last updated 2021-09-22 14:37:09 EDT
+Last updated 2021-09-28 20:34:37 EDT
 </div>
 </div>
 </body>

@@ -102,7 +102,6 @@ for_garnet:
 for_garnet_reclocked:
 	@echo "INFO: Creating and populating garnet example dir (reclocked)"
 	cp -p -R $(AWSTERIA_INFRA_REPO)/Platform_VCU118/HW/example_AWSteria_HW_reclocked  ./example_TestApp_reclocked
-	cp -p    $(AWSTERIA_INFRA_REPO)/Platform_VCU118/HW/synchronizers.v  example_TestApp_reclocked/src/
 	cp -p    RTL/*.v  example_TestApp_reclocked/src/
 	make GARNET_RTL=example_TestApp_reclocked/src/  copy_bsc_RTL_for_garnet
 	@echo "INFO: garnet example (reclocked) dir is ready: example_TestApp_reclocked/"

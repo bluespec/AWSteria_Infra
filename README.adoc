@@ -218,8 +218,8 @@ The "`Test Application`" and "`Porting your application`" sections
 below illustrate how to build and run an application on AWSteria_Infra
 and Garnet on VCU118.
 
-In general, you won't have to modify anything in this directory or
-build anything in this directory; it just provides resources for your
+In general, you won't have to modify anything or build anything in in
+`Platform_VCU118/`; it just provides resources for your
 application-build.
 
 // ----------------------------------------------------------------
@@ -419,7 +419,7 @@ We describe first the flow for a full speed app, and then the slight
 variation for a slower speed app.
 
 The following steps are performed in the AWSteria_Infra repo (the two
-`make` commands combined into one):
+`make` targets can be provided together):
 
 * In `TestApp/HW/build_VCU118` do `make compile`. This will create
     a directory `RTL/` and populate it with Verilog RTL generated
@@ -633,9 +633,9 @@ aws-fpga "`clock recipe`" argument.  Examples:
 
 The default clock recipe is A0, and builds for 125 MHz; A1 is for 250
 MHz, and A2 is for 16.67 MHz.  Details about clock recipes can be found at:
-----
-    https://github.com/aws/aws-fpga/blob/master/hdk/docs/clock_recipes.csv
-----
+****
+https://github.com/aws/aws-fpga/blob/master/hdk/docs/clock_recipes.csv
+****
 
 The DCP build for the default clock recipe (A0, 125 MHz) takes about
 1:40 hours running in an "`FPGA Developer`" AMI on an Amazon
@@ -942,10 +942,15 @@ Unloading a driver from the OS kernel (removing/stopping):
 
 AWSteria_Infra support for Xilinx PCIe-based boards (e.g., VCU118) is
 built on top of the "`Garnet`" system, and thus follows Garnet-build
-flows.  The Garnet repo from Cambridge University, UK is at:
+flows.  The Garnet repo from Cambridge University, UK is at
+https://github.com/CTSRD-CHERI/garnet[].
+
+Once cloned, we need to perform the following one-time step in the
+top-level directory to prepare some components that are used by
+AWSteria_Infra apps:
 
 ----
-    https://github.com/CTSRD-CHERI/garnet[]
+    $ make ip
 ----
 
 Garnet provides PCIe and DDR infrastructure for VCU118, and a 250 MHz
