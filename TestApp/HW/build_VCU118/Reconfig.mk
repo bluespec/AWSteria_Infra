@@ -31,9 +31,6 @@ PARTIAL_BITFILE_TESTAPP_250MHZ ?= ~/git_clones/CTSRD-CHERI_garnet/example_TestAp
 # AWSteria_HW TestApp (with reclocking, running at 100 MHz)
 PARTIAL_BITFILE_TESTAPP_100MHZ ?= ~/git_clones/CTSRD-CHERI_garnet/example_TestApp_reclocked/build/AWSteria_pblock_partition_partial.bit
 
-# AWSteria_HW_RISCV_Virtio reclocked
-PARTIAL_BITFILE_RISCV_VIRTIO ?= ~/git_clones/CTSRD-CHERI_garnet/example_RISCV_AWSteria_HW_reclocked/build/AWSteria_pblock_partition_partial.bit
-
 # ================================================================
 # Programming the bitfile and partial reconfig
 
