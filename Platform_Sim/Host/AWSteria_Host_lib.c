@@ -41,9 +41,12 @@ AWSteria_Host_State  awsteria_host_state;
 // Host_init returns pointer to any state needed for the remaining API calls
 // Return pointer to host state (or NULL if error)
 
+static int verbosity_init = 0;
+
 void *AWSteria_Host_init (void)
 {
-    fprintf (stdout, "%s()\n", __FUNCTION__);
+    if (verbosity_init > 0)
+	fprintf (stdout, "%s()\n", __FUNCTION__);
 
     if (awsteria_host_state.p_bytevec_state != NULL) {
 	fprintf (stdout, "WARNING: %s: already initialized\n", __FUNCTION__);
@@ -62,7 +65,9 @@ void *AWSteria_Host_init (void)
 	exit (1);
     }
 
-    fprintf (stdout, "%s: initialized, connected to simulation server\n", __FUNCTION__);
+    if (verbosity_init > 0)
+	fprintf (stdout, "%s: initialized, connected to simulation server\n", __FUNCTION__);
+
     return (& awsteria_host_state);
 }
 
