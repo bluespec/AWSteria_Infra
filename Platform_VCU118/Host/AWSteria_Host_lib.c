@@ -45,6 +45,7 @@ typedef struct {
     void *map_base;
 } AWSteria_Host_State;
 
+static int verbosity_init   = 0;
 static int verbosity_AXI4_W = 0;
 static int verbosity_AXI4_R = 0;
 static int verbosity_AXI4L_W = 0;
@@ -55,7 +56,8 @@ static int verbosity_AXI4L_R = 0;
 
 void *AWSteria_Host_init (void)
 {
-    fprintf (stdout, "%s: AWSteria_Host_init\n", __FUNCTION__);
+    if (verbosity_init != 0)
+	fprintf (stdout, "%s\n", __FUNCTION__);
 
     AWSteria_Host_State *p_state = (AWSteria_Host_State *) malloc (sizeof (AWSteria_Host_State));
     if (p_state == NULL) {
@@ -64,13 +66,15 @@ void *AWSteria_Host_init (void)
     }
 
     // ----------------
-    fprintf (stdout, "    Opening PCIe/AXI4 write device: %s\n", AXI4_w_devname);
+    if (verbosity_init != 0)
+	fprintf (stdout, "    Opening PCIe/AXI4 write device: %s\n", AXI4_w_devname);
     p_state->pci_AXI4_w_fd = open (AXI4_w_devname, O_RDWR);
     if (p_state->pci_AXI4_w_fd < 0) {
 	perror("    open device");
 	return NULL;
     }
-    fprintf (stdout, "        pci_AXI4_w_fd = %0d\n", p_state->pci_AXI4_w_fd);
+    if (verbosity_init != 0)
+	fprintf (stdout, "        pci_AXI4_w_fd = %0d\n", p_state->pci_AXI4_w_fd);
 
     // ----------------
     fprintf (stdout, "    Opening PCIe/AXI4 read device: %s\n", AXI4_r_devname);
@@ -82,16 +86,19 @@ void *AWSteria_Host_init (void)
     fprintf (stdout, "        pci_AXI4_r_fd = %0d\n", p_state->pci_AXI4_r_fd);
 
     // ----------------
-    fprintf (stdout, "    Opening PCIe/AXI4-Lite read/write device: %s\n", AXI4L_devname);
+    if (verbosity_init != 0)
+	fprintf (stdout, "    Opening PCIe/AXI4-Lite read/write device: %s\n", AXI4L_devname);
     p_state->pci_AXI4L_fd = open (AXI4L_devname, O_RDWR | O_SYNC);
     if (p_state->pci_AXI4L_fd < 0) {
 	perror("open device");
 	return NULL;
     }
-    fprintf (stdout, "        pci_AXI4L_fd = %0d\n", p_state->pci_AXI4L_fd);
+    if (verbosity_init != 0)
+	fprintf (stdout, "        pci_AXI4L_fd = %0d\n", p_state->pci_AXI4L_fd);
 
     // Memory-map the device
-    fprintf (stdout, "    mmap'ing the AXI4-Lite device\n");
+    if (verbosity_init != 0)
+	fprintf (stdout, "    mmap'ing the AXI4-Lite device\n");
     p_state->map_base = mmap (0,
 			      MAP_SIZE,
 			      PROT_READ | PROT_WRITE, MAP_SHARED,
@@ -101,7 +108,8 @@ void *AWSteria_Host_init (void)
 	perror("mmap device");
 	return NULL;
     }
-    fprintf (stdout, "        Memory map address base: %p\n", p_state->map_base);
+    if (verbosity_init != 0)
+	fprintf (stdout, "        Memory map address base: %p\n", p_state->map_base);
 
     // ----------------
 
@@ -120,8 +128,8 @@ int AWSteria_AXI4_write (void *opaque,
     AWSteria_Host_State *p_state = opaque;
 
     if (verbosity_AXI4_W != 0) {
-        fprintf (stdout, "%s (size 0x%lx address 0x%0lx)\n",
-		 __FUNCTION__, size, address);
+        fprintf (stdout, "%s (address 0x%0lx) size 0x%0lx\n",
+		 __FUNCTION__, address, size);
     }
 
     for (uint64_t n_sent = 0; n_sent < size; ) {
@@ -217,8 +225,8 @@ int AWSteria_AXI4_read (void *opaque,
 	rc = pread (p_state->pci_AXI4_r_fd, & (buffer [n_recd]), count, address + n_recd);
 	if (rc < 0) {
 	    perror("read device");
-	    fprintf (stdout, "ERROR: %s (size 0x%lx address 0x%0lx)\n",
-		     __FUNCTION__, size, address);
+	    fprintf (stdout, "ERROR: %s (address 0x%0lx size 0x%lx)\n",
+		     __FUNCTION__, address, size);
 	    fprintf (stdout, "    read => rc %0ld; n_recd 0x%lx, count 0x%lx\n",
 		     rc, n_recd, count);
 	    return -1;
