@@ -39,7 +39,6 @@ SIM_EXE_FILE = exe_HW_sim
 # bsc compilation flags
 
 BSC_COMPILATION_FLAGS += \
-	-D INCLUDE_DDR_B \
 	-keep-fires -aggressive-conditions -no-warn-action-shadowing -no-show-timestamps -check-assert \
 	-suppress-warnings G0020    \
 	+RTS -K128M -RTS  -show-range-conflict

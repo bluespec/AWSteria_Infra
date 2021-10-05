@@ -15,6 +15,8 @@ help:
 	@echo "    $(PARTIAL_BITFILE_TESTAPP_250MHZ)"
 	@echo "  make reconfig_TESTAPP_100MHZ      Load partial bitfile"
 	@echo "    $(PARTIAL_BITFILE_TESTAPP_100MHZ)"
+	@echo "  make reconfig_TESTAPP_25MHZ      Load partial bitfile"
+	@echo "    $(PARTIAL_BITFILE_TESTAPP_25MHZ)"
 	@echo "  make reconfig_RISCV_VIRTIO        Load partial bitfile"
 	@echo "    $(PARTIAL_BITFILE_RISCV_VIRTIO)"
 	@echo "  NOTE: uses 'sudo'"
@@ -29,7 +31,10 @@ PARTIAL_BITFILE_GARNET_EXAMPLE ?= /home/nikhil/git_clones/CTSRD-CHERI_garnet/exa
 PARTIAL_BITFILE_TESTAPP_250MHZ ?= ~/git_clones/CTSRD-CHERI_garnet/example_TestApp/build/AWSteria_pblock_partition_partial.bit
 
 # AWSteria_HW TestApp (with reclocking, running at 100 MHz)
-PARTIAL_BITFILE_TESTAPP_100MHZ ?= ~/git_clones/CTSRD-CHERI_garnet/example_TestApp_reclocked/build/AWSteria_pblock_partition_partial.bit
+PARTIAL_BITFILE_TESTAPP_100MHZ ?= ~/git_clones/CTSRD-CHERI_garnet/example_TestApp_reclocked_100MHz/build/AWSteria_pblock_partition_partial.bit
+
+# AWSteria_HW TestApp (with reclocking, running at 25 MHz)
+PARTIAL_BITFILE_TESTAPP_25MHZ ?= ~/git_clones/CTSRD-CHERI_garnet/example_TestApp_reclocked_25MHz/build/AWSteria_pblock_partition_partial.bit
 
 # ================================================================
 # Programming the bitfile and partial reconfig
@@ -52,6 +57,11 @@ reconfig_TESTAPP_250MHZ:
 reconfig_TESTAPP_100MHZ:
 	@echo "Reconfiguring partition with $(PARTIAL_BITFILE_TESTAPP_100MHZ)"
 	sudo xvsecctl -b $(BUS) -F $(DEVICE_NO) -c $(CAPABILITY_ID) -p $(PARTIAL_BITFILE_TESTAPP_100MHZ)
+
+.PHONY: reconfig_TESTAPP_25MHZ
+reconfig_TESTAPP_25MHZ:
+	@echo "Reconfiguring partition with $(PARTIAL_BITFILE_TESTAPP_25MHZ)"
+	sudo xvsecctl -b $(BUS) -F $(DEVICE_NO) -c $(CAPABILITY_ID) -p $(PARTIAL_BITFILE_TESTAPP_25MHZ)
 
 .PHONY: reconfig_RISCV_VIRTIO
 reconfig_RISCV_VIRTIO:

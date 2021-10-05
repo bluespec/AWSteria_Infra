@@ -34,6 +34,7 @@ SRCS_C = $(AWSTERIA_INFRA_REPO)/TestApp/Host/main.c
 
 SRCS_H += \
 	$(AWSTERIA_INFRA_REPO)/Include_API/AWSteria_Host_lib.h \
+	$(AWSTERIA_INFRA_REPO)/Platform_Sim/Host/AWSteria_Platform.h \
 	$(AWSTERIA_INFRA_REPO)/Platform_Sim/Host/Bytevec.h \
 	$(AWSTERIA_INFRA_REPO)/Platform_Sim/Host/TCP_Client_Lib.h
 
@@ -46,8 +47,9 @@ SRCS_C += \
 
 CFLAGS += -std=gnu11 -g -Wall -Werror
 
-CFLAGS += -I $(AWSTERIA_INFRA_REPO)/Include_API
+CFLAGS += -D SIM_FOR_VCU118
 
+CFLAGS += -I $(AWSTERIA_INFRA_REPO)/Include_API
 CFLAGS += -I $(AWSTERIA_INFRA_REPO)/Platform_Sim/Host
 
 CC     = gcc $(CFLAGS)

@@ -1,6 +1,19 @@
 ###  -*-Makefile-*-
 
 # ================================================================
+
+.PHONY: help
+help:
+	@echo "Usage:"
+	@echo "    make compile       Use bsc to compile for Bluesim"
+	@echo "    make simulator     Use bsc create Bluesim executable"
+	@echo ""
+	@echo "    make clean         Remove build_dir (for intermediate files)."
+	@echo "    make full_clean    Restore to pristine state."
+	@echo ""
+	@echo "  Current bsc compiler flags: $(BSC_COMPILATION_FLAGS)"
+
+# ================================================================
 # Defs
 
 ifndef FLUTE_REPO
@@ -15,7 +28,20 @@ else
   $(info  INFO: AWSTERIA_INFRA_REPO is $(AWSTERIA_INFRA_REPO))
 endif
 
+ifndef BLUESPEC_HOME
+  $(error ERROR: please define BLUESPEC_HOME, i.e., path to bsc installation)
+else
+  $(info  INFO: BLUESPEC_HOME is $(BLUESPEC_HOME))
+endif
+
 PLATFORM_SIM = $(AWSTERIA_INFRA_REPO)/Platform_Sim
+
+#================================================================
+# BSC flags
+
+BSC_COMPILATION_FLAGS += \
+	-D SIM_FOR_VCU118 \
+	-D INCLUDE_DDR_B \
 
 #================================================================
 # BSC_PATH for AWSteria_Infra TestApp

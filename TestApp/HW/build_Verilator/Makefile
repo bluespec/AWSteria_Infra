@@ -1,6 +1,19 @@
 ###  -*-Makefile-*-
 
 # ================================================================
+
+.PHONY: help
+help:
+	@echo "Usage:"
+	@echo "    make compile       Use bsc to compile to RTL"
+	@echo "    make simulator     Use Verilator on RTL to create simulator executable"
+	@echo ""
+	@echo "    make clean         Remove build_dir (for intermediate files)."
+	@echo "    make full_clean    Restore to pristine state."
+	@echo ""
+	@echo "  Current bsc compiler flags: $(BSC_COMPILATION_FLAGS)"
+
+# ================================================================
 # Defs
 
 ifndef FLUTE_REPO
@@ -24,6 +37,13 @@ endif
 PLATFORM_SIM = $(AWSTERIA_INFRA_REPO)/Platform_Sim
 
 #================================================================
+# BSC flags
+
+BSC_COMPILATION_FLAGS += \
+	-D SIM_FOR_VCU118 \
+	-D INCLUDE_DDR_B \
+
+#================================================================
 # BSC_PATH for AWSteria_Infra TestApp
 
 # The Test App
@@ -40,7 +60,7 @@ BSC_PATH := $(BSC_PATH):$(FLUTE_REPO)/src_Testbench/Fabrics/AXI4_Lite
 BSC_PATH := $(BSC_PATH):$(FLUTE_REPO)/src_Testbench/Fabrics/Adapters
 
 #================================================================
-# Verilator search path
+# Verilator search path for additional RTL
 
 VERILATOR_FLAGS := -I$(FLUTE_REPO)/src_bsc_lib_RTL
 

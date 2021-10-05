@@ -7,12 +7,14 @@
 .PHONY: help
 help:
 	@echo "Usage:"
-	@echo "    make compile       Create dir RTL/ and compile/copy"
-	@echo "                           sources to RTL there."
+	@echo "    make compile                       Create dir RTL/ and compile/copy sources to RTL there."
+	@echo "    make for_garnet                    Prepare directory for Garnet flow full speed (250 MHz)"
+	@echo "    make for_garnet_reclocked_100MHz   Prepare directory for Garnet flow reclocked 100 MHz"
+	@echo "    make for_garnet_reclocked_25MHz    Prepare directory for Garnet flow reclocked 25 MHz"
+	@echo ""
 	@echo "    make clean         Remove build_dir (for intermediate files)."
 	@echo "    make full_clean    Restore to pristine state."
 	@echo ""
-	@echo "  The RTL in RTL/ can then be copied to a Garnet example build dir."
 	@echo "  Current DDR compiler flag: $(INCLUDE_DDRS)"
 
 # ================================================================
@@ -36,7 +38,7 @@ else
   $(info  INFO: BLUESPEC_HOME is $(BLUESPEC_HOME))
 endif
 
-#================================================================
+# ================================================================
 # BSC_PATH for Test App
 
 # The Test App
@@ -52,7 +54,7 @@ BSC_PATH := $(BSC_PATH):$(FLUTE_REPO)/src_Testbench/Fabrics/AXI4
 BSC_PATH := $(BSC_PATH):$(FLUTE_REPO)/src_Testbench/Fabrics/AXI4_Lite
 BSC_PATH := $(BSC_PATH):$(FLUTE_REPO)/src_Testbench/Fabrics/Adapters
 
-#================================================================
+# ================================================================
 # Top-level file and module
 
 TOPFILE   = $(AWSTERIA_INFRA_REPO)/TestApp/HW/AWSteria_HW.bsv
@@ -98,13 +100,23 @@ for_garnet:
 	make GARNET_RTL=example_TestApp/src/  copy_bsc_RTL_for_garnet
 	@echo "INFO: garnet example dir is ready: example_TestApp/"
 
-.PHONY: for_garnet_reclocked
-for_garnet_reclocked:
-	@echo "INFO: Creating and populating garnet example dir (reclocked)"
-	cp -p -R $(AWSTERIA_INFRA_REPO)/Platform_VCU118/HW/example_AWSteria_HW_reclocked  ./example_TestApp_reclocked
-	cp -p    RTL/*.v  example_TestApp_reclocked/src/
-	make GARNET_RTL=example_TestApp_reclocked/src/  copy_bsc_RTL_for_garnet
-	@echo "INFO: garnet example (reclocked) dir is ready: example_TestApp_reclocked/"
+.PHONY: for_garnet_reclocked_100MHz
+for_garnet_reclocked_100MHz:
+	@echo "INFO: Creating and populating garnet example dir (reclocked 100 MHz)"
+	cp -p -R $(AWSTERIA_INFRA_REPO)/Platform_VCU118/HW/example_AWSteria_HW_reclocked_100MHz \
+		./example_TestApp_reclocked_100MHz
+	cp -p    RTL/*.v  example_TestApp_reclocked_100MHz/src/
+	make GARNET_RTL=example_TestApp_reclocked_100MHz/src/  copy_bsc_RTL_for_garnet
+	@echo "INFO: garnet example (reclocked 100 MHz) dir is ready: example_TestApp_reclocked_100MHz/"
+
+.PHONY: for_garnet_reclocked_25MHz
+for_garnet_reclocked_25MHz:
+	@echo "INFO: Creating and populating garnet example dir (reclocked 25 MHz)"
+	cp -p -R $(AWSTERIA_INFRA_REPO)/Platform_VCU118/HW/example_AWSteria_HW_reclocked_25MHz \
+		./example_TestApp_reclocked_25MHz
+	cp -p    RTL/*.v  example_TestApp_reclocked_25MHz/src/
+	make GARNET_RTL=example_TestApp_reclocked_25MHz/src/  copy_bsc_RTL_for_garnet
+	@echo "INFO: garnet example (reclocked 25 MHz) dir is ready: example_TestApp_reclocked_25MHz/"
 
 .PHONY: copy_bsc_RTL_for_garnet
 copy_bsc_RTL_for_garnet:

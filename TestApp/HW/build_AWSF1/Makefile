@@ -9,10 +9,11 @@ help:
 	@echo "Usage:"
 	@echo "    make compile       Create dir RTL/ and compile/copy"
 	@echo "                           sources to RTL there."
+	@echo "    make for_AWS1_HDK  Prepare directory for AWS DCP-build flow"
+	@echo ""
 	@echo "    make clean         Remove build_dir (for intermediate files)."
 	@echo "    make full_clean    Restore to pristine state."
 	@echo ""
-	@echo "  The RTL in RTL/ can then be copied to a Garnet example build dir."
 	@echo "  Current DDR compiler flag: $(INCLUDE_DDRS)"
 
 # ================================================================
@@ -36,7 +37,7 @@ else
   $(info  INFO: BLUESPEC_HOME is $(BLUESPEC_HOME))
 endif
 
-#================================================================
+# ================================================================
 # BSC_PATH for Test App
 
 # The Test App
@@ -52,7 +53,7 @@ BSC_PATH := $(BSC_PATH):$(FLUTE_REPO)/src_Testbench/Fabrics/AXI4
 BSC_PATH := $(BSC_PATH):$(FLUTE_REPO)/src_Testbench/Fabrics/AXI4_Lite
 BSC_PATH := $(BSC_PATH):$(FLUTE_REPO)/src_Testbench/Fabrics/Adapters
 
-#================================================================
+# ================================================================
 # Top-level file and module
 
 TOPFILE   = $(AWSTERIA_INFRA_REPO)/TestApp/HW/AWSteria_HW.bsv

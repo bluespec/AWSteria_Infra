@@ -16,7 +16,7 @@ help:
 ifndef AWSTERIA_INFRA_REPO
   $(error ERROR: please define AWSTERIA_INFRA_REPO (path to AWSteria_Infra repo))
 else
-  $(info  INFO: AWSTERIA_INFRA_REPO = $(AWSTERIA_INFO_REPO))
+  $(info  INFO: AWSTERIA_INFRA_REPO = $(AWSTERIA_INFRA_REPO))
 endif
 
 $(info INFO: Making executable $(EXE) for AWSteria TestApp host side on VCU118)
@@ -32,7 +32,8 @@ SRCS_C = $(AWSTERIA_INFRA_REPO)/TestApp/Host/main.c
 # ----------------
 # AWSteria infra
 
-SRCS_H += $(AWSTERIA_INFRA_REPO)/Include_API/AWSteria_Host_lib.h
+SRCS_H += $(AWSTERIA_INFRA_REPO)/Include_API/AWSteria_Host_lib.h \
+	  $(AWSTERIA_INFRA_REPO)/Platform_VCU118/Host/AWSteria_Platform.h
 
 SRCS_C += $(AWSTERIA_INFRA_REPO)/Platform_VCU118/Host/AWSteria_Host_lib.c
 
@@ -40,7 +41,9 @@ SRCS_C += $(AWSTERIA_INFRA_REPO)/Platform_VCU118/Host/AWSteria_Host_lib.c
 
 CFLAGS += -std=gnu11 -g -Wall -Werror
 
-CFLAGS += -I $(AWSTERIA_INFRA_REPO)/Include_API
+CFLAGS += -D PLATFORM_VCU118
+
+CFLAGS += -I $(AWSTERIA_INFRA_REPO)/Include_API  -I $(AWSTERIA_INFRA_REPO)/Platform_VCU118/Host
 
 CC     = gcc $(CFLAGS)
 

@@ -7,7 +7,7 @@ package AWSteria_HW;
 // This package contains the mkAWSteria_HW module with AWSteria_HW_IFC interface.
 
 // In this implementation:
-// it contains an AXI4 fabric (64b addrs, 512b data):
+// it contains an 2xN AXI4 fabric, where N = 1,2,3,4 (64b addrs, 512b data):
 //    S 0: connects to host_AXI4_S
 //    S 1: connects to host_AXI4L_S (via an AXI4-Lite-to-AXI4 adapter)
 //    M 0,1,2,3: Connect to DDRs 0,1,2,3 (A,B,C,D)
@@ -36,7 +36,8 @@ import AXI4_Lite_Types      :: *;
 
 import AXI4L_S_to_AXI4_M_Adapter :: *;
 
-import AWSteria_HW_IFC    :: *;
+import AWSteria_HW_IFC      :: *;
+import AWSteria_HW_Platform :: *;
 
 // ================================================================
 
@@ -67,17 +68,30 @@ endmodule
 // AXI4 and AXI4-Lite to the AXI4 DDRs
 
 // ----------------
-// Address-Decode function to route requests to appropriate server
-//     DDR A addr (server 0): base addr 0x_0_0000_0000
-//     DDR B addr (server 1): base addr 0x_4_0000_0000    (16GB)
-//     DDR C addr (server 2): base addr 0x_8_0000_0000    (32GB)
-//     DDR D addr (server 3): base addr 0x_C_0000_0000    (48GB)
+// Address-Decode function to route requests to appropriate DDR
 
 function Tuple2 #(Bool, Bit #(TLog #(N_DDRs)))  fn_addr_to_ddr_num (Bit #(64) addr);
-   Bit #(TLog #(N_DDRs)) ddr_num = truncate (addr [63:34]);
-   Bit #(TSub #(64, TAdd #(TLog #(N_DDRs), 34))) msbs = truncateLSB (addr);
-   Bool valid = (msbs == 0);
-   return tuple2 (valid, ddr_num);
+   if ((ddr_A_base <= addr) && (addr < ddr_A_lim))
+      return tuple2 (True, 0);
+
+`ifdef INCLUDE_DDR_B
+   else if ((ddr_B_base <= addr) && (addr < ddr_B_lim))
+      return tuple2 (True, 1);
+`endif
+
+`ifdef INCLUDE_DDR_C
+   else if ((ddr_C_base <= addr) && (addr < ddr_C_lim))
+      return tuple2 (True, 2);
+`endif
+
+`ifdef INCLUDE_DDR_D
+   else if ((ddr_D_base <= addr) && (addr < ddr_D_lim))
+      return tuple2 (True, 3);
+`endif
+
+   else
+      return tuple2 (False, 0);
+
 endfunction
 
 // ----------------
