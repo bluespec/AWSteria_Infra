@@ -39,9 +39,10 @@ PLATFORM_SIM = $(AWSTERIA_INFRA_REPO)/Platform_Sim
 #================================================================
 # BSC flags
 
-BSC_COMPILATION_FLAGS += \
-	-D SIM_FOR_VCU118 \
-	-D INCLUDE_DDR_B \
+BSC_COMPILATION_FLAGS += -D SIM_FOR_VCU118
+# BSC_COMPILATION_FLAGS += -D SIM_FOR_AWSF1
+
+BSC_COMPILATION_FLAGS += -D INCLUDE_DDR_B
 
 #================================================================
 # BSC_PATH for AWSteria_Infra TestApp

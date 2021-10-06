@@ -376,6 +376,18 @@ int main (int argc, char *argv [])
 	return 0;
     }
 
+#ifdef SIM_FOR_VCU118
+    fprintf (stdout, "INFO: Simulation built for Platform VCU118 \n");
+#endif
+
+#ifdef SIM_FOR_AWSF1
+    fprintf (stdout, "INFO: Simulation built for Platform AWSF1 \n");
+#endif
+    fprintf (stdout, "    DDR_A_BASE = 0x%16llx  DDR_A_LIM = 0x%16llx\n", DDR_A_BASE, DDR_A_LIM);
+    if (test_DDR_B) 
+    fprintf (stdout, "    DDR_B_BASE = 0x%16llx  DDR_B_LIM = 0x%16llx\n", DDR_B_BASE, DDR_B_LIM);
+    fprintf (stdout, "    OUT_OF_BOUNDS_ADDR                         = 0x%16llx\n", OUT_OF_BOUNDS_ADDR);
+
     // ----------------------------------------------------------------
     // Initialize AWSteria host-side API libs
 
@@ -404,10 +416,6 @@ int main (int argc, char *argv [])
 
     // ----------------------------------------------------------------
     // Tests
-
-    fprintf (stdout, "INFO: DDR_A_BASE         = 0x%0llx\n", DDR_A_BASE);
-    if (test_DDR_B) fprintf (stdout, "INFO: DDR_B_BASE         = 0x%0llx\n", DDR_B_BASE);
-    fprintf (stdout, "INFO: OUT_OF_BOUNDS_ADDR = 0x%0llx\n", OUT_OF_BOUNDS_ADDR);
 
     fprintf (stdout, "\n");
     fprintf (stdout, "Performing tests ...\n");

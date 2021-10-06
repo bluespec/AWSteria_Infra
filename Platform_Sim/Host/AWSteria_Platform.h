@@ -9,6 +9,8 @@
 // ================================================================
 #ifdef SIM_FOR_VCU118
 
+// WARNING: these should be same as in: Platform_VCU118/Host/AWSteria_Platform.h
+
 #define DDR_A_BASE          0x00000000llu
 #define DDR_A_LIM           0x80000000llu
 
@@ -21,6 +23,8 @@
 
 // ================================================================
 #elif defined (SIM_FOR_AWSF1)
+
+// WARNING: these should be same as in: Platform_AWSF1/Host/AWSteria_Platform.h
 
 #define DDR_A_BASE          0x000000000llu
 #define DDR_A_LIM           0x400000000llu

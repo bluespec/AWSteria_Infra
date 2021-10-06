@@ -48,6 +48,7 @@ SRCS_C += \
 CFLAGS += -std=gnu11 -g -Wall -Werror
 
 CFLAGS += -D SIM_FOR_VCU118
+# CFLAGS += -D SIM_FOR_AWSF1
 
 CFLAGS += -I $(AWSTERIA_INFRA_REPO)/Include_API
 CFLAGS += -I $(AWSTERIA_INFRA_REPO)/Platform_Sim/Host
