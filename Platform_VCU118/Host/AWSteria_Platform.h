@@ -8,10 +8,10 @@
 
 // ================================================================
 
-#define DDR_A_BASE          0x00000000llu
-#define DDR_A_LIM           0x80000000llu
+#define DDR_A_BASE           0x00000000llu
+#define DDR_A_LIM            0x80000000llu
 
-#define DDR_B_BASE          0x80000000llu
+#define DDR_B_BASE           0x80000000llu
 #define DDR_B_LIM           0x100000000llu
 
 // ----------------

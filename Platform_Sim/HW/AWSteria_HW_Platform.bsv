@@ -11,11 +11,11 @@ package AWSteria_HW_Platform;
 
 // WARNING: these should be same as in: Platform_VCU118/HW/AWSteria_HW_Platform.bsv
 
-Bit #(64) ddr_A_base = 'h0_0000_0000;
-Bit #(64) ddr_A_lim  = 'h0_8000_0000;
+Bit #(64) ddr_A_base = 'h_0_0000_0000;
+Bit #(64) ddr_A_lim  = 'h_0_8000_0000;
 
-Bit #(64) ddr_B_base = 'h0_8000_0000;
-Bit #(64) ddr_B_lim  = 'h1_0000_0000;
+Bit #(64) ddr_B_base = 'h_0_8000_0000;
+Bit #(64) ddr_B_lim  = 'h_1_0000_0000;
 
 `endif
 
