@@ -561,6 +561,7 @@ int AWSteria_AXI4L_read (void *p_state,
 {
     int  verbosity2 = 0;
     bool did_some_comms;
+    bool ok  = true;
 
     check_state_initialized ();
 
@@ -574,7 +575,8 @@ int AWSteria_AXI4L_read (void *p_state,
     if (verbosity2 != 0)
 	fprintf (stdout, "%s: enqueue AXI4L Rd_Addr %08x\n", __FUNCTION__, rda.araddr);
     while (true) {
-	int status = Bytevec_enqueue_AXI4L_Rd_Addr_a32_u0 (awsteria_host_state.p_bytevec_state, & rda);
+	int status = Bytevec_enqueue_AXI4L_Rd_Addr_a32_u0 (awsteria_host_state.p_bytevec_state,
+							   & rda);
 	if (status == 1) break;
 	usleep (10);
 	did_some_comms = do_comms ();
@@ -585,16 +587,18 @@ int AWSteria_AXI4L_read (void *p_state,
 	if (! did_some_comms)
 	    usleep (1000);
 
-	int status = Bytevec_dequeue_AXI4L_Rd_Data_d32_u0 (awsteria_host_state.p_bytevec_state, & rdd);
+	int status = Bytevec_dequeue_AXI4L_Rd_Data_d32_u0 (awsteria_host_state.p_bytevec_state,
+							   & rdd);
 	if (status == 1) {
 	    *p_data = rdd.rdata;
+	    ok = (ok && (rdd.rresp == 0));    // AXI4L: rresp is OKAY
 	    break;
 	}
     }
     if (verbosity2 != 0)
 	fprintf (stdout, "%s: rresp %0d, rdata %08x\n",
 		 __FUNCTION__, rdd.rresp, rdd.rdata);
-    return 0;
+    return (! ok);
 }
 
 // ================================================================
@@ -605,6 +609,7 @@ int AWSteria_AXI4L_write (void *p_state,
 {
     int  verbosity2 = 0;
     bool did_some_comms;
+    bool ok  = true;
 
     check_state_initialized ();
 
@@ -638,11 +643,15 @@ int AWSteria_AXI4L_write (void *p_state,
 	    usleep (10);
 
 	int status = Bytevec_dequeue_AXI4L_Wr_Resp_u0 (awsteria_host_state.p_bytevec_state, & wrr);
-	if (status == 1) break;
+	if (status == 1) {
+	    ok = (ok && (wrr.bresp == 0));    // AXI4L: bresp is OKAY
+	    break;
+	}
     }
     if (verbosity2 != 0)
 	fprintf (stdout, "%s: bresp = %0d\n", __FUNCTION__, wrr.bresp);
-    return 0;
+
+    return (! ok);
 }
 
 // ================================================================
