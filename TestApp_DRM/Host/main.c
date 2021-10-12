@@ -344,7 +344,7 @@ int main (int argc, char *argv [])
     wdata = (0x11000000 | (word0_IP_off & 0x00FFFFFF));
     buf_read_AXI4L (p_rdata, drm_addr_min, p_wdata);
 
-    fprintf (stdout, "---------------- Test read from DRM, out-of-bounds addr 0x%0x\n", drm_addr_max + 1);
+    fprintf (stdout, "---------------- Test illegal read from DRM, out-of-bounds addr 0x%0x\n", drm_addr_max + 1);
     wdata = 0x11111111;
     buf_read_AXI4L (p_rdata, drm_addr_max+1, p_wdata);
 

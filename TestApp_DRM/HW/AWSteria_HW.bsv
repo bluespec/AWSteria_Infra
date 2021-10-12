@@ -28,10 +28,11 @@ package AWSteria_HW;
 //   |     +=Switch=+     |                                        |
 //   |     |      AXI4L_M-+                                        |
 // AXI4L_S-+ 1x2    |                                              |
-//   |     |      AXI4L_M-+                    to app              |
-//   |     +========+     |                      ^                 |
-//   |                    |   +====DRM======+    |                 |
-//   |                    +-AXI4L_S       Clock--+                 |
+//   |     |      AXI4L_M-+                             to app     |
+//   |     +========+     |                              ^  ^      |
+//   |                    |   +====DRM======+            |  |      |
+//   |                    +-AXI4L_S       clock_for_app--+  |      |
+//   |                        |           ip_enable---------+      |
 //   |                        +=============+                      |
 //   +=============================================================+
 
@@ -182,7 +183,7 @@ endmodule
 
 interface DRM_IFC;
    interface AXI4_Lite_Slave_IFC #(32, 32, 0) axi4L_S;
-   method    Bool                             clock_enable;
+   method    Bool                             ip_enable;
    interface Clock                            clock_for_app;
 endinterface
 
@@ -254,7 +255,7 @@ module mkDRM (DRM_IFC);
    // INTERFACE
 
    interface axi4L_S       = axi4L_S_xactor.axi_side;
-   method    clock_enable  = (rg_data [0] == 1);
+   method    ip_enable     = (rg_data [0] == 1);
    interface clock_for_app = noClock;    // gated_clock.new_clk;
 endmodule
 
