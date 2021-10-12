@@ -33,7 +33,12 @@ static char AXI4L_devname[]  = "/dev/xdma0_user";
 
 #define RW_MAX_SIZE  0x7ffff000
 
-#define MAP_SIZE     (32*1024UL)
+// Size for mmap of AXI4-Lite space
+// #define MAP_SIZE     (32*1024UL)
+
+// mmap returns EINVAL for MAP_SIZE > 0x_400_0000    (64 MB)
+// on a Debian x86_64 machine
+#define MAP_SIZE     0x2000000llu    // 32 MB
 
 typedef struct {
     // For AXI4
@@ -246,9 +251,18 @@ int AWSteria_AXI4_read (void *opaque,
 // These are used to communicate with the host-facing AXI4-Lite port on the HW.
 // Return 0 if transfer was ok, non-zero if transfer had error.
 
+// ----------------
+// AXI4-Lite writes
+
 int AWSteria_AXI4L_write (void *opaque, uint64_t addr, uint32_t data)
 {
     assert (opaque != NULL);
+
+    if (addr >= MAP_SIZE) {
+	fprintf (stdout, "ERROR: %s: addr %0lx beyond MAP_SIZE %0llx (data %0x)\n",
+		 __FUNCTION__, addr, MAP_SIZE, data);
+	return 1;
+    }
 
     AWSteria_Host_State *p_state = opaque;
 
@@ -263,10 +277,19 @@ int AWSteria_AXI4L_write (void *opaque, uint64_t addr, uint32_t data)
     return 0;
 }
 
+// ----------------
+// AXI4-Lite reads
+
 int AWSteria_AXI4L_read (void *opaque, uint64_t addr, uint32_t *p_data)
 {
     assert (opaque != NULL);
     assert (p_data != NULL);
+
+    if (addr >= MAP_SIZE) {
+	fprintf (stdout, "ERROR: %s: addr %0lx beyond MAP_SIZE %0llx\n",
+		 __FUNCTION__, addr, MAP_SIZE);
+	return 1;
+    }
 
     AWSteria_Host_State *p_state = opaque;
 
