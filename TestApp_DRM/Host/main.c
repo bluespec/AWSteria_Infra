@@ -283,11 +283,11 @@ int main (int argc, char *argv [])
     uint32_t rdata;
     uint8_t *p_rdata = ((uint8_t *) (& rdata));
 
-    uint32_t drm_addr_min     = 0x00000000;
-    uint32_t drm_addr_max     = 0x0000FFFF;
+    uint32_t adapter_addr_min = 0x00000000;    // 0
+    uint32_t adapter_addr_max = 0x000FFFFF;    // 1MB
 
-    uint32_t adapter_addr_min = 0x80000000;
-    uint32_t adapter_addr_max = 0xFFFFFFFF;
+    uint32_t drm_addr_min     = 0x00100000;    // 1MB
+    uint32_t drm_addr_max     = 0x00103FFF;    // 1MB + 16KB
 
     fprintf (stdout, "---------------- Test write to DRM [0], enabling IP (lsb 1)\n");
     wdata = word0_IP_on;
@@ -360,7 +360,7 @@ int main (int argc, char *argv [])
     buf_read_AXI4L (p_rdata, adapter_addr_min, p_wdata);
 
     fprintf (stdout, "---------------- Test write to Mem via AXI4L\n");
-    wdata = 0xCAFEDAD9;
+    wdata = 0xDADABABA;
     buf_write_AXI4L (p_wdata, adapter_addr_max - 3);
 
     fprintf (stdout, "---------------- Test read from Mem via AXI4L\n");
