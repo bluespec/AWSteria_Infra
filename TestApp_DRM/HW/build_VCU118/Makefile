@@ -57,7 +57,7 @@ BSC_PATH := $(BSC_PATH):$(FLUTE_REPO)/src_Testbench/Fabrics/Adapters
 # ================================================================
 # Top-level file and module
 
-TOPFILE   = $(AWSTERIA_INFRA_REPO)/TestApp/HW/AWSteria_HW.bsv
+TOPFILE   = $(AWSTERIA_INFRA_REPO)/TestApp_DRM/HW/AWSteria_HW.bsv
 TOPMODULE = mkAWSteria_HW
 
 # ================================================================
@@ -123,6 +123,7 @@ copy_bsc_RTL_for_garnet:
 	@echo "Copying RTL from BLUESPEC_HOME = $(BLUESPEC_HOME)"
 	cp -p  $(BLUESPEC_HOME)/lib/Verilog/FIFO2.v        $(GARNET_RTL)
 	cp -p  $(BLUESPEC_HOME)/lib/Verilog/SizedFIFO.v    $(GARNET_RTL)
+	cp -p  $(BLUESPEC_HOME)/lib/Verilog/SizedFIFO0.v    $(GARNET_RTL)
 
 # ================================================================
 
