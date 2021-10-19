@@ -19,15 +19,15 @@ help:
 # Partial-reconfig bitfiles
 
 # AWSteria_HW TestApp_DRM (no reclocking, running at 250 MHz)
-PARTIAL_BITFILE_TESTAPP_DRM_250MHZ ?= ~/git_clones/CTSRD-CHERI_garnet/example_TestApp_DRM/build/AWSteria_pblock_partition_partial.bit
+PARTIAL_BITFILE_TESTAPP_DRM_250MHZ ?= ~/garnet/example_TestApp_DRM_2/build/AWSteria_pblock_partition_partial.bit
 
 # AWSteria_HW TestApp_DRM (with reclocking, running at 100 MHz)
-PARTIAL_BITFILE_TESTAPP_DRM_100MHZ ?= ~/git_clones/CTSRD-CHERI_garnet/example_TestApp_DRM_100MHz/build/AWSteria_pblock_partition_partial.bit
+PARTIAL_BITFILE_TESTAPP_DRM_100MHZ ?= ~/garnet/example_TestApp_DRM_100MHz/build/AWSteria_pblock_partition_partial.bit
 
 # ================================================================
 # Programming the bitfile and partial reconfig
 
-BUS           = 0x07
+BUS           = 0x06
 DEVICE_NO     = 0x0
 CAPABILITY_ID = 0x1
 
