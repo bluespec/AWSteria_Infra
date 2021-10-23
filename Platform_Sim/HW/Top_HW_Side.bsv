@@ -65,24 +65,22 @@ module mkTop_HW_Side (Empty) ;
    // Models for the four DDRs,
    // and their connection to awsteria_hw.
 
-   // DDR A (cached mem access, incl. bursts)
+`ifdef INCLUDE_DDR_A
    AXI4_16_64_512_0_Slave_IFC  ddr_A <- mkDDR_A_Model;
    mkConnection (awsteria_hw.ddr_A_M, ddr_A);
+`endif
 
 `ifdef INCLUDE_DDR_B
-   // DDR B (uncached mem access, no bursts)
    AXI4_16_64_512_0_Slave_IFC  ddr_B <- mkDDR_B_Model;
    mkConnection (awsteria_hw.ddr_B_M, ddr_B);
 `endif
 
 `ifdef INCLUDE_DDR_C
-   // DDR C (tie-off: unused for now)
    AXI4_16_64_512_0_Slave_IFC  ddr_C <- mkDDR_C_Model;
    mkConnection (awsteria_hw.ddr_C_M, ddr_C);
 `endif
 
 `ifdef INCLUDE_DDR_D
-   // DDR D (tie-off: unused for now)
    AXI4_16_64_512_0_Slave_IFC  ddr_D <- mkDDR_D_Model;
    mkConnection (awsteria_hw.ddr_D_M, ddr_D);
 `endif

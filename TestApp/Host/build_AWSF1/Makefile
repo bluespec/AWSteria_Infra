@@ -39,8 +39,8 @@ SRCS_C = $(AWSTERIA_INFRA_REPO)/TestApp/Host/main.c
 # ----------------
 # AWSteria infra
 
-SRCS_H += $(AWSTERIA_INFRA_REPO)/Include_API/AWSteria_Host_lib.h \
-	  $(AWSTERIA_INFRA_REPO)/Platform_AWSF1/Host/AWSteria_Platform.h
+SRCS_H += $(AWSTERIA_INFRA_REPO)/Include_API/AWSteria_Host_lib.h
+SRCS_H += $(AWSTERIA_INFRA_REPO)/Platform_AWSF1/Host/AWSteria_Platform.h
 
 SRCS_C += $(AWSTERIA_INFRA_REPO)/Platform_AWSF1/Host/AWSteria_Host_lib.c
 

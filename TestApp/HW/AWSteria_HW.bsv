@@ -154,35 +154,31 @@ module mkAWSteria_HW #(Clock b_CLK, Reset b_RST_N)
    mkConnection (adapter_AXI4L_S_to_AXI4_M.ifc_AXI4_M,
 		 fabric.v_from_masters [1]);
 
-   // Tie off DDR B if not included
-`ifndef INCLUDE_DDR_B
+   // Tie-off for unused DDR ports, if any
    AXI4_Slave_IFC #(16,64,512,0) dummy_ddr_S = dummy_AXI4_Slave_ifc;
-
-   mkConnection (fabric.v_to_slaves [1], dummy_ddr_S);
-`endif
 
    // ================================================================
    // INTERFACE
-
-   AXI4_16_64_512_0_M_IFC dummy_ddr_master = dummy_AXI4_Master_ifc;
 
    // Facing Host
    interface AXI4_Slave_IFC      host_AXI4_S  = fabric.v_from_masters [0];
    interface AXI4_Lite_Slave_IFC host_AXI4L_S = adapter_AXI4L_S_to_AXI4_M.ifc_AXI4L_S;
 
    // Facing DDR
+`ifdef INCLUDE_DDR_B
    interface AXI4_Master_IFC ddr_A_M = fabric.v_to_slaves [0];
+`endif
 
 `ifdef INCLUDE_DDR_B
    interface AXI4_Master_IFC ddr_B_M = fabric.v_to_slaves [1];
 `endif
 
 `ifdef INCLUDE_DDR_C
-   interface AXI4_Master_IFC ddr_C_M = dummy_ddr_master;
+   interface AXI4_Master_IFC ddr_C_M = fabric.v_to_slaves [2];
 `endif
 
 `ifdef INCLUDE_DDR_D
-   interface AXI4_Master_IFC ddr_D_M = dummy_ddr_master;
+   interface AXI4_Master_IFC ddr_D_M = fabric.v_to_slaves [3];
 `endif
 
    // ================

@@ -62,8 +62,11 @@ TOPMODULE = mkAWSteria_HW
 # ================================================================
 # bsc compilation flags
 
-# Depending on platform, can also add DDR C and D
+# AWSF1 has DDR A, B, C and D
+INCLUDE_DDRS += -D INCLUDE_DDR_A
 INCLUDE_DDRS += -D INCLUDE_DDR_B
+INCLUDE_DDRS += -D INCLUDE_DDR_C
+INCLUDE_DDRS += -D INCLUDE_DDR_D
 
 BSC_COMPILATION_FLAGS += $(INCLUDE_DDRS) \
 	-keep-fires -aggressive-conditions -no-warn-action-shadowing \

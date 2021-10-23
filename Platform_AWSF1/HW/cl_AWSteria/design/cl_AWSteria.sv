@@ -452,22 +452,6 @@ module cl_AWSteria #(parameter NUM_DDR=4)
    assign  v_ddr4_axi4_wid [2] = 16'b0;    // DDR D
 
    // ================================================================
-   // Tie-off AXI4 for unused DDR C
-   assign cl_sh_ddr_awvalid = 1'b0;
-   assign cl_sh_ddr_wvalid  = 1'b0;
-   assign cl_sh_ddr_arvalid = 1'b0;
-   assign cl_sh_ddr_bready  = 1'b0;
-   assign cl_sh_ddr_rready  = 1'b0;
-
-   // ================================================================
-   // Tie-off AXI4 for Unused DDR D
-   assign v_ddr4_axi4_awvalid [2] = 1'b0;
-   assign v_ddr4_axi4_wvalid [2]  = 1'b0;
-   assign v_ddr4_axi4_arvalid [2] = 1'b0;
-   assign v_ddr4_axi4_bready [2]  = 1'b0;
-   assign v_ddr4_axi4_rready [2]  = 1'b0;
-
-   // ================================================================
    // mkAWSteria_HW instantiation
 
    (* dont_touch = "true" *)
@@ -649,6 +633,98 @@ module cl_AWSteria #(parameter NUM_DDR=4)
 		  .ddr_B_M_rresp    (v_ddr4_axi4_rresp [1]),
 		  .ddr_B_M_rlast    (v_ddr4_axi4_rlast [1]),
 		  .ddr_B_M_rready   (v_ddr4_axi4_rready [1]),
+
+		  // ----------------
+		  // DDR C
+		  .ddr_C_M_awvalid  (cl_sh_ddr_awvalid),
+		  .ddr_C_M_awid     (cl_sh_ddr_awid),
+		  .ddr_C_M_awaddr   (cl_sh_ddr_awaddr),
+		  .ddr_C_M_awlen    (cl_sh_ddr_awlen),
+		  .ddr_C_M_awsize   (cl_sh_ddr_awsize),
+		  .ddr_C_M_awburst  (),    // Unused; we drive 2'b01 (INCR) into sh_ddr
+		  .ddr_C_M_awlock   (),    // Unused
+		  .ddr_C_M_awcache  (),    // Unused
+		  .ddr_C_M_awprot   (),    // Unused
+		  .ddr_C_M_awqos    (),    // Unused
+		  .ddr_C_M_awregion (),    // Unused
+		  .ddr_C_M_awready  (cl_sh_ddr_awready),
+
+		  .ddr_C_M_wvalid   (cl_sh_ddr_wvalid),
+		  .ddr_C_M_wdata    (cl_sh_ddr_wdata),
+		  .ddr_C_M_wstrb    (cl_sh_ddr_wstrb),
+		  .ddr_C_M_wlast    (cl_sh_ddr_wlast),
+		  .ddr_C_M_wready   (cl_sh_ddr_wready),
+
+		  .ddr_C_M_bvalid   (cl_sh_ddr_bvalid),
+		  .ddr_C_M_bid      (cl_sh_ddr_bid),
+		  .ddr_C_M_bresp    (cl_sh_ddr_bresp),
+		  .ddr_C_M_bready   (cl_sh_ddr_bready),
+
+		  .ddr_C_M_arvalid  (cl_sh_ddr_arvalid),
+		  .ddr_C_M_arid     (cl_sh_ddr_arid),
+		  .ddr_C_M_araddr   (cl_sh_ddr_araddr),
+		  .ddr_C_M_arlen    (cl_sh_ddr_arlen),
+		  .ddr_C_M_arsize   (cl_sh_ddr_arsize),
+		  .ddr_C_M_arburst  (),    // unused; we drive 2'b01 (INCR) into sh_ddr
+		  .ddr_C_M_arlock   (),    // Unused
+		  .ddr_C_M_arcache  (),    // Unused
+		  .ddr_C_M_arprot   (),    // Unused
+		  .ddr_C_M_arqos    (),    // Unused
+		  .ddr_C_M_arregion (),    // Unused
+		  .ddr_C_M_arready  (cl_sh_ddr_arready),
+
+		  .ddr_C_M_rvalid   (cl_sh_ddr_rvalid),
+		  .ddr_C_M_rid      (cl_sh_ddr_rid),
+		  .ddr_C_M_rdata    (cl_sh_ddr_rdata),
+		  .ddr_C_M_rresp    (cl_sh_ddr_rresp),
+		  .ddr_C_M_rlast    (cl_sh_ddr_rlast),
+		  .ddr_C_M_rready   (cl_sh_ddr_rready),
+
+		  // ----------------
+		  // DDR D
+		  .ddr_D_M_awvalid  (v_ddr4_axi4_awvalid [2]),
+		  .ddr_D_M_awid     (v_ddr4_axi4_awid [2]),
+		  .ddr_D_M_awaddr   (v_ddr4_axi4_awaddr [2]),
+		  .ddr_D_M_awlen    (v_ddr4_axi4_awlen [2]),
+		  .ddr_D_M_awsize   (v_ddr4_axi4_awsize [2]),
+		  .ddr_D_M_awburst  (),    // Unused; we drive 2'b01 (INCR) into sh_ddr
+		  .ddr_D_M_awlock   (),    // Unused
+		  .ddr_D_M_awcache  (),    // Unused
+		  .ddr_D_M_awprot   (),    // Unused
+		  .ddr_D_M_awqos    (),    // Unused
+		  .ddr_D_M_awregion (),    // Unused
+		  .ddr_D_M_awready  (v_ddr4_axi4_awready [2]),
+
+		  .ddr_D_M_wvalid   (v_ddr4_axi4_wvalid [2]),
+		  .ddr_D_M_wdata    (v_ddr4_axi4_wdata [2]),
+		  .ddr_D_M_wstrb    (v_ddr4_axi4_wstrb [2]),
+		  .ddr_D_M_wlast    (v_ddr4_axi4_wlast [2]),
+		  .ddr_D_M_wready   (v_ddr4_axi4_wready [2]),
+
+		  .ddr_D_M_bvalid   (v_ddr4_axi4_bvalid [2]),
+		  .ddr_D_M_bid      (v_ddr4_axi4_bid [2]),
+		  .ddr_D_M_bresp    (v_ddr4_axi4_bresp [2]),
+		  .ddr_D_M_bready   (v_ddr4_axi4_bready [2]),
+
+		  .ddr_D_M_arvalid  (v_ddr4_axi4_arvalid [2]),
+		  .ddr_D_M_arid     (v_ddr4_axi4_arid [2]),
+		  .ddr_D_M_araddr   (v_ddr4_axi4_araddr [2]),
+		  .ddr_D_M_arlen    (v_ddr4_axi4_arlen [2]),
+		  .ddr_D_M_arsize   (v_ddr4_axi4_arsize [2]),
+		  .ddr_D_M_arburst  (),    // unused; we drive 2'b01 (INCR) into sh_ddr
+		  .ddr_D_M_arlock   (),    // Unused
+		  .ddr_D_M_arcache  (),    // Unused
+		  .ddr_D_M_arprot   (),    // Unused
+		  .ddr_D_M_arqos    (),    // Unused
+		  .ddr_D_M_arregion (),    // Unused
+		  .ddr_D_M_arready  (v_ddr4_axi4_arready [2]),
+
+		  .ddr_D_M_rvalid   (v_ddr4_axi4_rvalid [2]),
+		  .ddr_D_M_rid      (v_ddr4_axi4_rid [2]),
+		  .ddr_D_M_rdata    (v_ddr4_axi4_rdata [2]),
+		  .ddr_D_M_rresp    (v_ddr4_axi4_rresp [2]),
+		  .ddr_D_M_rlast    (v_ddr4_axi4_rlast [2]),
+		  .ddr_D_M_rready   (v_ddr4_axi4_rready [2]),
 
 		  // ----------------
 		  // Misc signals

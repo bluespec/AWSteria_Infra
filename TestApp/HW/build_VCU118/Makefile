@@ -63,7 +63,8 @@ TOPMODULE = mkAWSteria_HW
 # ================================================================
 # bsc compilation flags
 
-# Depending on platform, can also add DDR C and D
+# VCU118 has DDR A and DDR B
+INCLUDE_DDRS += -D INCLUDE_DDR_A
 INCLUDE_DDRS += -D INCLUDE_DDR_B
 
 BSC_COMPILATION_FLAGS += $(INCLUDE_DDRS) \

@@ -10,6 +10,7 @@ help:
 	@echo "    make $(EXE)        create the host-side executable"
 	@echo "    make clean         delete temporary files/dirs but keep the executable"
 	@echo "    make full_clean    delete temporary files/dirs and delete the executable"
+	@echo "  Please define TARGET=VCU118 or TARGET=AWSF1 for proper DDR setup"
 
 #================================================================
 
@@ -19,7 +20,10 @@ else
   $(info  INFO: AWSTERIA_INFRA_REPO = $(AWSTERIA_INFRA_REPO))
 endif
 
-$(info INFO: Making executable $(EXE) for AWSteria TestApp host side for Bluesim/Verilator sim)
+$(info INFO: Making executable for AWSteria TestApp host side for Bluesim/Verilator sim)
+
+# Default target
+TARGET = VCU118
 
 # ================================================================
 # Source files
@@ -47,8 +51,13 @@ SRCS_C += \
 
 CFLAGS += -std=gnu11 -g -Wall -Werror
 
-CFLAGS += -D SIM_FOR_VCU118
-# CFLAGS += -D SIM_FOR_AWSF1
+ifeq ($(TARGET),VCU118)
+  CFLAGS += -D SIM_FOR_VCU118
+else ifeq ($(TARGET),AWSF1)
+  CFLAGS += -D SIM_FOR_AWSF1
+else
+  $(error ERROR: please define TARGET=VCU118 or TARGET=AWSF1 for proper DDR setup)
+endif
 
 CFLAGS += -I $(AWSTERIA_INFRA_REPO)/Include_API
 CFLAGS += -I $(AWSTERIA_INFRA_REPO)/Platform_Sim/Host
