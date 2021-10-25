@@ -23,38 +23,6 @@
 #include "AWSteria_Host_lib.h"
 
 // ================================================================
-// A constant for the size of each of the 4 AWSteria DDRs
-
-#ifndef DDR_A_BASE
-#error DDR_A_BASE is undefined; please define it.
-#endif
-
-#ifndef DDR_B_BASE
-#error DDR_B_BASE is undefined; please define it.
-#endif
-
-#ifndef OUT_OF_BOUNDS_ADDR
-#error OUT_OF_BOUNDS_ADDR is undefined; please define it.
-#endif
-
-
-// ================================================================
-// On AWS F1, FPGA Developer AMI (CentOS 7), gcc  does not seem to
-// define getentropy(), so we define it here.
-
-#ifdef PLATFORM_AWSF1
-#include <sys/syscall.h>
-
-int getentropy (void *buf, size_t buflen) {
-    if (buflen > 256) return -1;
-
-    unsigned int flags = 0;
-    int n = syscall (SYS_getrandom, buf, buflen, flags);
-    return ((n == buflen) ? 0 : -1);
-}
-#endif
-
-// ================================================================
 
 int verbosity_AXI4_R = 0;
 int verbosity_AXI4_W = 0;
@@ -74,7 +42,9 @@ uint64_t AXI4_write_bytes = 0;
 uint64_t n_AXI4L_writes = 0;
 uint64_t n_AXI4L_reads  = 0;
 
-uint64_t num_ERRORS  = 0;
+uint64_t num_ERRORS          = 0;
+uint64_t num_expected_ERRORS = 0;
+uint64_t num_ERRORS_save;
 
 // ================================================================
 // Write to FPGA DDR4 using HW-side AXI4 port
@@ -236,8 +206,6 @@ void print_help (int argc, char *argv [])
 
 // ----------------
 
-bool test_DDR_B = true;
-
 int main (int argc, char *argv [])
 {
     int rc;
@@ -248,18 +216,6 @@ int main (int argc, char *argv [])
 	print_help (argc, argv);
 	return 0;
     }
-
-#ifdef SIM_FOR_VCU118
-    fprintf (stdout, "INFO: Simulation built for Platform VCU118 \n");
-#endif
-
-#ifdef SIM_FOR_AWSF1
-    fprintf (stdout, "INFO: Simulation built for Platform AWSF1 \n");
-#endif
-    fprintf (stdout, "    DDR_A_BASE = 0x%16llx  DDR_A_LIM = 0x%16llx\n", DDR_A_BASE, DDR_A_LIM);
-    if (test_DDR_B) 
-    fprintf (stdout, "    DDR_B_BASE = 0x%16llx  DDR_B_LIM = 0x%16llx\n", DDR_B_BASE, DDR_B_LIM);
-    fprintf (stdout, "    OUT_OF_BOUNDS_ADDR                         = 0x%16llx\n", OUT_OF_BOUNDS_ADDR);
 
     // ----------------------------------------------------------------
     // Initialize AWSteria host-side API libs
@@ -274,9 +230,8 @@ int main (int argc, char *argv [])
     fprintf (stdout, "\n");
     fprintf (stdout, "Performing tests ...\n");
 
-    const uint32_t word0_IP_on  = 0xDACAFE99;
-    const uint32_t word0_IP_off = 0xABCDEF40;
-    const uint32_t word1        = 0x32107654;
+    const uint32_t word_IP_on  = 0xDACAFE99;
+    const uint32_t word_IP_off = 0xABCDEF40;
 
     uint32_t wdata;
     uint8_t *p_wdata = ((uint8_t *) (& wdata));
@@ -289,81 +244,93 @@ int main (int argc, char *argv [])
     uint32_t drm_addr_min     = 0x00100000;    // 1MB
     uint32_t drm_addr_max     = 0x00103FFF;    // 1MB + 16KB
 
-    fprintf (stdout, "---------------- Test write to DRM [0], enabling IP (lsb 1)\n");
-    wdata = word0_IP_on;
+    fprintf (stdout, "---- Test write to DRM [0], enabling IP (lsb 1)\n");
+    wdata = word_IP_on;
     buf_write_AXI4L (p_wdata, drm_addr_min);
 
-    fprintf (stdout, "---------------- Test read from DRM [0]\n");
-    wdata = word0_IP_on;
+    fprintf (stdout, "---- Test read from DRM [0]\n");
     buf_read_AXI4L (p_rdata, drm_addr_min, p_wdata);
 
-    fprintf (stdout, "---------------- Test write to DRM [4]\n");
-    wdata = word1;
+
+    fprintf (stdout, "---- Test write to DRM [0], disabling IP (lsb 0)\n");
+    wdata = word_IP_off;
+    buf_write_AXI4L (p_wdata, drm_addr_min);
+
+    fprintf (stdout, "---- Test read from DRM [0]\n");
+    buf_read_AXI4L (p_rdata, drm_addr_min, p_wdata);
+
+
+    fprintf (stdout, "---- Test write to DRM [4]\n");
+    wdata = word_IP_on;
     buf_write_AXI4L (p_wdata, drm_addr_min + 4);
 
-    fprintf (stdout, "---------------- Test read from DRM [4]\n");
-    wdata = word1;
+    fprintf (stdout, "---- Test read from DRM [4]\n");
     buf_read_AXI4L (p_rdata, drm_addr_min + 4, p_wdata);
-
-    fprintf (stdout, "---------------- Test write to DRM [0], disabling IP (lsb 0)\n");
-    wdata = word0_IP_off;
-    buf_write_AXI4L (p_wdata, drm_addr_min);
-
-    fprintf (stdout, "---------------- Test read from DRM [0]\n");
-    buf_read_AXI4L (p_rdata, drm_addr_min, p_wdata);
 
     // ----------------
     // Test unaligned read/write to DRM
 
     fprintf (stdout, "================================================================\n");
-    fprintf (stdout, "---------------- Test unaligned write to DRM [3]\n");
+    fprintf (stdout, "---- Test unaligned write to DRM [3] (expect error)\n");
     wdata = 0x11111111;
+    num_ERRORS_save = num_ERRORS;
     buf_write_AXI4L (p_wdata, drm_addr_min + 3);
+    num_expected_ERRORS += num_ERRORS - num_ERRORS_save;
+    num_ERRORS = num_ERRORS_save;
 
-    fprintf (stdout, "---------------- Test read from DRM [0]\n");
-    wdata = (0x11000000 | (word0_IP_off & 0x00FFFFFF));
+    // Readback aligned word containing DRM [3]; should not have changed
+    fprintf (stdout, "---- Test read from DRM [0]\n");
+    wdata = word_IP_on;    // last-written word
     buf_read_AXI4L (p_rdata, drm_addr_min, p_wdata);
 
-    fprintf (stdout, "---------------- Test read from DRM [1]\n");
-    wdata = ((word1 & 0xFF000000) | 0x111111);
-    buf_read_AXI4L (p_rdata, drm_addr_min + 4, p_wdata);
-
-    fprintf (stdout, "---------------- Test unaligned read from DRM [3]\n");
+    fprintf (stdout, "---- Test unaligned read from DRM [3] (expect error)\n");
     wdata = 0x11111111;
+    num_ERRORS_save = num_ERRORS;
     buf_read_AXI4L (p_rdata, drm_addr_min + 3, p_wdata);
+    num_expected_ERRORS += num_ERRORS - num_ERRORS_save;
+    num_ERRORS = num_ERRORS_save;
 
     // ----------------
     // Test illegal read/write to DRM using out-of-bounds addrs
 
     fprintf (stdout, "================================================================\n");
-    fprintf (stdout, "---------------- Test illegal write to DRM, out-of-bounds addr 0x%0x\n", drm_addr_max + 1);
+    fprintf (stdout, "---- Test illegal write to DRM, out-of-bounds addr 0x%0x (expect err)\n",
+	     drm_addr_max + 1);
     wdata = 0x11111111;
+    num_ERRORS_save = num_ERRORS;
     buf_write_AXI4L (p_wdata, drm_addr_max+1);
+    num_expected_ERRORS += num_ERRORS - num_ERRORS_save;
+    num_ERRORS = num_ERRORS_save;
 
-    fprintf (stdout, "---------------- Test legal read from DRM (should not have changed)\n");
-    wdata = (0x11000000 | (word0_IP_off & 0x00FFFFFF));
+    fprintf (stdout, "---- Test legal read from DRM (should not have changed)\n");
+    wdata = word_IP_on;    // last-written word
     buf_read_AXI4L (p_rdata, drm_addr_min, p_wdata);
 
-    fprintf (stdout, "---------------- Test illegal read from DRM, out-of-bounds addr 0x%0x\n", drm_addr_max + 1);
+    fprintf (stdout, "---- Test illegal read from DRM, out-of-bounds addr 0x%0x (expect err)\n",
+	     drm_addr_max + 1);
     wdata = 0x11111111;
+    num_ERRORS_save = num_ERRORS;
     buf_read_AXI4L (p_rdata, drm_addr_max+1, p_wdata);
+    num_expected_ERRORS += num_ERRORS - num_ERRORS_save;
+    num_ERRORS = num_ERRORS_save;
 
     // ----------------
     // Test read/writes to DDR via AXI4-Lite
+    // Assumes adapter_addr_min and adapter_addr_max are legitimate DDR addrs
 
     fprintf (stdout, "================================================================\n");
-    fprintf (stdout, "---------------- Test write to Mem via AXI4L\n");
+    fprintf (stdout, "---- Test write to Mem via AXI4L\n");
     wdata = 0xCAFEDAD7;
     buf_write_AXI4L (p_wdata, adapter_addr_min);
 
-    fprintf (stdout, "---------------- Test read from Mem via AXI4L\n");
+    fprintf (stdout, "---- Test read from Mem via AXI4L\n");
     buf_read_AXI4L (p_rdata, adapter_addr_min, p_wdata);
 
-    fprintf (stdout, "---------------- Test write to Mem via AXI4L\n");
+    fprintf (stdout, "---- Test write to Mem via AXI4L\n");
     wdata = 0xDADABABA;
     buf_write_AXI4L (p_wdata, adapter_addr_max - 3);
 
-    fprintf (stdout, "---------------- Test read from Mem via AXI4L\n");
+    fprintf (stdout, "---- Test read from Mem via AXI4L\n");
     buf_read_AXI4L (p_rdata, adapter_addr_max - 3, p_wdata);
 
     // ----------------------------------------------------------------
@@ -372,6 +339,7 @@ int main (int argc, char *argv [])
     fprintf (stdout, "\n");
     fprintf (stdout, "END OF TESTS; TEST STATS ----------------\n");
     fprintf (stdout, "num_ERRORS = %0ld\n", num_ERRORS);
+    fprintf (stdout, "num_expected_ERRORS = %0ld\n", num_expected_ERRORS);
     fprintf (stdout, "n_AXI4_reads  = %0ld, AXI4_read_bytes  = %0ld\n",
 	     n_AXI4_reads, AXI4_read_bytes);
 

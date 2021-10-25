@@ -38,7 +38,7 @@ endif
 PLATFORM_SIM = $(AWSTERIA_INFRA_REPO)/Platform_Sim
 
 # Default target
-TARGET = VCU118
+TARGET ?= VCU118
 
 #================================================================
 # BSC flags
@@ -57,7 +57,7 @@ else ifeq ($(TARGET),AWSF1)
   BSC_COMPILATION_FLAGS += -D INCLUDE_DDR_B
   BSC_COMPILATION_FLAGS += -D INCLUDE_DDR_C
   BSC_COMPILATION_FLAGS += -D INCLUDE_DDR_D
-  $(info  INFO: TARGET is VCU118 (has DDR A, B, C and D))
+  $(info  INFO: TARGET is AWSF1 (has DDR A, B, C and D))
 
 else
   $(error ERROR: please define TARGET=VCU118 or TARGET=AWSF1 for proper DDR setup)

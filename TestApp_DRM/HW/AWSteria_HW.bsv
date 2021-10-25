@@ -4,23 +4,27 @@
 package AWSteria_HW;
 
 // ================================================================
-// This package contains a specific AWSteria_Infra app,
-// i.e., an mkAWSteria_HW module with AWSteria_HW_IFC interface.
+// This package contains a sample AWSteria_Infra app,
+// i.e., a mkAWSteria_HW module with AWSteria_HW_IFC interface.
 
 // This specific application contains
 // - a 2xN AXI4 fabric, where N = 1,2,3,4 (64b addrs, 512b data):
-// - a 1x2 AXI4-Lite switch
 // - an AXI4-Lite-to-AXI4 adapter
+// - a 1x2 AXI4-Lite switch
 // - a placeholder 'DRM' module which will eventually contain a
 //     DRM-provider's IP.
 
-// The topology is:
+// The schematic is:
 //
 //   +==AWSteria_HW================================================+
 //   |                                           +=AXI4-Fabric=+   |
-// AXI4_S----------------------------------------+             +-AXI4_M
+// AXI4_S----------------------------------------+             +-AXI4_M to DDR A
+//   |                                           |             |   |
+//   |                                           |             +-AXI4_M to DDR B
 //   |                                           |     2xN     |   |
-//   |                                       +-AXI4_S          +-AXI4_M
+//   |                                           |             +-AXI4_M to DDR C
+//   |                                           |             |   |
+//   |                                       +-AXI4_S          +-AXI4_M to DDR D
 //   |                                       |   +=============+   |
 //   |                        +=Adapter=+    |                     |
 //   |                    +-AXI4L_S   AXI4_M-+                     |
@@ -42,7 +46,7 @@ package AWSteria_HW;
 import FIFOF       :: *;
 import GetPut      :: *;
 import Connectable :: *;
-// import Clocks      :: *;
+import Clocks      :: *;
 
 // ----------------
 // BSV additional libs
@@ -142,13 +146,13 @@ endmodule
 // host AXI4 to DRM (targe 0) and AXI4-Lite adapter (target 1)
 
 // ----------------
-// Address-Decode function to route requests to appropriate target
+// Address-Decode function to route AXI4-Lite requests to appropriate target
 
 Bit #(32) adapter_addr_min = 'h_0000_0000;    // 0
 Bit #(32) adapter_addr_max = 'h_000F_FFFF;    // 1 MB
 
-Bit #(32) drm_addr_min     = 'h_0010_0000;    // 1  MB
-Bit #(32) drm_addr_max     = 'h_0010_3FFF;    // 16 KB
+Bit #(32) drm_addr_min     = 'h_0010_0000;    // 1 MB
+Bit #(32) drm_addr_max     = 'h_0010_3FFF;    // 1 MB + 16 KB
 
 
 function Tuple2 #(Bool, Bit #(1))  fn_addr_to_AXI4L_target_num (Bit #(32) addr);
@@ -180,6 +184,8 @@ endmodule
 
 // ****************************************************************
 // Module: Dummy DRM module
+// For any AXI4-Lite transaction received with 4-byte aligned address,
+// reads and writes from a single 4-byte register.
 
 interface DRM_IFC;
    interface AXI4_Lite_Slave_IFC #(32, 32, 0) axi4L_S;
@@ -192,7 +198,7 @@ module mkDRM (DRM_IFC);
    // Instantiate slave transactor
    AXI4_Lite_Slave_Xactor_IFC #(32, 32, 0) axi4L_S_xactor <- mkAXI4_Lite_Slave_Xactor;
 
-   Reg #(Bit #(32)) rg_data   <- mkReg (0);
+   Reg #(Bit #(32)) rg_data <- mkReg (0);
 
    // GatedClockIfc gated_clock <- mkGatedClockFromCC (False);
 
@@ -210,6 +216,7 @@ module mkDRM (DRM_IFC);
 			     : AXI4_LITE_SLVERR);
 
       if (resp == AXI4_LITE_OKAY) begin
+	 // Note: we now ignore addr, so all addrs map to rg_data
 	 $display ("  rg_data old %0x", rg_data);
 	 $display ("  rg_data new %0x", wrd.wdata);
 	 rg_data <= wrd.wdata;
@@ -241,6 +248,7 @@ module mkDRM (DRM_IFC);
 			     ? AXI4_LITE_SLVERR
 			     : AXI4_LITE_OKAY);
 
+      // Note: we now ignore addr, so all addrs map to rg_data
       let rdd = AXI4_Lite_Rd_Data {rresp: resp,
 				   rdata: (  (resp == AXI4_LITE_OKAY)
 					   ? rg_data
@@ -288,7 +296,7 @@ module mkAWSteria_HW #(Clock b_CLK, Reset b_RST_N)
    AXI4L_S_to_AXI4_M_Adapter_IFC #(32,    // wd_addr_AXI4L_S
 				   32,    // wd_data_AXI4L_S
 				   0,     // wd_user_AXI4L_S
-				   16,      // wd_id_AXI4_M
+				   16,    // wd_id_AXI4_M
 				   64,    // wd_addr_AXI4_M
 				   512,   // wd_data_AXI4_M
 				   0)     // wd_user_AXI4_M)
@@ -313,35 +321,28 @@ module mkAWSteria_HW #(Clock b_CLK, Reset b_RST_N)
    mkConnection (adapter_AXI4L_S_to_AXI4_M.ifc_AXI4_M,
 		 fabric.v_from_masters [1]);
 
-   // Tie off DDR B if not included
-`ifndef INCLUDE_DDR_B
-   AXI4_Slave_IFC #(16,64,512,0) dummy_ddr_S = dummy_AXI4_Slave_ifc;
-
-   mkConnection (fabric.v_to_slaves [1], dummy_ddr_S);
-`endif
-
    // ================================================================
    // INTERFACE
-
-   AXI4_16_64_512_0_M_IFC dummy_ddr_master = dummy_AXI4_Master_ifc;
 
    // Facing Host
    interface AXI4_Slave_IFC      host_AXI4_S  = fabric.v_from_masters [0];
    interface AXI4_Lite_Slave_IFC host_AXI4L_S = axi4L_switch.v_from_masters [0];
 
    // Facing DDR
+`ifdef INCLUDE_DDR_A
    interface AXI4_Master_IFC ddr_A_M = fabric.v_to_slaves [0];
+`endif
 
 `ifdef INCLUDE_DDR_B
    interface AXI4_Master_IFC ddr_B_M = fabric.v_to_slaves [1];
 `endif
 
 `ifdef INCLUDE_DDR_C
-   interface AXI4_Master_IFC ddr_C_M = dummy_ddr_master;
+   interface AXI4_Master_IFC ddr_C_M = fabric.v_to_slaves [2];
 `endif
 
 `ifdef INCLUDE_DDR_D
-   interface AXI4_Master_IFC ddr_D_M = dummy_ddr_master;
+   interface AXI4_Master_IFC ddr_D_M = fabric.v_to_slaves [3];
 `endif
 
    // ================

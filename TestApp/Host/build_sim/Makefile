@@ -23,7 +23,7 @@ endif
 $(info INFO: Making executable for AWSteria TestApp host side for Bluesim/Verilator sim)
 
 # Default target
-TARGET = VCU118
+TARGET ?= VCU118
 
 # ================================================================
 # Source files

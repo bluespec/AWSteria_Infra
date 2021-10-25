@@ -4,13 +4,30 @@
 package AWSteria_HW;
 
 // ================================================================
-// This package contains the mkAWSteria_HW module with AWSteria_HW_IFC interface.
+// This package contains a sample AWSteria_Infra app,
+// i.e., a mkAWSteria_HW module with AWSteria_HW_IFC interface.
 
-// In this implementation:
-// it contains an 2xN AXI4 fabric, where N = 1,2,3,4 (64b addrs, 512b data):
-//    S 0: connects to host_AXI4_S
-//    S 1: connects to host_AXI4L_S (via an AXI4-Lite-to-AXI4 adapter)
-//    M 0,1,2,3: Connect to DDRs 0,1,2,3 (A,B,C,D)
+// This specific application contains
+// - a 2xN AXI4 fabric, where N = 1,2,3,4 (64b addrs, 512b data):
+// - an AXI4-Lite-to-AXI4 adapter
+
+// The schematic is:
+//
+//   +==AWSteria_HW================================================+
+//   |                                           +=AXI4-Fabric=+   |
+// AXI4_S----------------------------------------+             +-AXI4_M to DDR A
+//   |                                           |             |   |
+//   |                                           |             +-AXI4_M to DDR B
+//   |                                           |     2xN     |   |
+//   |                                           |             +-AXI4_M to DDR C
+//   |                                           |             |   |
+//   |                                       +-AXI4_S          +-AXI4_M to DDR D
+//   |                                       |   +=============+   |
+//   |                        +=Adapter=+    |                     |
+// AXI4L_S-----------------AXI4L_S    AXI4_M-+                     |
+//   |                        +=========+                          |
+//   |                                                             |
+//   +=============================================================+
 
 // ================================================================
 // BSV library imports
@@ -30,9 +47,10 @@ import GetPut_Aux :: *;
 // ================================================================
 // Project imports
 
-import AXI4_Types           :: *;
-import AXI4_Fabric          :: *;
-import AXI4_Lite_Types      :: *;
+import AXI4_Types  :: *;
+import AXI4_Fabric :: *;
+
+import AXI4_Lite_Types  :: *;
 
 import AXI4L_S_to_AXI4_M_Adapter :: *;
 
@@ -65,7 +83,7 @@ endmodule
 
 // ****************************************************************
 // Module: synthesized instance of AXI4 fabric connecting the host
-// AXI4 and AXI4-Lite to the AXI4 DDRs
+// AXI4 and (via adapter) AXI4-Lite to the AXI4 DDRs
 
 // ----------------
 // Address-Decode function to route requests to appropriate DDR
@@ -133,7 +151,7 @@ module mkAWSteria_HW #(Clock b_CLK, Reset b_RST_N)
    AXI4L_S_to_AXI4_M_Adapter_IFC #(32,    // wd_addr_AXI4L_S
 				   32,    // wd_data_AXI4L_S
 				   0,     // wd_user_AXI4L_S
-				   16,      // wd_id_AXI4_M
+				   16,    // wd_id_AXI4_M
 				   64,    // wd_addr_AXI4_M
 				   512,   // wd_data_AXI4_M
 				   0)     // wd_user_AXI4_M)
@@ -154,9 +172,6 @@ module mkAWSteria_HW #(Clock b_CLK, Reset b_RST_N)
    mkConnection (adapter_AXI4L_S_to_AXI4_M.ifc_AXI4_M,
 		 fabric.v_from_masters [1]);
 
-   // Tie-off for unused DDR ports, if any
-   AXI4_Slave_IFC #(16,64,512,0) dummy_ddr_S = dummy_AXI4_Slave_ifc;
-
    // ================================================================
    // INTERFACE
 
@@ -165,7 +180,7 @@ module mkAWSteria_HW #(Clock b_CLK, Reset b_RST_N)
    interface AXI4_Lite_Slave_IFC host_AXI4L_S = adapter_AXI4L_S_to_AXI4_M.ifc_AXI4L_S;
 
    // Facing DDR
-`ifdef INCLUDE_DDR_B
+`ifdef INCLUDE_DDR_A
    interface AXI4_Master_IFC ddr_A_M = fabric.v_to_slaves [0];
 `endif
 
