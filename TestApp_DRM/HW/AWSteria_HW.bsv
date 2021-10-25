@@ -14,31 +14,7 @@ package AWSteria_HW;
 // - a placeholder 'DRM' module which will eventually contain a
 //     DRM-provider's IP.
 
-// The schematic is:
-//
-//   +==AWSteria_HW================================================+
-//   |                                           +=AXI4-Fabric=+   |
-// AXI4_S----------------------------------------+             +-AXI4_M to DDR A
-//   |                                           |             |   |
-//   |                                           |             +-AXI4_M to DDR B
-//   |                                           |     2xN     |   |
-//   |                                           |             +-AXI4_M to DDR C
-//   |                                           |             |   |
-//   |                                       +-AXI4_S          +-AXI4_M to DDR D
-//   |                                       |   +=============+   |
-//   |                        +=Adapter=+    |                     |
-//   |                    +-AXI4L_S   AXI4_M-+                     |
-//   |                    |   +=========+                          |
-//   |     +=Switch=+     |                                        |
-//   |     |      AXI4L_M-+                                        |
-// AXI4L_S-+ 1x2    |                                              |
-//   |     |      AXI4L_M-+                             to app     |
-//   |     +========+     |                              ^  ^      |
-//   |                    |   +====DRM======+            |  |      |
-//   |                    +-AXI4L_S       clock_for_app--+  |      |
-//   |                        |           ip_enable---------+      |
-//   |                        +=============+                      |
-//   +=============================================================+
+// Pleae see Doc/Fig_060_AWSteria_Infra_TestApp_DRM for a schematic.
 
 // ================================================================
 // BSV library imports
@@ -60,9 +36,11 @@ import GetPut_Aux :: *;
 
 import AXI4_Types  :: *;
 import AXI4_Fabric :: *;
+import AXI4_Gate   :: *;
 
 import AXI4_Lite_Types  :: *;
 import AXI4_Lite_Fabric :: *;
+import AXI4L_Gate       :: *;
 
 import AXI4L_S_to_AXI4_M_Adapter :: *;
 
@@ -183,6 +161,21 @@ module mkAXI4L_32_32_0_Fabric_1_2 (AXI4L_32_32_0_Fabric_1_2_IFC);
 endmodule
 
 // ****************************************************************
+// Module: synthesized instances of AXI4-Lite Gate and AXI4 gate
+
+(* synthesize *)
+module mkAXI4L_Gate_32_32_0 (AXI4L_Gate_IFC #(32, 32, 0));
+   let m <- mkAXI4L_Gate;
+   return m;
+endmodule
+
+(* synthesize *)
+module mkAXI4_Gate_16_64_512_0 (AXI4_Gate_IFC #(16, 64, 512, 0));
+   let m <- mkAXI4_Gate;
+   return m;
+endmodule
+
+// ****************************************************************
 // Module: Dummy DRM module
 // For any AXI4-Lite transaction received with 4-byte aligned address,
 // reads and writes from a single 4-byte register.
@@ -195,12 +188,12 @@ endinterface
 
 (* synthesize *)
 module mkDRM (DRM_IFC);
+   Integer verbosity = 0;
+
    // Instantiate slave transactor
    AXI4_Lite_Slave_Xactor_IFC #(32, 32, 0) axi4L_S_xactor <- mkAXI4_Lite_Slave_Xactor;
 
    Reg #(Bit #(32)) rg_data <- mkReg (0);
-
-   // GatedClockIfc gated_clock <- mkGatedClockFromCC (False);
 
    // ================================================================
    // Write transactions
@@ -209,7 +202,8 @@ module mkDRM (DRM_IFC);
       let wra <- pop_o (axi4L_S_xactor.o_wr_addr);
       let wrd <- pop_o (axi4L_S_xactor.o_wr_data);
 
-      $display ("DRM: WR xaction:\n  ", fshow (wra), "\n  ", fshow (wrd));
+      if (verbosity != 0)
+	 $display ("DRM: WR xaction:\n  ", fshow (wra), "\n  ", fshow (wrd));
 
       AXI4_Lite_Resp resp = (  ((wra.awaddr & 'h3) == 0)
 			     ? AXI4_LITE_OKAY
@@ -217,23 +211,28 @@ module mkDRM (DRM_IFC);
 
       if (resp == AXI4_LITE_OKAY) begin
 	 // Note: we now ignore addr, so all addrs map to rg_data
-	 $display ("  rg_data old %0x", rg_data);
-	 $display ("  rg_data new %0x", wrd.wdata);
+	 if (verbosity != 0) begin
+	    $display ("  rg_data old %0x", rg_data);
+	    $display ("  rg_data new %0x", wrd.wdata);
+	 end
+
 	 rg_data <= wrd.wdata;
 
-	 if ((rg_data[0] == 1'b0)  &&  (wrd.wdata[0] == 1'b1))
-	    $display ("  Enabling clock");
-	 if ((rg_data[0] == 1'b1)  &&  (wrd.wdata[0] == 1'b0))
-	    $display ("  Disabling clock");
-
-	 // gated_clock.setGateCond (wrd.wdata != 0);
+	 if (verbosity != 0) begin
+	    if ((rg_data[0] == 1'b0)  &&  (wrd.wdata[0] == 1'b1))
+	       $display ("  Enabling IP");
+	    if ((rg_data[0] == 1'b1)  &&  (wrd.wdata[0] == 1'b0))
+	       $display ("  Disabling IP");
+	 end
       end
 
       let wrr = AXI4_Lite_Wr_Resp {bresp: resp,
 				   buser: wra.awuser};
 
       axi4L_S_xactor.i_wr_resp.enq (wrr);
-      $display ("  ", fshow (wrr));
+
+      if (verbosity != 0)
+	 $display ("  ", fshow (wrr));
    endrule
 
    // ================================================================
@@ -242,7 +241,8 @@ module mkDRM (DRM_IFC);
    rule rl_rd_xaction;
       let rda <- pop_o (axi4L_S_xactor.o_rd_addr);
 
-      $display ("DRM: RD xaction:\n  ", fshow (rda));
+      if (verbosity != 0)
+	 $display ("DRM: RD xaction:\n  ", fshow (rda));
 
       AXI4_Lite_Resp resp = (  ((rda.araddr & 'h3) != 0)
 			     ? AXI4_LITE_SLVERR
@@ -256,7 +256,8 @@ module mkDRM (DRM_IFC);
 				   ruser: rda.aruser};
 
       axi4L_S_xactor.i_rd_data.enq (rdd);
-      $display ("  ", fshow (rdd));
+      if (verbosity != 0)
+	 $display ("  ", fshow (rdd));
    endrule
 
    // ================================================================
@@ -288,8 +289,13 @@ module mkAWSteria_HW #(Clock b_CLK, Reset b_RST_N)
    // ----------------
    // DRM
    DRM_IFC drm <- mkDRM;
-   // AXI4-Lite 1x2 switch
+
+   // AXI4-Lite 1x2 switch to split off some AXI4L traffic towards DRM
    AXI4L_32_32_0_Fabric_1_2_IFC axi4L_switch <- mkAXI4L_32_32_0_Fabric_1_2;
+
+   // Gates to control AXI4 and AXI4L traffic to the app logic
+   AXI4_Gate_IFC  #(16, 64, 512, 0) axi4_gate  <- mkAXI4_Gate_16_64_512_0;
+   AXI4L_Gate_IFC #(32, 32, 0)      axi4L_gate <- mkAXI4L_Gate_32_32_0;
 
    // ----------------
    // AXI4-Lite to AXI4 adapter
@@ -313,19 +319,31 @@ module mkAWSteria_HW #(Clock b_CLK, Reset b_RST_N)
    // ================================================================
    // BEHAVIOR
 
-   // Connect AXI4-Lite switch to AXI4-Lite-to-AXI4-adapter and DRM
+   // Connect AXI4-Lite switch to DRM and to AXI4-Lite Gate
    mkConnection (axi4L_switch.v_to_slaves [0], drm.axi4L_S);
-   mkConnection (axi4L_switch.v_to_slaves [1], adapter_AXI4L_S_to_AXI4_M.ifc_AXI4L_S);
+   mkConnection (axi4L_switch.v_to_slaves [1], axi4L_gate.axi4L_S);
+
+   // Connect AXI4-Lite Gate to AXI4-Lite-to-AXI4-adapter
+   mkConnection (axi4L_gate.axi4L_M, adapter_AXI4L_S_to_AXI4_M.ifc_AXI4L_S);
 
    // Connect AXI4-Lite-to-AXI4-adapter to AXI4 fabric
-   mkConnection (adapter_AXI4L_S_to_AXI4_M.ifc_AXI4_M,
-		 fabric.v_from_masters [1]);
+   mkConnection (adapter_AXI4L_S_to_AXI4_M.ifc_AXI4_M,  fabric.v_from_masters [1]);
+
+   // Connect AXI4 Gate to AXI4 fabric
+   mkConnection (axi4_gate.axi4_M,  fabric.v_from_masters [0]);
+
+   // Connect DRM 'ip_enable' output to AXI4 and AXI4L gates
+   (* no_implicit_conditions, fire_when_enabled *)
+   rule rl_drm_control;
+      axi4_gate.m_enable  (drm.ip_enable);
+      axi4L_gate.m_enable (drm.ip_enable);
+   endrule
 
    // ================================================================
    // INTERFACE
 
    // Facing Host
-   interface AXI4_Slave_IFC      host_AXI4_S  = fabric.v_from_masters [0];
+   interface AXI4_Slave_IFC      host_AXI4_S  = axi4_gate.axi4_S;
    interface AXI4_Lite_Slave_IFC host_AXI4L_S = axi4L_switch.v_from_masters [0];
 
    // Facing DDR

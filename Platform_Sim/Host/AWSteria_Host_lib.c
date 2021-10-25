@@ -162,6 +162,8 @@ bool do_comms (void)
 static const int verbosity_AXI4_read  = 0;
 static const int verbosity_AXI4_write = 0;
 
+static const int max_iters_timeout = 100000;
+
 // ================================================================
 // The following defs are needed for AWSteria_AXI4_read()/write()
 // tranfers use AXI4 bursts where
@@ -241,12 +243,19 @@ int AWSteria_AXI4_read_aux (uint8_t *buffer, const size_t size, const uint64_t a
 	fprintf (stdout, "%s: araddr %0lx arlen %0d arsize %0x arburst %0x",
 		 __FUNCTION__, rda.araddr, rda.arlen, rda.arsize, rda.arburst);
 
+    uint64_t iters = 0;
     while (true) {
 	// Try to send request
 	int status = Bytevec_enqueue_AXI4_Rd_Addr_i16_a64_u0 (awsteria_host_state.p_bytevec_state, & rda);
 	if (status == 1) break;
 	usleep (10);                     // Wait, if unable to send
 	did_some_comms = do_comms ();    // Move data in comms channel
+	iters++;
+	if (iters >= max_iters_timeout) {
+	    fprintf (stdout, "%s: timeout after %0ld attempts to send AXI4 RD_ADDR\n",
+		     __FUNCTION__, iters);
+	    return 1;
+	}
     }
     did_some_comms = do_comms ();        // Move data in comms channel
 
@@ -263,18 +272,26 @@ int AWSteria_AXI4_read_aux (uint8_t *buffer, const size_t size, const uint64_t a
 
     for (int beat = 0; beat < num_beats; beat++) {
 	// Read an AXI4 beat
+	iters = 0;
 	while (true) {
 	    did_some_comms = do_comms ();    // Move data in comms channel
 	    if (! did_some_comms)
 		usleep (10);                 // Wait, if no activity
 
 	    // Try to receive a beat
-	    int status = Bytevec_dequeue_AXI4_Rd_Data_i16_d512_u0 (awsteria_host_state.p_bytevec_state, & rdd);
+	    int status = Bytevec_dequeue_AXI4_Rd_Data_i16_d512_u0 (awsteria_host_state.p_bytevec_state,
+								   & rdd);
 	    if (status == 1) break;          // Successfully received a beat
 
 	    if (verbosity_AXI4_read >= 3)
 		fprintf (stdout, "%s: AXI4 RD_DATA response wait loop; beat %0d beat_addr %0lx\n",
 			 __FUNCTION__, beat, beat_addr);
+	    iters++;
+	    if (iters >= max_iters_timeout) {
+		fprintf (stdout, "%s: timeout after %0ld attempts to receive AXI4 RD_DATA\n",
+			 __FUNCTION__, iters);
+		return 1;
+	    }
 	}
 
 	// Debugging: show response
@@ -420,12 +437,20 @@ int AWSteria_AXI4_write_aux (uint8_t *buffer, const size_t size, const uint64_t 
     if (verbosity_AXI4_write >= 3)
 	fprintf (stdout, "\n%s: awaddr %0lx awlen %0d awsize %0x awburst %0x\n",
 		 __FUNCTION__, wra.awaddr, wra.awlen, wra.awsize, wra.awburst);
+
+    uint64_t iters = 0;
     while (true) {
 	// Try to send request
 	int status = Bytevec_enqueue_AXI4_Wr_Addr_i16_a64_u0 (awsteria_host_state.p_bytevec_state, & wra);
 	if (status == 1) break;
 	usleep (10);                     // Wait, if unable to send
 	did_some_comms = do_comms ();    // Move data in comms channel
+	iters++;
+	if (iters >= max_iters_timeout) {
+	    fprintf (stdout, "%s: timeout after %0ld attempts to send AXI4 WR_ADDR\n",
+		     __FUNCTION__, iters);
+	    return 1;
+	}
     }
     did_some_comms = do_comms ();        // Move data in comms channel
 
@@ -474,12 +499,20 @@ int AWSteria_AXI4_write_aux (uint8_t *buffer, const size_t size, const uint64_t 
 	}
 
 	// Send the AXI4 write-data beat
+	iters = 0;
 	while (true) {
 	    // Try to send the beat
-	    int status = Bytevec_enqueue_AXI4_Wr_Data_d512_u0  (awsteria_host_state.p_bytevec_state, & wrd);
+	    int status = Bytevec_enqueue_AXI4_Wr_Data_d512_u0  (awsteria_host_state.p_bytevec_state,
+								& wrd);
 	    if (status == 1) break;
 	    usleep (10);                     // Wait if unable to send
 	    did_some_comms = do_comms ();    // Move data in comms channel
+	    iters++;
+	    if (iters >= max_iters_timeout) {
+		fprintf (stdout, "%s: timeout after %0ld attempts to send AXI4 WR_DATA\n",
+			 __FUNCTION__, iters);
+		return 1;
+	    }
 	}
 	did_some_comms = do_comms ();        // Move data in comms channel
 
@@ -489,10 +522,11 @@ int AWSteria_AXI4_write_aux (uint8_t *buffer, const size_t size, const uint64_t 
     }    
 
     // ----------------
-    // Recieve AXI4 WR_RESP bus response
+    // Receive AXI4 WR_RESP bus response
 
     AXI4_Wr_Resp_i16_u0  wrr;
 
+    iters = 0;
     while (true) {
 	did_some_comms = do_comms ();    // Move data in comms channel
 	if (! did_some_comms)            // Wait if no activity
@@ -504,6 +538,13 @@ int AWSteria_AXI4_write_aux (uint8_t *buffer, const size_t size, const uint64_t 
 
 	if (verbosity_AXI4_write >= 3)
 	    fprintf (stdout, "%s: AXI4 WR_RESP wait loop\n", __FUNCTION__);
+
+	iters++;
+	if (iters >= max_iters_timeout) {
+	    fprintf (stdout, "%s: timeout after %0ld attempts to receive AXI4 WR_RESP\n",
+		     __FUNCTION__, iters);
+	    return 1;
+	}
     }
     if (verbosity_AXI4_write >= 3)
 	fprintf (stdout, "%s: complete; bresp = %0d\n", __FUNCTION__, wrr.bresp);
@@ -574,18 +615,27 @@ int AWSteria_AXI4L_read (void *p_state,
 
     if (verbosity2 != 0)
 	fprintf (stdout, "%s: enqueue AXI4L Rd_Addr %08x\n", __FUNCTION__, rda.araddr);
+
+    uint64_t iters = 0;
     while (true) {
 	int status = Bytevec_enqueue_AXI4L_Rd_Addr_a32_u0 (awsteria_host_state.p_bytevec_state,
 							   & rda);
 	if (status == 1) break;
 	usleep (10);
 	did_some_comms = do_comms ();
+	iters++;
+	if (iters >= max_iters_timeout) {
+	    fprintf (stdout, "%s: timeout after %0ld attempts to send AXI4L RD_ADDR\n",
+		     __FUNCTION__, iters);
+	    return 1;
+	}
     }
 
+    iters = 0;
     while (true) {
 	did_some_comms = do_comms ();
 	if (! did_some_comms)
-	    usleep (1000);
+	    usleep (10);
 
 	int status = Bytevec_dequeue_AXI4L_Rd_Data_d32_u0 (awsteria_host_state.p_bytevec_state,
 							   & rdd);
@@ -593,6 +643,12 @@ int AWSteria_AXI4L_read (void *p_state,
 	    *p_data = rdd.rdata;
 	    ok = (ok && (rdd.rresp == 0));    // AXI4L: rresp is OKAY
 	    break;
+	}
+	iters++;
+	if (iters >= max_iters_timeout) {
+	    fprintf (stdout, "%s: timeout after %0ld attempts to receive AXI4L RD_DATA\n",
+		     __FUNCTION__, iters);
+	    return 1;
 	}
     }
     if (verbosity2 != 0)
@@ -624,19 +680,34 @@ int AWSteria_AXI4L_write (void *p_state,
     wrd.wdata  = data;
     wrd.wstrb  = 0xFF;
 
+    uint64_t iters = 0;
     while (true) {
 	int status = Bytevec_enqueue_AXI4L_Wr_Addr_a32_u0 (awsteria_host_state.p_bytevec_state, & wra);
 	if (status == 1) break;
 	usleep (10);
 	did_some_comms = do_comms ();
+	iters++;
+	if (iters >= max_iters_timeout) {
+	    fprintf (stdout, "%s: timeout after %0ld attempts to send AXI4L WR_ADDR\n",
+		     __FUNCTION__, iters);
+	    return 1;
+	}
     }
+    iters = 0;
     while (true) {
 	int status = Bytevec_enqueue_AXI4L_Wr_Data_d32 (awsteria_host_state.p_bytevec_state, & wrd);
 	if (status == 1) break;
 	usleep (10);
 	did_some_comms = do_comms ();
+	iters++;
+	if (iters >= max_iters_timeout) {
+	    fprintf (stdout, "%s: timeout after %0ld attempts to send AXI4L WR_DATA\n",
+		     __FUNCTION__, iters);
+	    return 1;
+	}
     }
 
+    iters = 0;
     while (true) {
 	did_some_comms = do_comms ();
 	if (! did_some_comms)
@@ -646,6 +717,12 @@ int AWSteria_AXI4L_write (void *p_state,
 	if (status == 1) {
 	    ok = (ok && (wrr.bresp == 0));    // AXI4L: bresp is OKAY
 	    break;
+	}
+	iters++;
+	if (iters >= max_iters_timeout) {
+	    fprintf (stdout, "%s: timeout after %0ld attempts to receive AXI4L WR RESP\n",
+		     __FUNCTION__, iters);
+	    return 1;
 	}
     }
     if (verbosity2 != 0)

@@ -251,7 +251,6 @@ int main (int argc, char *argv [])
     fprintf (stdout, "---- Test read from DRM [0]\n");
     buf_read_AXI4L (p_rdata, drm_addr_min, p_wdata);
 
-
     fprintf (stdout, "---- Test write to DRM [0], disabling IP (lsb 0)\n");
     wdata = word_IP_off;
     buf_write_AXI4L (p_wdata, drm_addr_min);
@@ -259,13 +258,12 @@ int main (int argc, char *argv [])
     fprintf (stdout, "---- Test read from DRM [0]\n");
     buf_read_AXI4L (p_rdata, drm_addr_min, p_wdata);
 
-
-    fprintf (stdout, "---- Test write to DRM [4]\n");
+    fprintf (stdout, "---- Test write to DRM [0], enabling IP (lsb 1)\n");
     wdata = word_IP_on;
-    buf_write_AXI4L (p_wdata, drm_addr_min + 4);
+    buf_write_AXI4L (p_wdata, drm_addr_min);
 
-    fprintf (stdout, "---- Test read from DRM [4]\n");
-    buf_read_AXI4L (p_rdata, drm_addr_min + 4, p_wdata);
+    fprintf (stdout, "---- Test read from DRM [0]\n");
+    buf_read_AXI4L (p_rdata, drm_addr_min, p_wdata);
 
     // ----------------
     // Test unaligned read/write to DRM
@@ -349,6 +347,45 @@ int main (int argc, char *argv [])
     fprintf (stdout, "n_AXI4L_reads  = %0ld (4 bytes each)\n", n_AXI4L_reads);
     fprintf (stdout, "n_AXI4L_writes = %0ld (4 bytes each)\n", n_AXI4L_writes);
     fprintf (stdout, "----------------\n");
+
+    // ================================================================
+    // Disable DRM and try some reads/writes (should hang/timeout)
+
+    fprintf (stdout, "================================================================\n");
+    fprintf (stdout, "---- Test write to DRM [0], disabling IP (lsb 0)\n");
+    wdata = word_IP_off;
+    buf_write_AXI4L (p_wdata, drm_addr_min);
+
+    fprintf (stdout, "---- Test read from DRM [0]\n");
+    buf_read_AXI4L (p_rdata, drm_addr_min, p_wdata);
+
+    fprintf (stdout, "Subsequent reads/writes from AXI4 or AXI4L should hang/timeout\n");
+
+    // ----------------
+    // Try write/read to AXI4L to app: should hang/timeout
+    if (true) {
+	fprintf (stdout, "---- Test write to Mem via AXI4L (expect hang/timeout)\n");
+	wdata = 0xCAFEDAD7;
+	buf_write_AXI4L (p_wdata, adapter_addr_min);
+    }
+
+    if (true) {
+	fprintf (stdout, "---- Test read from Mem via AXI4L (expect hang/timeout)\n");
+	buf_read_AXI4L (p_rdata, adapter_addr_min, p_wdata);
+    }
+
+    // ----------------
+    // Try write/read to AXI4 to app: should hang/timeout
+    if (true) {
+	fprintf (stdout, "---- Test write to Mem via AXI4 (expect hang/timeout)\n");
+	wdata = 0xCAFEDAD7;
+	buf_write_AXI4 (p_wdata, 4, adapter_addr_min);
+    }
+
+    if (true) {
+	fprintf (stdout, "---- Test read from Mem via AXI4 (expect hang/timeout)\n");
+	buf_read_AXI4 (p_rdata, 4, adapter_addr_min, p_wdata);
+    }
 
     // ----------------------------------------------------------------
     // Shutdown FPGA PCIe or simulation libraries
