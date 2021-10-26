@@ -8,7 +8,7 @@ HELP_TEXT = \
 "    GARNET_SHELL_BITFILE = $(GARNET_SHELL_BITFILE)\n" \
 "    Override this with your Garnet shell bitfile location, if necessary."
 
-GARNET_SHELL_BITFILE ?= ~/git_clones/CTSRD-CHERI_garnet/shell/prebuilt/empty.bit
+GARNET_SHELL_BITFILE ?= ~/garnet/shell/prebuilt/empty.bit
 
 # ================================================================
 

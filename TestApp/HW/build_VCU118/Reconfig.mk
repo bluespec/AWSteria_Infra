@@ -28,18 +28,16 @@ help:
 PARTIAL_BITFILE_GARNET_EXAMPLE ?= /home/nikhil/git_clones/CTSRD-CHERI_garnet/example/build/example_pblock_partition_partial.bit
 
 # AWSteria_HW TestApp (no reclocking, running at 250 MHz)
-PARTIAL_BITFILE_TESTAPP_250MHZ ?= ~/git_clones/CTSRD-CHERI_garnet/example_TestApp/build/AWSteria_pblock_partition_partial.bit
+PARTIAL_BITFILE_TESTAPP_250MHZ ?= ~/garnet/example6/build/AWSteria_pblock_partition_partial.bit
 
 # AWSteria_HW TestApp (with reclocking, running at 100 MHz)
-PARTIAL_BITFILE_TESTAPP_100MHZ ?= ~/git_clones/CTSRD-CHERI_garnet/example_TestApp_reclocked_100MHz/build/AWSteria_pblock_partition_partial.bit
+PARTIAL_BITFILE_TESTAPP_100MHZ ?= ~/garnet/example_TestApp_reclocked/build/AWSteria_pblock_partition_partial.bit
 
-# AWSteria_HW TestApp (with reclocking, running at 25 MHz)
-PARTIAL_BITFILE_TESTAPP_25MHZ ?= ~/git_clones/CTSRD-CHERI_garnet/example_TestApp_reclocked_25MHz/build/AWSteria_pblock_partition_partial.bit
 
 # ================================================================
 # Programming the bitfile and partial reconfig
 
-BUS           = 0x07
+BUS           = 0x06
 DEVICE_NO     = 0x0
 CAPABILITY_ID = 0x1
 
