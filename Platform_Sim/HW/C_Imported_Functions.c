@@ -231,21 +231,21 @@ void check_connection (int fd, const char *caller)
 
     if ((x_pollfd.revents & POLLHUP) != 0) {
 	// Connection has been terminated by remote host (client)
-	fprintf (stdout, "%s: connection terminated by remote host (POLLHUP); exiting",
+	fprintf (stdout, "%s: terminated by remote host (POLLHUP); exiting\n",
 		 __FUNCTION__);
 	fprintf (stdout, "    during %s()\n", caller);
 	exit (0);
     }
     if ((x_pollfd.revents & POLLERR) != 0) {
 	// Connection has been terminated by remote host (client)
-	fprintf (stdout, "%s: connection terminated by remote host (POLLERR); exiting",
+	fprintf (stdout, "%s: terminated by remote host (POLLERR); exiting\n",
 		 __FUNCTION__);
 	fprintf (stdout, "    during %s()\n", caller);
 	exit (0);
     }
     if ((x_pollfd.revents & POLLNVAL) != 0) {
 	// Connection has been terminated by remote host (client)
-	fprintf (stdout, "%s: connection terminated by remote host (POLLNVAL); exiting",
+	fprintf (stdout, "%s: terminated by remote host (POLLNVAL); exiting\n",
 		 __FUNCTION__);
 	fprintf (stdout, "    during %s()\n", caller);
 	exit (0);
@@ -260,8 +260,10 @@ void  c_host_listen (const uint16_t tcp_port)
     struct sockaddr_in  servaddr;             // socket address structure
     struct linger       linger;
   
+    /*
     fprintf (stdout, "%s: Listening on tcp port %0d for host connection ...\n",
 	     __FUNCTION__, tcp_port);
+    */
 
     // Create the listening socket
     if ( (listen_sockfd = socket (AF_INET, SOCK_STREAM, 0)) < 0 ) {
@@ -321,8 +323,7 @@ uint8_t c_host_try_accept (uint8_t dummy)
 	exit (1);
     }
     else {
-	fprintf (stdout, "%s: Connection accepted\n", __FUNCTION__);
-	fflush (stdout);
+	// fprintf (stdout, "%s: Connection accepted\n", __FUNCTION__);
 	return 1;
     }
 }
