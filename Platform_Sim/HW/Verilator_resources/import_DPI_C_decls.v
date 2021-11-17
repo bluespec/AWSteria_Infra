@@ -60,7 +60,10 @@ function  int unsigned  c_trace_file_close (byte unsigned dummy);
 // ****************************************************************
 
 import "DPI-C"
-function  void  c_host_connect (shortint  tcp_port);
+function  void  c_host_listen (shortint  tcp_port);
+
+import "DPI-C"
+function  byte unsigned  c_host_try_accept (shortint  tcp_port);
 
 import "DPI-C"
 function  void  c_host_disconnect (byte unsigned  dummy);

@@ -44,7 +44,7 @@ import AWSteria_HW     :: *;
 // Instantiates the SoC.
 // Instantiates a memory model.
 
-typedef enum { STATE_CONNECTING, STATE_CONNECTED, STATE_RUNNING } State
+typedef enum { STATE_LISTEN, STATE_ACCEPT, STATE_RUNNING } State
 deriving (Eq, Bits, FShow);
 
 (* synthesize *)
@@ -53,7 +53,7 @@ module mkTop_HW_Side (Empty) ;
    // 0: quiet; 1: rules
    Integer verbosity = 0;
 
-   Reg #(State) rg_state <- mkReg (STATE_CONNECTING);
+   Reg #(State) rg_state <- mkReg (STATE_LISTEN);
 
    // The top-level of the AWSteria design
    AWSteria_HW_IFC #(AXI4_Slave_IFC #(16, 64, 512, 0),
@@ -88,22 +88,24 @@ module mkTop_HW_Side (Empty) ;
    // ================================================================
    // BEHAVIOR: start up
 
-   rule rl_connecting (rg_state == STATE_CONNECTING);
+   rule rl_listen (rg_state == STATE_LISTEN);
       $display ("================================================================");
-      $display ("Bluespec AWSteria simulation v2.0");
+      $display ("Bluespec AWSteria_Infra simulation v2.0");
       $display ("Copyright (c) 2020-2021 Bluespec, Inc. All Rights Reserved.");
       $display ("================================================================");
 
-      // Open connection to remote host (host is client, we are server)
-      c_host_connect (default_tcp_port);
-      rg_state <= STATE_CONNECTED;
+      // Start listening on TCP server socket for remote host (client) connection
+      c_host_listen (default_tcp_port);
+      rg_state <= STATE_ACCEPT;
    endrule
 
-   rule rl_start_when_connected (rg_state == STATE_CONNECTED);
-
-      // Any post-connection initialization goes here
-
-      rg_state <= STATE_RUNNING;
+   rule rl_accept (rg_state == STATE_ACCEPT);
+      // $display ("rl_accept: try accept");
+      let success <- c_host_try_accept (?);
+      if (success == 1) begin
+	 $display ("%0d: %m.rl_accept: connection accepted", cur_cycle);
+	 rg_state <= STATE_RUNNING;
+      end
    endrule
 
    // ================================================================

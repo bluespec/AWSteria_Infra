@@ -74,7 +74,10 @@ uint32_t c_putchar (uint8_t ch);
 // ================================================================
 
 extern
-void  c_host_connect (const uint16_t tcp_port);
+void  c_host_listen (const uint16_t tcp_port);
+
+extern
+uint8_t c_host_try_accept (uint8_t dummy);
 
 extern
 void c_host_disconnect (uint8_t dummy);
