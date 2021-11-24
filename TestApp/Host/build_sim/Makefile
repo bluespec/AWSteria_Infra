@@ -20,8 +20,6 @@ else
   $(info  INFO: AWSTERIA_INFRA_REPO = $(AWSTERIA_INFRA_REPO))
 endif
 
-$(info INFO: Making executable for AWSteria TestApp host side for Bluesim/Verilator sim)
-
 # Default target
 TARGET ?= VCU118
 
@@ -48,16 +46,26 @@ SRCS_C += \
 	$(AWSTERIA_INFRA_REPO)/Platform_Sim/Host/TCP_Client_Lib.c
 
 # ================================================================
-
-CFLAGS += -std=gnu11 -g -Wall -Werror
+# Config AWSteria_Infra simulation for different targets
 
 ifeq ($(TARGET),VCU118)
+
   CFLAGS += -D SIM_FOR_VCU118
+  $(info  INFO: TARGET is VCU118 (has DDR A and B))
+
 else ifeq ($(TARGET),AWSF1)
+
   CFLAGS += -D SIM_FOR_AWSF1
+  $(info  INFO: TARGET is AWSF1 (has DDR A, B, C and D))
+
 else
   $(error ERROR: please define TARGET=VCU118 or TARGET=AWSF1 for proper DDR setup)
 endif
+
+# ================================================================
+# C compilation
+
+CFLAGS += -std=gnu11 -g -Wall -Werror
 
 CFLAGS += -I $(AWSTERIA_INFRA_REPO)/Include_API
 CFLAGS += -I $(AWSTERIA_INFRA_REPO)/Platform_Sim/Host
@@ -71,7 +79,7 @@ EXE    = exe_Host_sim
 
 $(EXE): $(SRCS_H) $(SRCS_C)
 	$(CC) -g  -o $(EXE) $(SRCS_C)
-	@echo "INFO: created '$(EXE)'"
+	@echo "INFO: Created host-side executable $(EXE)"
 
 # ================================================================
 
