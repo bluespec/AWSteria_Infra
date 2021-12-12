@@ -81,7 +81,7 @@ simulator:
 	verilator \
 		-IVerilator_RTL \
 		$(VERILATOR_FLAGS) \
-		--cc  --exe --build -j 4 -o exe_HW_sim  $(TOPMODULE).v \
+		--cc  --exe --build -j 4 -o $(SIM_EXE_FILE)  $(TOPMODULE).v \
 		--top-module $(TOPMODULE) \
 		$(VERILATOR_RESOURCES)/sim_main.cpp \
 		$(AWSTERIA_INFRA_REPO)/Platform_Sim/HW/C_Imported_Functions.c
