@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Bluespec, Inc.  All Rights Reserved
+// Copyright (c) 2020-2022 Bluespec, Inc.  All Rights Reserved
 
 // This library implements the AWSteria host-side API routines
 // Bluesim and Verilator sim.
@@ -247,7 +247,8 @@ int AWSteria_AXI4_read_aux (uint8_t *buffer, const size_t size, const uint64_t a
     uint64_t iters = 0;
     while (true) {
 	// Try to send request
-	int status = Bytevec_enqueue_AXI4_Rd_Addr_i16_a64_u0 (awsteria_host_state.p_bytevec_state, & rda);
+	int status = Bytevec_enqueue_AXI4_Rd_Addr_i16_a64_u0 (awsteria_host_state.p_bytevec_state,
+							      & rda);
 	if (status == 1) break;
 	usleep (10);                     // Wait, if unable to send
 	did_some_comms = do_comms ();    // Move data in comms channel
@@ -410,7 +411,7 @@ int AWSteria_AXI4_write_aux (uint8_t *buffer, const size_t size, const uint64_t 
     const uint64_t  address_lim = address + size;
 
     // ----------------
-    // Compose and AXI4 WR_ADDR bus request
+    // Compose an AXI4 WR_ADDR bus request
 
     AXI4_Wr_Addr_i16_a64_u0  wra;
 
@@ -443,7 +444,8 @@ int AWSteria_AXI4_write_aux (uint8_t *buffer, const size_t size, const uint64_t 
     uint64_t iters = 0;
     while (true) {
 	// Try to send request
-	int status = Bytevec_enqueue_AXI4_Wr_Addr_i16_a64_u0 (awsteria_host_state.p_bytevec_state, & wra);
+	int status = Bytevec_enqueue_AXI4_Wr_Addr_i16_a64_u0 (awsteria_host_state.p_bytevec_state,
+							      & wra);
 	if (status == 1) break;
 	usleep (10);                     // Wait, if unable to send
 	did_some_comms = do_comms ();    // Move data in comms channel
@@ -464,7 +466,6 @@ int AWSteria_AXI4_write_aux (uint8_t *buffer, const size_t size, const uint64_t 
 
     uint8_t *pb = buffer;
 
-    bool     ok             = true;
     uint64_t beat_addr      = (address & MASK_TO_BEAT_START);
     uint64_t next_beat_addr = beat_addr + BEAT_SIZE;
 
@@ -525,9 +526,36 @@ int AWSteria_AXI4_write_aux (uint8_t *buffer, const size_t size, const uint64_t 
     }    
 
     // ----------------
-    // Receive AXI4 WR_RESP bus response
-
+    // NEW: Drain responses as long as they're available
+    // (some or all responses may be from previous write-requests)
+    bool                 ok  = true;
     AXI4_Wr_Resp_i16_u0  wrr;
+
+    while (true) {
+	did_some_comms = do_comms ();
+	// if (! did_some_comms) break;
+	int status;
+	status = Bytevec_dequeue_AXI4_Wr_Resp_i16_u0 (awsteria_host_state.p_bytevec_state,
+						      & wrr);
+	if (status != 1)
+	    // Nothing received
+	    break;
+
+	if (wrr.bresp != 0) {
+	    // AXI4L: bresp is not OKAY
+	    fprintf (stdout, "%s: AXI4-Lite error respons\n", __FUNCTION__);
+	    ok = false;
+	}
+    }
+    if (verbosity_AXI4_write != 0)
+	fprintf (stdout, "%s: ok = %0d\n", __FUNCTION__, ok);
+    return (! ok);
+
+    // ----------------
+    // OLD: // Wait for and receive AXI4 WR_RESP bus response for this write
+    // DELETE AFTER TESTING
+
+    /*
 
     iters = 0;
     while (true) {
@@ -555,6 +583,7 @@ int AWSteria_AXI4_write_aux (uint8_t *buffer, const size_t size, const uint64_t 
 
     ok = (wrr.bresp == 0);
     return (! ok);
+    */
 }
 
 // ----------------
@@ -669,7 +698,6 @@ int AWSteria_AXI4L_write (void *p_state,
 {
     int  verbosity2 = 0;
     bool did_some_comms;
-    bool ok  = true;
 
     check_state_initialized ();
 
@@ -686,9 +714,10 @@ int AWSteria_AXI4L_write (void *p_state,
 
     uint64_t iters = 0;
     while (true) {
-	int status = Bytevec_enqueue_AXI4L_Wr_Addr_a32_u0 (awsteria_host_state.p_bytevec_state, & wra);
+	int status = Bytevec_enqueue_AXI4L_Wr_Addr_a32_u0 (awsteria_host_state.p_bytevec_state,
+							   & wra);
 	if (status == 1) break;
-	usleep (10);
+	// usleep (10);
 	did_some_comms = do_comms ();
 	iters++;
 	if (iters >= max_iters_timeout) {
@@ -701,7 +730,7 @@ int AWSteria_AXI4L_write (void *p_state,
     while (true) {
 	int status = Bytevec_enqueue_AXI4L_Wr_Data_d32 (awsteria_host_state.p_bytevec_state, & wrd);
 	if (status == 1) break;
-	usleep (10);
+	// usleep (10);
 	did_some_comms = do_comms ();
 	iters++;
 	if (iters >= max_iters_timeout) {
@@ -711,6 +740,34 @@ int AWSteria_AXI4L_write (void *p_state,
 	}
     }
 
+    // ----------------
+    // NEW: Drain responses as long as they're available
+    // (some responses may be from previous write-requests)
+    bool ok  = true;
+    while (true) {
+	did_some_comms = do_comms ();
+	// if (! did_some_comms) break;
+	int status = Bytevec_dequeue_AXI4L_Wr_Resp_u0 (awsteria_host_state.p_bytevec_state,
+						       & wrr);
+	if (status != 1)
+	    // Nothing received
+	    break;
+
+	if (wrr.bresp != 0) {
+	    // AXI4L: bresp is not OKAY
+	    fprintf (stdout, "%s: AXI4-Lite error respons\n", __FUNCTION__);
+	    ok = false;
+	}
+    }
+    if (verbosity2 != 0)
+	fprintf (stdout, "%s: ok = %0d\n", __FUNCTION__, ok);
+    return (! ok);
+
+    // ----------------
+    // OLD: // Wait for and receive AXI4 WR_RESP bus response for this write
+    // DELETE AFTER TESTING
+
+    /*
     iters = 0;
     while (true) {
 	did_some_comms = do_comms ();
@@ -733,6 +790,7 @@ int AWSteria_AXI4L_write (void *p_state,
 	fprintf (stdout, "%s: bresp = %0d\n", __FUNCTION__, wrr.bresp);
 
     return (! ok);
+    */
 }
 
 // ================================================================

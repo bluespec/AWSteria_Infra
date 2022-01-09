@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Bluespec, Inc.  All Rights Reserved
+// Copyright (c) 2020-2022 Bluespec, Inc.  All Rights Reserved
 
 // ================================================================
 // Client communications over TCP/IP
@@ -32,6 +32,7 @@
 #include <sys/types.h>        /*  socket types              */
 #include <arpa/inet.h>        /*  inet (3) funtions         */
 #include <fcntl.h>            /* To set non-blocking mode   */
+#include <netinet/tcp.h>
 
 // ----------------
 // Project includes
@@ -85,6 +86,14 @@ uint32_t  tcp_client_open (const char *server_host, const uint16_t server_port)
     if (connect (sockfd, (struct sockaddr *) &servaddr, sizeof(servaddr) ) < 0 ) {
 	fprintf (stdout, "%s: Error calling connect()\n", __FUNCTION__);
 	return status_err;
+    }
+
+    // This code copied from riscv-openocd's jtag_vpi.c, where they say:
+    //    "This increases performance dramatically for local
+    //     connections, which is the most likely arrangement ..."
+    if (servaddr.sin_addr.s_addr == htonl(INADDR_LOOPBACK)) {
+	int flag = 1;
+	setsockopt (sockfd, IPPROTO_TCP, TCP_NODELAY, (char *) & flag, sizeof(int));
     }
 
     fprintf (stdout, "%s: connected\n", __FUNCTION__);
