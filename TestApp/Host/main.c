@@ -406,16 +406,50 @@ int main (int argc, char *argv [])
 	return 0;
     }
 
+#ifdef PLATFORM_VCU118
+    test_DDR_A = true;  ddr_A_base = DDR_A_BASE;  ddr_A_lim = DDR_A_LIM;
+    test_DDR_B = true;  ddr_B_base = DDR_B_BASE;  ddr_B_lim = DDR_B_LIM;
+    out_of_bounds_addr = OUT_OF_BOUNDS_ADDR;
+
+    fprintf (stdout, "INFO: TestApp host-side built for Platform VCU118 \n");
+    fprintf (stdout, "    ddr_A_base = 0x%16lx  ddr_A_lim = 0x%16lx\n",
+	     ddr_A_base, ddr_A_lim);
+    fprintf (stdout, "    ddr_B_base = 0x%16lx  ddr_B_lim = 0x%16lx\n",
+	     ddr_B_base, ddr_B_lim);
+    fprintf (stdout, "    out_of_bounds_addr                         = 0x%16lx\n",
+	     out_of_bounds_addr);
+#endif
+
 #ifdef SIM_FOR_VCU118
     test_DDR_A = true;  ddr_A_base = DDR_A_BASE;  ddr_A_lim = DDR_A_LIM;
     test_DDR_B = true;  ddr_B_base = DDR_B_BASE;  ddr_B_lim = DDR_B_LIM;
     out_of_bounds_addr = OUT_OF_BOUNDS_ADDR;
 
-    fprintf (stdout, "INFO: Simulation built for Platform VCU118 \n");
+    fprintf (stdout, "INFO: TestApp host-side built for simulation of Platform VCU118 \n");
     fprintf (stdout, "    ddr_A_base = 0x%16lx  ddr_A_lim = 0x%16lx\n",
 	     ddr_A_base, ddr_A_lim);
     fprintf (stdout, "    ddr_B_base = 0x%16lx  ddr_B_lim = 0x%16lx\n",
 	     ddr_B_base, ddr_B_lim);
+    fprintf (stdout, "    out_of_bounds_addr                         = 0x%16lx\n",
+	     out_of_bounds_addr);
+#endif
+
+#ifdef PLATFORM_AWSF1
+    test_DDR_A = true;  ddr_A_base = DDR_A_BASE;  ddr_A_lim = DDR_A_LIM;
+    test_DDR_B = true;  ddr_B_base = DDR_B_BASE;  ddr_B_lim = DDR_B_LIM;
+    test_DDR_C = true;  ddr_C_base = DDR_C_BASE;  ddr_C_lim = DDR_C_LIM;
+    test_DDR_D = true;  ddr_D_base = DDR_D_BASE;  ddr_D_lim = DDR_D_LIM;
+    out_of_bounds_addr = OUT_OF_BOUNDS_ADDR;
+
+    fprintf (stdout, "INFO: TestApp host-side built for Platform AWSF1 \n");
+    fprintf (stdout, "    ddr_A_base = 0x%16lx  ddr_A_lim = 0x%16lx\n",
+	     ddr_A_base, ddr_A_lim);
+    fprintf (stdout, "    ddr_B_base = 0x%16lx  ddr_B_lim = 0x%16lx\n",
+	     ddr_B_base, ddr_B_lim);
+    fprintf (stdout, "    ddr_C_base = 0x%16lx  ddr_C_lim = 0x%16lx\n",
+	     ddr_C_base, ddr_C_lim);
+    fprintf (stdout, "    ddr_D_base = 0x%16lx  ddr_D_lim = 0x%16lx\n",
+	     ddr_D_base, ddr_D_lim);
     fprintf (stdout, "    out_of_bounds_addr                         = 0x%16lx\n",
 	     out_of_bounds_addr);
 #endif
@@ -427,7 +461,7 @@ int main (int argc, char *argv [])
     test_DDR_D = true;  ddr_D_base = DDR_D_BASE;  ddr_D_lim = DDR_D_LIM;
     out_of_bounds_addr = OUT_OF_BOUNDS_ADDR;
 
-    fprintf (stdout, "INFO: Simulation built for Platform AWSF1 \n");
+    fprintf (stdout, "INFO: TestApp host-side built for simulation of Platform AWSF1 \n");
     fprintf (stdout, "    ddr_A_base = 0x%16lx  ddr_A_lim = 0x%16lx\n",
 	     ddr_A_base, ddr_A_lim);
     fprintf (stdout, "    ddr_B_base = 0x%16lx  ddr_B_lim = 0x%16lx\n",

@@ -27,7 +27,10 @@ help:
 # Original garnet repo example
 PARTIAL_BITFILE_GARNET_EXAMPLE ?= /home/nikhil/git_clones/CTSRD-CHERI_garnet/example/build/example_pblock_partition_partial.bit
 
-# AWSteria_HW TestApp (no reclocking, running at 250 MHz)
+# AWSteria_HW TestApp (running at 250 MHz)
+PARTIAL_BITFILE_TESTAPP_250MHZ ?= ~/git_clones/CTSRD-CHERI_garnet/garnet_TestApp_HW_250MHz/build/AWSteria_pblock_partition_partial.bit
+
+# AWSteria_HW TestApp (OLD: no reclocking, running at 250 MHz)
 PARTIAL_BITFILE_TESTAPP_250MHZ ?= ~/git_clones/CTSRD-CHERI_garnet/example_TestApp/build/AWSteria_pblock_partition_partial.bit
 
 # AWSteria_HW TestApp (with reclocking, running at 100 MHz)
