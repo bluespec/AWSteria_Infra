@@ -1,6 +1,6 @@
 ###  -*-Makefile-*-
 
-# Copyright (c) 2018-2021 Bluespec, Inc. All Rights Reserved
+# Copyright (c) 2018-2022 Bluespec, Inc. All Rights Reserved
 
 # This file is not a standalone Makefile, but 'include'd by other Makefiles
 
@@ -66,6 +66,8 @@ simulator:
 	@echo "Copying all Verilog files from Verilog_RTL/ to Verilator_RTL"
 	mkdir -p Verilator_RTL
 	cp -p  Verilog_RTL/*.v  Verilator_RTL/
+	@echo "Copying boilerplate Verilog files to Verilator_RTL"
+	cp -p  $(VERILATOR_RESOURCES)/ClockDiv.v  Verilator_RTL/
 	@echo "----------------"
 	@echo "INFO: Editing Verilog_RTL/$(TOPMODULE).v -> Verilator_RTL/$(TOPMODULE).v for DPI-C"
 	sed  -f $(VERILATOR_RESOURCES)/sed_script.txt  Verilog_RTL/$(TOPMODULE).v  > tmp1.v

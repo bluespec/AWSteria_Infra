@@ -36,6 +36,9 @@ set_msg_config -id {Synth 8-3917} -suppress
 # Many inputs deliberately left unused
 set_msg_config -id {Synth 8-3331} -suppress
 
+# Clock Divider for slower clocks
+add_files [list "$project_dir/src/bd/ClockDiv_Block_Design/ClockDiv_Block_Design.bd" ]
+
 # Project source RTL + a bit of boilerplate
 add_files -norecurse "$project_dir/src"
 

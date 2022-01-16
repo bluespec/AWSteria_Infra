@@ -20,7 +20,7 @@
 // @BERI_LICENSE_HEADER_END@
 //
 
-// Modified by Rishiyur S. Nikhil for AWSteria
+// Modified by Rishiyur S. Nikhil for AWSteria, 2021-2022
 
 module top_garnet_AWSteria (
   `include "partition_ports.vh"
@@ -63,6 +63,24 @@ module top_garnet_AWSteria (
    assign DDRB_M_AXI_awid = DDRB_M_AXI_awid_16 [5:0];
 
    // ================================================================
+   // Instant
+
+   wire        clk1;
+   wire        clk2;
+   wire        clk3;
+   wire        clk4;
+   wire        clk5;
+
+   ClockDiv_Block_Design #()
+   clockdiv_block_design_inst (.CLK (clk),
+			       .RST_N (resetn),
+			       .clk_out1 (clk1),
+			       .clk_out2 (clk2),
+			       .clk_out3 (clk3),
+			       .clk_out4 (clk4),
+			       .clk_out5 (clk5));
+
+   // ================================================================
    // mkBluPont_HW_Side instantiation
 
    // NOTE: mkAWSteria_HW_reclocked is the reclocking wrapper, containing
@@ -76,8 +94,11 @@ module top_garnet_AWSteria (
    mkAWSteria_HW_inst (.CLK   (clk),
 		       .RST_N (resetn),
 
-		       .CLK_b_CLK (0),
-		       .RST_N_b_RST_N (0),
+		       .CLK_clk1 (clk1),
+		       .CLK_clk2 (clk2),
+		       .CLK_clk3 (clk3),
+		       .CLK_clk4 (clk4),
+		       .CLK_clk5 (clk5),
 
 		       // ----------------
 		       // AXI4 (DMA_PCIS) S connection

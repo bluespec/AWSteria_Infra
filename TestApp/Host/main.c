@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <inttypes.h>
 #include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
@@ -146,18 +147,17 @@ void buf_read_AXI4 (uint8_t *rbuf, const int n_bytes, const uint64_t addr,
 // ================================================================
 // Write to FPGA DDR4 using HW-side AXI4-Lite port
 
-void buf_write_AXI4L (uint8_t *wbuf, const uint64_t addr)
+void buf_write_AXI4L (uint32_t *wbuf, const uint64_t addr)
 {
     int rc;
-
-    uint32_t *p32 = (uint32_t *) wbuf;
 
     if ((addr & 0xFFFFFFFF00000000llu) != 0) {
 	fprintf (stdout, "ERROR: %s: addr %0lx is > 32 bits\n", __FUNCTION__, addr);
 	return;
     }
 
-    rc = AWSteria_AXI4L_write (AWSteria_Host_state, addr, *p32);
+    // fprintf (stdout, "%s: addr %0" PRIx64 " data %0" PRIx32 "\n", __FUNCTION__, addr, *wbuf);
+    rc = AWSteria_AXI4L_write (AWSteria_Host_state, addr, *wbuf);
     if (rc != 0) {
 	fprintf (stdout, "ERROR: %s: 4 bytes to addr 0x%0lx\n", __FUNCTION__, addr);
 	fprintf (stdout, "    FAILED: rc = %0d\n", rc);
@@ -171,7 +171,7 @@ void buf_write_AXI4L (uint8_t *wbuf, const uint64_t addr)
 // ================================================================
 // Read from FPGA DDR4 using HW-side AXI4-Lite port, and check against wbuf
 
-void buf_read_AXI4L (uint8_t *rbuf, const uint64_t addr, const uint8_t *wbuf)
+void buf_read_AXI4L (uint32_t *rbuf, const uint64_t addr, const uint32_t *wbuf)
 {
     int rc;
 
@@ -180,33 +180,31 @@ void buf_read_AXI4L (uint8_t *rbuf, const uint64_t addr, const uint8_t *wbuf)
 	return;
     }
 
-    rc = AWSteria_AXI4L_read (AWSteria_Host_state, addr, (uint32_t *) rbuf);
+    rc = AWSteria_AXI4L_read (AWSteria_Host_state, addr, rbuf);
     if (rc != 0) {
 	fprintf (stdout, "ERROR: %s: 4 bytes from addr 0x%0lx\n", __FUNCTION__, addr);
 	fprintf (stdout, "    FAILED: rc = %0d\n", rc);
 	num_ERRORS++;
 	return;
     }
+    // fprintf (stdout, "%s: addr %0" PRIx64 " data %0" PRIx32 "\n", __FUNCTION__, addr, *rbuf);
 
     int n_mismatches = 0;
-    for (int j = 0; j < 4; j++) {
-	if (wbuf [j] != rbuf [j]) {
-	    if (verbosity_AXI4L_R > 0) {
-		fprintf (stdout, "ERROR: %s addr 0x%0lx [%0d]\n", __FUNCTION__, addr, j);
-		fprintf (stdout, "    Wrote %02x readback %02x\n", wbuf [j], rbuf [j]);
-	    }
+    uint8_t *p_r = (uint8_t *) rbuf;
+    uint8_t *p_w = (uint8_t *) wbuf;
+    for (int j = 0; j < 4; j++)
+	if (p_w [j] != p_r [j])
 	    n_mismatches++;
-	}
-    }
 
     if (n_mismatches == 0) {
 	n_AXI4L_reads++;
 	if (verbosity_AXI4L_R != 0)
-	    fprintf (stdout, "    Readback check OK\n");
+	    fprintf (stdout, "    Readback check OK from addr 0x%0" PRIx64 "\n", addr);
     }
     else {
-	fprintf (stdout, "ERROR: %s: 4 bytes from addr 0x%0lx\n", __FUNCTION__, addr);
+	fprintf (stdout, "ERROR: %s: 4 bytes from addr 0x%0" PRIx64 "\n", __FUNCTION__, addr);
 	fprintf (stdout, "    Readback check FAILED with %0d mismatches\n", n_mismatches);
+	fprintf (stdout, "    Wrote %02x readback %02x\n", *wbuf, *rbuf);
 	num_ERRORS += n_mismatches;
     }
 }
@@ -291,19 +289,19 @@ void test70 ()
     // ----------------
 
     if (test_DDR_A) {
-	fprintf (stdout, "AXI4: read back DDR_A, testing data was not overwritten\n");
+	fprintf (stdout, "AXI4: read back DDR_A, testing that data was not overwritten\n");
 	buf_read_AXI4  (& (rbuf [offset_A]), size, ddr_A_base, & (wbuf [offset_A]));
     }
     if (test_DDR_B) {
-	fprintf (stdout, "AXI4: read back DDR_B, testing data was not overwritten\n");
+	fprintf (stdout, "AXI4: read back DDR_B, testing that data was not overwritten\n");
 	buf_read_AXI4  (& (rbuf [offset_B]), size, ddr_B_base, & (wbuf [offset_B]));
     }
     if (test_DDR_C) {
-	fprintf (stdout, "AXI4: read back DDR_C, testing data was not overwritten\n");
+	fprintf (stdout, "AXI4: read back DDR_C, testing that data was not overwritten\n");
 	buf_read_AXI4  (& (rbuf [offset_C]), size, ddr_C_base, & (wbuf [offset_C]));
     }
     if (test_DDR_D) {
-	fprintf (stdout, "AXI4: read back DDR_D, testing data was not overwritten\n");
+	fprintf (stdout, "AXI4: read back DDR_D, testing that data was not overwritten\n");
 	buf_read_AXI4  (& (rbuf [offset_D]), size, ddr_D_base, & (wbuf [offset_D]));
     }
 }
@@ -315,8 +313,8 @@ void test80 ()
     fprintf (stdout, "AXI4L: Series of 4 byte write/read across first 128 bytes\n");
 
     for (int addr = 0; addr < 128; addr += 4) {
-	buf_write_AXI4L (wbuf, addr);
-	buf_read_AXI4L  (rbuf, addr, wbuf);
+	buf_write_AXI4L ((uint32_t *) (& wbuf [addr]), addr);
+	buf_read_AXI4L  ((uint32_t *) (& rbuf [addr]), addr, (uint32_t *) (& wbuf [addr]));
     }
 }
 
@@ -336,8 +334,10 @@ void test90 (uint32_t base_addr)
 
     // Readback via AXI4L
     fprintf (stdout, "AXI4L: readback 128 bytes\n");
-    for (int j = 0; j < 128; j += 4)
-	buf_read_AXI4L (& (rbuf [j]), base_addr + j, & (wbuf [j]));
+    for (int addr = 0; addr < 128; addr += 4)
+	buf_read_AXI4L ((uint32_t *) (& (rbuf [addr])),
+			base_addr + addr,
+			(uint32_t *) (& (wbuf [addr])));
 }
 
 void test100 (uint32_t base_addr)
@@ -353,8 +353,8 @@ void test100 (uint32_t base_addr)
 
     // Write via AXI4L
     fprintf (stdout, "AXI4L write 128 bytes\n");
-    for (int j = 0; j < 128; j += 4)
-	buf_write_AXI4L (& (wbuf [j]), base_addr + j);
+    for (int addr = 0; addr < 128; addr += 4)
+	buf_write_AXI4L (((uint32_t *) (& (wbuf [addr]))), base_addr + addr);
 
     // Readback via AXI4
     fprintf (stdout, "AXI4: readback 128 bytes\n");

@@ -7,10 +7,8 @@
 .PHONY: help
 help:
 	@echo "Usage:"
-	@echo "    make compile                       Create dir RTL/ and compile/copy sources to RTL there."
-	@echo "    make for_garnet                    Prepare directory for Garnet flow full speed (250 MHz)"
-	@echo "    make for_garnet_reclocked_100MHz   Prepare directory for Garnet flow reclocked 100 MHz"
-	@echo "    make for_garnet_reclocked_25MHz    Prepare directory for Garnet flow reclocked 25 MHz"
+	@echo "    make compile       Create dir RTL/ and compile/copy sources to RTL there."
+	@echo "    make for_garnet    Prepare directory for Garnet flow"
 	@echo ""
 	@echo "    make clean         Remove build_dir (for intermediate files)."
 	@echo "    make full_clean    Restore to pristine state."
@@ -93,37 +91,17 @@ compile:
 # ================================================================
 # For VCU118: collect all RTL needed for garnet flow
 
+FOR_GARNET_DIR = garnet_TestApp_HW_250MHz
+
 .PHONY: for_garnet
 for_garnet:
 	@echo "INFO: Creating and populating garnet example dir (no reclocking)"
-	cp -p -R $(AWSTERIA_INFRA_REPO)/Platform_VCU118/HW/example_AWSteria_HW  ./example_TestApp
-	cp -p    RTL/*.v  example_TestApp/src/
-	make GARNET_RTL=example_TestApp/src/  copy_bsc_RTL_for_garnet
-	@echo "INFO: garnet example dir is ready: example_TestApp/"
-
-.PHONY: for_garnet_reclocked_100MHz
-for_garnet_reclocked_100MHz:
-	@echo "INFO: Creating and populating garnet example dir (reclocked 100 MHz)"
-	cp -p -R $(AWSTERIA_INFRA_REPO)/Platform_VCU118/HW/example_AWSteria_HW_reclocked_100MHz \
-		./example_TestApp_reclocked_100MHz
-	cp -p    RTL/*.v  example_TestApp_reclocked_100MHz/src/
-	make GARNET_RTL=example_TestApp_reclocked_100MHz/src/  copy_bsc_RTL_for_garnet
-	@echo "INFO: garnet example (reclocked 100 MHz) dir is ready: example_TestApp_reclocked_100MHz/"
-
-.PHONY: for_garnet_reclocked_25MHz
-for_garnet_reclocked_25MHz:
-	@echo "INFO: Creating and populating garnet example dir (reclocked 25 MHz)"
-	cp -p -R $(AWSTERIA_INFRA_REPO)/Platform_VCU118/HW/example_AWSteria_HW_reclocked_25MHz \
-		./example_TestApp_reclocked_25MHz
-	cp -p    RTL/*.v  example_TestApp_reclocked_25MHz/src/
-	make GARNET_RTL=example_TestApp_reclocked_25MHz/src/  copy_bsc_RTL_for_garnet
-	@echo "INFO: garnet example (reclocked 25 MHz) dir is ready: example_TestApp_reclocked_25MHz/"
-
-.PHONY: copy_bsc_RTL_for_garnet
-copy_bsc_RTL_for_garnet:
+	cp -p -R $(AWSTERIA_INFRA_REPO)/Platform_VCU118/HW/example_AWSteria_HW  $(FOR_GARNET_DIR)
+	cp -p    RTL/*.v  $(FOR_GARNET_DIR)/src/
 	@echo "Copying RTL from BLUESPEC_HOME = $(BLUESPEC_HOME)"
-	cp -p  $(BLUESPEC_HOME)/lib/Verilog/FIFO2.v        $(GARNET_RTL)
-	cp -p  $(BLUESPEC_HOME)/lib/Verilog/SizedFIFO.v    $(GARNET_RTL)
+	cp -p  $(BLUESPEC_HOME)/lib/Verilog/FIFO2.v        $(FOR_GARNET_DIR)/src/
+	cp -p  $(BLUESPEC_HOME)/lib/Verilog/SizedFIFO.v    $(FOR_GARNET_DIR)/src/
+	@echo "INFO: garnet example dir is ready: $(FOR_GARNET_DIR)"
 
 # ================================================================
 
@@ -133,6 +111,6 @@ clean:
 
 .PHONY: full_clean
 full_clean: clean
-	rm -r -f  *~  tmp_all_srcs  build_dir  RTL  example_TestApp  example_TestApp_reclocked
+	rm -r -f  *~  tmp_all_srcs  build_dir  RTL  $(FOR_GARNET_DIR)
 
 # ================================================================

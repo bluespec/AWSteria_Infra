@@ -55,11 +55,21 @@ module mkTop_HW_Side (Empty) ;
 
    Reg #(State) rg_state <- mkReg (STATE_START);
 
+   ClockDividerIfc clkdiv1 <- mkClockDivider (2);    // 125 MHz
+   ClockDividerIfc clkdiv2 <- mkClockDivider (3);    // 83.333 MHz
+   ClockDividerIfc clkdiv3 <- mkClockDivider (5);    // 50 MHz
+   ClockDividerIfc clkdiv4 <- mkClockDivider (10);   // 25 MHz
+   ClockDividerIfc clkdiv5 <- mkClockDivider (25);   // 10 MHz
+
    // The top-level of the AWSteria design
    AWSteria_HW_IFC #(AXI4_Slave_IFC #(16, 64, 512, 0),
 		     AXI4_Lite_Slave_IFC #(32, 32, 0),
 		     AXI4_Master_IFC #(16, 64, 512, 0))
-   awsteria_hw<- mkAWSteria_HW (noClock, noReset);
+   awsteria_hw<- mkAWSteria_HW (clkdiv1.slowClock,
+				clkdiv2.slowClock,
+				clkdiv3.slowClock,
+				clkdiv4.slowClock,
+				clkdiv5.slowClock);
 
    // ----------------
    // Models for the four DDRs,

@@ -95,7 +95,7 @@ int AWSteria_Host_shutdown (void *awsteria_host_state)
 static
 bool do_comms (void)
 {
-    int verbosity2 = 0;
+    int verbosity_do_comms = 0;
 
     check_state_initialized ();
 
@@ -103,11 +103,11 @@ bool do_comms (void)
     bool activity = false;
 
     // Send
-    if (verbosity2 > 1)
+    if (verbosity_do_comms > 1)
 	fprintf (stdout, "%s: packet to_bytevec\n", __FUNCTION__);
     int ready = Bytevec_struct_to_bytevec (awsteria_host_state.p_bytevec_state);
     if (ready) {
-	if (verbosity2 != 0) {
+	if (verbosity_do_comms != 0) {
 	    fprintf (stdout, "%s: sending %0d bytes\n  ",  __FUNCTION__,
 		     awsteria_host_state.p_bytevec_state->bytevec_C_to_BSV [0]);
 	    for (int j = 0; j < awsteria_host_state.p_bytevec_state->bytevec_C_to_BSV [0]; j++)
@@ -125,7 +125,7 @@ bool do_comms (void)
     }
         
     // Receive
-    if (verbosity2 > 1)
+    if (verbosity_do_comms > 1)
 	fprintf (stdout, "%s: attempt receive bytevec\n",  __FUNCTION__);
     const bool poll    = true;
     status = tcp_client_recv (poll, 1, awsteria_host_state.p_bytevec_state->bytevec_BSV_to_C);
@@ -135,7 +135,7 @@ bool do_comms (void)
 	status = tcp_client_recv (no_poll, size,
 				  & (awsteria_host_state.p_bytevec_state->bytevec_BSV_to_C [1]));
 
-	if (verbosity2 != 0) {
+	if (verbosity_do_comms != 0) {
 	    fprintf (stdout, "%s: received %0d bytes\n  ",  __FUNCTION__,
 		     awsteria_host_state.p_bytevec_state->bytevec_BSV_to_C [0]);
 	    for (int j = 0; j < awsteria_host_state.p_bytevec_state->bytevec_BSV_to_C [0]; j++)
@@ -143,7 +143,7 @@ bool do_comms (void)
 	    fprintf (stdout, "\n");
 	}
 
-	if (verbosity2 != 0)
+	if (verbosity_do_comms != 0)
 	    fprintf (stdout, "%s: packet from_bytevec\n",  __FUNCTION__);
 	Bytevec_struct_from_bytevec (awsteria_host_state.p_bytevec_state);
 
@@ -584,6 +584,9 @@ int AWSteria_AXI4_write_aux (uint8_t *buffer, const size_t size, const uint64_t 
     ok = (wrr.bresp == 0);
     return (! ok);
     */
+
+    if ((verbosity_AXI4_write >= 3) && did_some_comms)
+	fprintf (stdout, "%s: did_some_comms\n", __FUNCTION__);
 }
 
 // ----------------
@@ -633,7 +636,7 @@ int AWSteria_AXI4_write (void *awsteria_host_state,
 int AWSteria_AXI4L_read (void *p_state,
 			uint64_t addr, uint32_t *p_data)
 {
-    int  verbosity2 = 0;
+    int  verbosity_AXI4L_read = 0;
     bool did_some_comms;
     bool ok  = true;
 
@@ -646,7 +649,7 @@ int AWSteria_AXI4L_read (void *p_state,
     rda.arprot = 0;
     rda.aruser = 0;
 
-    if (verbosity2 != 0)
+    if (verbosity_AXI4L_read != 0)
 	fprintf (stdout, "%s: enqueue AXI4L Rd_Addr %08x\n", __FUNCTION__, rda.araddr);
 
     uint64_t iters = 0;
@@ -684,7 +687,7 @@ int AWSteria_AXI4L_read (void *p_state,
 	    return 1;
 	}
     }
-    if (verbosity2 != 0)
+    if (verbosity_AXI4L_read != 0)
 	fprintf (stdout, "%s: rresp %0d, rdata %08x\n",
 		 __FUNCTION__, rdd.rresp, rdd.rdata);
     return (! ok);
@@ -696,7 +699,7 @@ int AWSteria_AXI4L_read (void *p_state,
 int AWSteria_AXI4L_write (void *p_state,
 			 uint64_t addr, uint32_t data)
 {
-    int  verbosity2 = 0;
+    int  verbosity_AXI4L_write = 0;
     bool did_some_comms;
 
     check_state_initialized ();
@@ -759,7 +762,7 @@ int AWSteria_AXI4L_write (void *p_state,
 	    ok = false;
 	}
     }
-    if (verbosity2 != 0)
+    if (verbosity_AXI4L_write != 0)
 	fprintf (stdout, "%s: ok = %0d\n", __FUNCTION__, ok);
     return (! ok);
 
@@ -786,11 +789,14 @@ int AWSteria_AXI4L_write (void *p_state,
 	    return 1;
 	}
     }
-    if (verbosity2 != 0)
+    if (verbosity_AXI4L_write != 0)
 	fprintf (stdout, "%s: bresp = %0d\n", __FUNCTION__, wrr.bresp);
 
     return (! ok);
     */
+
+    if ((verbosity_AXI4L_write >= 3) && did_some_comms)
+	fprintf (stdout, "%s: did_some_comms\n", __FUNCTION__);
 }
 
 // ================================================================
