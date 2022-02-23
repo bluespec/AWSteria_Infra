@@ -26,7 +26,7 @@ set garnet_dir "$project_dir/.."
 set project_name "AWSteria"
 set partition_module "top_garnet_AWSteria"
 # set disable_ddrb 1
-
+source "$project_dir/tcl/build_clock_divider.tcl"
 source "$garnet_dir/tcl/build.tcl"
 
 garnet_create_synth_project
@@ -37,7 +37,7 @@ set_msg_config -id {Synth 8-3917} -suppress
 set_msg_config -id {Synth 8-3331} -suppress
 
 # Clock Divider for slower clocks
-add_files [list "$project_dir/src/bd/ClockDiv_Block_Design/ClockDiv_Block_Design.bd" ]
+add_files [list "$project_dir/build/clk_div/clk_div.xci" ]
 
 # Project source RTL + a bit of boilerplate
 add_files -norecurse "$project_dir/src"

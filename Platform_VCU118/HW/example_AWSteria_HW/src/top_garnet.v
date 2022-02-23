@@ -71,9 +71,9 @@ module top_garnet_AWSteria (
    wire        clk4;
    wire        clk5;
 
-   ClockDiv_Block_Design #()
-   clockdiv_block_design_inst (.CLK (clk),
-			       .RST_N (resetn),
+   clk_div #()
+   clockdiv_block_design_inst (.clk_in1 (clk),
+			       .resetn (resetn),
 			       .clk_out1 (clk1),
 			       .clk_out2 (clk2),
 			       .clk_out3 (clk3),
