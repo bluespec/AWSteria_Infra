@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Bluespec, Inc.  All Rights Reserved
+// Copyright (c) 2020-2022 Bluespec, Inc.  All Rights Reserved
 // Author: Rishiyur S. Nikhil
 
 // This program performs a series of AXI4 and AXI4L reads and writes

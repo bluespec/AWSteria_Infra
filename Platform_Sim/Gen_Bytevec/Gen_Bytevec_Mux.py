@@ -1,6 +1,6 @@
 #!/usr/bin/python3 -B
 
-# Copyright (c) 2020-2021 Bluespec, Inc.
+# Copyright (c) 2020-2022 Bluespec, Inc.
 # Author: Rishiyur S. Nikhil
 
 # See README for details

@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2021 Bluespec, Inc.  All Rights Reserved
+// Copyright (c) 2013-2022 Bluespec, Inc.  All Rights Reserved
 
 // ================================================================
 // These are functions imported into BSV during Bluesim or Verilog simulation.

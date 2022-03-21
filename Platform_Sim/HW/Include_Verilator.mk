@@ -26,7 +26,7 @@ compile:  build_dir  Verilog_RTL
 
 # Additional module(s) with DPI-C calls that need edits to remove '$imported_' prefix
 # Each of these should have a 'sed' step (see below)
-EDIT_MODULE2 = mkAWSteria_HW
+EDIT_MODULE2 = mkAWSteria_System
 
 VTOP                = V$(TOPMODULE)
 VERILATOR_RESOURCES = $(AWSTERIA_INFRA_REPO)/Platform_Sim/HW/Verilator_resources

@@ -1,6 +1,6 @@
 #pragma once
 
-// Copyright (c) 2020-2021 Bluespec, Inc.  All Rights Reserved
+// Copyright (c) 2020-2022 Bluespec, Inc.  All Rights Reserved
 // Author: Rishiyur S. Nikhil
 
 // ================================================================
