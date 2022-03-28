@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2021 Bluespec, Inc. All Rights Reserved.
+// Copyright (c) 2013-2022 Bluespec, Inc. All Rights Reserved.
 // Author: Rishiyur S. Nikhil
 
 package Top_HW_Side;
@@ -101,7 +101,7 @@ module mkTop_HW_Side (Empty) ;
    rule rl_start (rg_state == STATE_START);
       $display ("================================================================");
       $display ("Bluespec AWSteria_Infra simulation v2.1");
-      $display ("Copyright (c) 2020-2021 Bluespec, Inc. All Rights Reserved.");
+      $display ("Copyright (c) 2020-2022 Bluespec, Inc. All Rights Reserved.");
       $display ("================================================================");
 
       rg_state <= STATE_LISTEN;

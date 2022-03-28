@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2021 Bluespec, Inc.
+# Copyright (c) 2020-2022 Bluespec, Inc.
 # Author: Rishiyur S. Nikhil
 
 BYTEVEC_FILES = Bytevec.bsv  Bytevec.c  Bytevec.h

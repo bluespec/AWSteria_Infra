@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2020 Bluespec, Inc. All Rights Reserved
+// Copyright (c) 2018-2022 Bluespec, Inc. All Rights Reserved
 
 // Top-level driver for "verilated" objects (Verilog compiled with verilator)
 

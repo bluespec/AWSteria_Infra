@@ -15,7 +15,7 @@
 //    // implied. See the License for the specific language governing permissions and
 //    // limitations under the License.
 //
-// Modifications Copyright (c) 2020-2021, Bluespec, Inc.
+// Modifications Copyright (c) 2020-2022, Bluespec, Inc.
 // Author: Rishiyur S. Nikhil
 //
 // ================================================================

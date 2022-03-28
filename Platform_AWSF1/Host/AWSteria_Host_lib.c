@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Bluespec, Inc.  All Rights Reserved
+// Copyright (c) 2020-2022 Bluespec, Inc.  All Rights Reserved
 
 // This library implements the AWSteria host-side API routines
 // for AWS F1, linking with routines in aws-fpga SDK.

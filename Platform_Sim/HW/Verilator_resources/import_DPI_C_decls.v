@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2020 Bluespec, Inc. All Rights Reserved
+// Copyright (c) 2018-2022 Bluespec, Inc. All Rights Reserved
 
 // Hand-written System Verilog import statements for imported C functions
 
