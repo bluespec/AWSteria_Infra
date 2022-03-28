@@ -57,7 +57,7 @@ VERILATOR_FLAGS += -O3 --x-assign fast --x-initial fast --noassert
 VERILATOR_FLAGS += --stats -CFLAGS -O3 -CFLAGS -DVL_DEBUG -LDFLAGS -static
 
 # VERILATOR_FLAGS += --threads 6  --threads-dpi pure
-# VERILATOR_FLAGS += --trace  --trace-depth 2  -CFLAGS -DVM_TRACE
+VERILATOR_FLAGS += --trace  -CFLAGS -DVM_TRACE
 
 .PHONY: simulator
 simulator:
