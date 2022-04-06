@@ -4,6 +4,7 @@ Figs = \
     Fig_030_AWSteria_Infra_VCU118.png \
     Fig_040_AWSteria_Infra_AWSF1.png \
     Fig_050_AWSteria_Infra_TestApp.png \
+    Fig_060_AWSteria_Infra_TestApp_DRM.png \
 
 
 all: $(Figs)

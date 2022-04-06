@@ -1,6 +1,6 @@
 ###  -*-Makefile-*-
 
-# Copyright (c) 2020-2021 Bluespec, Inc.  All Rights Reserved
+# Copyright (c) 2020-2022 Bluespec, Inc.  All Rights Reserved
 
 # ================================================================
 
@@ -26,7 +26,7 @@ else
   $(info  INFO: SDK_DIR = $(SDK_DIR))
 endif
 
-$(info INFO: Making executable $(EXE) for AWSteria TestApp host side on AWS F1)
+$(info INFO: Making executable $(EXE) for AWSteria TestApp_DRM host side on AWS F1)
 
 # ================================================================
 # Source files
@@ -34,13 +34,13 @@ $(info INFO: Making executable $(EXE) for AWSteria TestApp host side on AWS F1)
 # ----------------
 # App host side
 
-SRCS_C = ../main.c
+SRCS_C = $(AWSTERIA_INFRA_REPO)/TestApp_DRM/Host/main.c
 
 # ----------------
 # AWSteria infra
 
-SRCS_H += $(AWSTERIA_INFRA_REPO)/Include_API/AWSteria_Host_lib.h \
-	  $(AWSTERIA_INFRA_REPO)/Platform_AWSF1/Host/AWSteria_Platform.h
+SRCS_H += $(AWSTERIA_INFRA_REPO)/Include_API/AWSteria_Host_lib.h
+SRCS_H += $(AWSTERIA_INFRA_REPO)/Platform_AWSF1/Host/AWSteria_Platform.h
 
 SRCS_C += $(AWSTERIA_INFRA_REPO)/Platform_AWSF1/Host/AWSteria_Host_lib.c
 

@@ -1,6 +1,6 @@
 ###  -*-Makefile-*-
 
-# Copyright (c) 2018-2021 Bluespec, Inc. All Rights Reserved
+# Copyright (c) 2018-2022 Bluespec, Inc. All Rights Reserved
 
 # This file is not a standalone Makefile, but 'include'd by other Makefiles
 
@@ -26,7 +26,7 @@ compile:  build_dir  Verilog_RTL
 
 # Additional module(s) with DPI-C calls that need edits to remove '$imported_' prefix
 # Each of these should have a 'sed' step (see below)
-EDIT_MODULE2 = mkAWSteria_HW
+EDIT_MODULE2 = mkAWSteria_System
 
 VTOP                = V$(TOPMODULE)
 VERILATOR_RESOURCES = $(AWSTERIA_INFRA_REPO)/Platform_Sim/HW/Verilator_resources
@@ -57,7 +57,7 @@ VERILATOR_FLAGS += -O3 --x-assign fast --x-initial fast --noassert
 VERILATOR_FLAGS += --stats -CFLAGS -O3 -CFLAGS -DVL_DEBUG -LDFLAGS -static
 
 # VERILATOR_FLAGS += --threads 6  --threads-dpi pure
-# VERILATOR_FLAGS += --trace  --trace-depth 2  -CFLAGS -DVM_TRACE
+VERILATOR_FLAGS += --trace  -CFLAGS -DVM_TRACE
 
 .PHONY: simulator
 simulator:
@@ -66,6 +66,8 @@ simulator:
 	@echo "Copying all Verilog files from Verilog_RTL/ to Verilator_RTL"
 	mkdir -p Verilator_RTL
 	cp -p  Verilog_RTL/*.v  Verilator_RTL/
+	@echo "Copying boilerplate Verilog files to Verilator_RTL"
+	cp -p  $(VERILATOR_RESOURCES)/ClockDiv.v  Verilator_RTL/
 	@echo "----------------"
 	@echo "INFO: Editing Verilog_RTL/$(TOPMODULE).v -> Verilator_RTL/$(TOPMODULE).v for DPI-C"
 	sed  -f $(VERILATOR_RESOURCES)/sed_script.txt  Verilog_RTL/$(TOPMODULE).v  > tmp1.v
@@ -81,7 +83,7 @@ simulator:
 	verilator \
 		-IVerilator_RTL \
 		$(VERILATOR_FLAGS) \
-		--cc  --exe --build -j 4 -o exe_HW_sim  $(TOPMODULE).v \
+		--cc  --exe --build -j 4 -o $(SIM_EXE_FILE)  $(TOPMODULE).v \
 		--top-module $(TOPMODULE) \
 		$(VERILATOR_RESOURCES)/sim_main.cpp \
 		$(AWSTERIA_INFRA_REPO)/Platform_Sim/HW/C_Imported_Functions.c

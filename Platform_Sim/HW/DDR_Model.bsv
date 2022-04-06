@@ -1,4 +1,4 @@
-// Copyright (c) 2016-2021 Bluespec, Inc. All Rights Reserved.
+// Copyright (c) 2016-2022 Bluespec, Inc. All Rights Reserved.
 // Author: Rishiyur S. Nikhil
 
 package DDR_Model;
@@ -66,17 +66,21 @@ endfunction
 
 (* synthesize *)
 module mkDDR_A_Model (AXI4_16_64_512_0_Slave_IFC);
+`ifdef INCLUDE_DDR_A
    let ifc <- mkMem_Model (0,                       // verbosity
 			   0,                       // ddr_num
 			   False,                   // init_with_memhex
 			   "DDR_A.memhex512",       // memhex_filename
 			   ddr_A_base,              // byte_addr_base
 			   ddr_A_lim,               // byte_addr_lim
-			   'h_1_0000_0000);         // bytes_implemented (4 GB)
+			   'h_8000_0000);           // bytes_implemented (2 GB)
 
    AXI4_Deburster_IFC #(16, 64, 512, 0) deburster <- mkAXI4_Deburster;
    mkConnection (deburster.to_slave, ifc);
    return deburster.from_master;
+`else
+   return dummy_AXI4_Slave_ifc;
+`endif
 endmodule
 
 // ================================================================
@@ -85,34 +89,64 @@ endmodule
 
 (* synthesize *)
 module mkDDR_B_Model (AXI4_16_64_512_0_Slave_IFC);
+`ifdef INCLUDE_DDR_B
    let ifc <- mkMem_Model (0,                       // verbosity
 			   1,                       // ddr_num
 			   False,                   // init_with_memhex
 			   "DDR_B.memhex512",       // memhex_filename
 			   ddr_B_base,              // byte_addr_base
 			   ddr_B_lim,               // byte_addr_lim
-			   'h_1_0000_0000);         // bytes_implemented (4 GB)
+			   'h_8000_0000);           // bytes_implemented (2 GB)
    AXI4_Deburster_IFC #(16, 64, 512, 0) deburster <- mkAXI4_Deburster;
    mkConnection (deburster.to_slave, ifc);
    return deburster.from_master;
+`else
+   return dummy_AXI4_Slave_ifc;
+`endif
 endmodule
 
 // ================================================================
 // DDR_C
-// Currently a dummy
+// Supports bursts
 
 (* synthesize *)
 module mkDDR_C_Model (AXI4_16_64_512_0_Slave_IFC);
+`ifdef INCLUDE_DDR_C
+   let ifc <- mkMem_Model (0,                       // verbosity
+			   2,                       // ddr_num
+			   False,                   // init_with_memhex
+			   "DDR_C.memhex512",       // memhex_filename
+			   ddr_C_base,              // byte_addr_base
+			   ddr_C_lim,               // byte_addr_lim
+			   'h_8000_0000);           // bytes_implemented (2 GB)
+   AXI4_Deburster_IFC #(16, 64, 512, 0) deburster <- mkAXI4_Deburster;
+   mkConnection (deburster.to_slave, ifc);
+   return deburster.from_master;
+`else
    return dummy_AXI4_Slave_ifc;
+`endif
 endmodule
 
 // ================================================================
 // DDR_C
-// Currently a dummy
+// Supports bursts
 
 (* synthesize *)
 module mkDDR_D_Model (AXI4_16_64_512_0_Slave_IFC);
+`ifdef INCLUDE_DDR_D
+   let ifc <- mkMem_Model (0,                       // verbosity
+			   3,                       // ddr_num
+			   False,                   // init_with_memhex
+			   "DDR_D.memhex512",       // memhex_filename
+			   ddr_D_base,              // byte_addr_base
+			   ddr_D_lim,               // byte_addr_lim
+			   'h_8000_0000);           // bytes_implemented (2 GB)
+   AXI4_Deburster_IFC #(16, 64, 512, 0) deburster <- mkAXI4_Deburster;
+   mkConnection (deburster.to_slave, ifc);
+   return deburster.from_master;
+`else
    return dummy_AXI4_Slave_ifc;
+`endif
 endmodule
 
 // ================================================================
@@ -228,16 +262,19 @@ module mkMem_Model #(Integer    verbosity,
       let wrr = AXI4_Wr_Resp {bid: wra.awid, bresp: axi4_resp_slverr, buser: ?};
 
       if (! ok1) begin
-	 $display ("%0d: Mem_Model [%0d]: rl_wr_req: addr %0h <= %0h strb %0h: OUT OF BOUNDS",
-		   cur_cycle, ddr_num, wra.awaddr, wrd.wdata, wrd.wstrb);
+	 $display ("%0d: Mem_Model [%0d]: rl_wr_req: OUT OF BOUNDS",
+		   cur_cycle, ddr_num);
+	 $display ("    addr %0h <= %0h strb %0h",
+		   wra.awaddr, wrd.wdata, wrd.wstrb);
 	 $display ("    base %016h  lim %016h", byte_addr_base, byte_addr_lim);
       end
       else if (! ok2) begin
-	 $display ("%0d: Mem_Model [%0d]: rl_wr_req: addr %0h <= %0h strb %0h: OUT OF IMPLEMENTED BOUNDS",
-		   cur_cycle, ddr_num, wra.awaddr, wrd.wdata, wrd.wstrb);
-	 $display ("%0d: Mem_Model [%0d]: rl_wr_req: addr %0h <= %0h strb %0h: OUT OF IMPLEMENTED BOUNDS",
-		   cur_cycle, ddr_num, wra.awaddr, wrd.wdata, wrd.wstrb);
-	 $display ("    base %016h  implementation lim %016h", byte_addr_base, implem_addr_lim);
+	 $display ("%0d: Mem_Model [%0d]: rl_wr_req: OUT OF IMPLEMENTED BOUNDS",
+		   cur_cycle, ddr_num);
+	 $display ("    addr %0h <= %0h strb %0h",
+		   wra.awaddr, wrd.wdata, wrd.wstrb);
+	 $display ("    base %016h  implementation lim %016h",
+		   byte_addr_base, implem_addr_lim);
       end
       else begin
 	 let old_data = rf.sub (offset_W);

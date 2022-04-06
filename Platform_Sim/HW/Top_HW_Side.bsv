@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2021 Bluespec, Inc. All Rights Reserved.
+// Copyright (c) 2013-2022 Bluespec, Inc. All Rights Reserved.
 // Author: Rishiyur S. Nikhil
 
 package Top_HW_Side;
@@ -44,7 +44,7 @@ import AWSteria_HW     :: *;
 // Instantiates the SoC.
 // Instantiates a memory model.
 
-typedef enum { STATE_CONNECTING, STATE_CONNECTED, STATE_RUNNING } State
+typedef enum { STATE_START, STATE_LISTEN, STATE_ACCEPT, STATE_RUNNING } State
 deriving (Eq, Bits, FShow);
 
 (* synthesize *)
@@ -53,36 +53,44 @@ module mkTop_HW_Side (Empty) ;
    // 0: quiet; 1: rules
    Integer verbosity = 0;
 
-   Reg #(State) rg_state <- mkReg (STATE_CONNECTING);
+   Reg #(State) rg_state <- mkReg (STATE_START);
+
+   ClockDividerIfc clkdiv1 <- mkClockDivider (2);    // 125 MHz
+   ClockDividerIfc clkdiv2 <- mkClockDivider (3);    // 83.333 MHz
+   ClockDividerIfc clkdiv3 <- mkClockDivider (5);    // 50 MHz
+   ClockDividerIfc clkdiv4 <- mkClockDivider (10);   // 25 MHz
+   ClockDividerIfc clkdiv5 <- mkClockDivider (25);   // 10 MHz
 
    // The top-level of the AWSteria design
    AWSteria_HW_IFC #(AXI4_Slave_IFC #(16, 64, 512, 0),
 		     AXI4_Lite_Slave_IFC #(32, 32, 0),
 		     AXI4_Master_IFC #(16, 64, 512, 0))
-   awsteria_hw<- mkAWSteria_HW (noClock, noReset);
+   awsteria_hw<- mkAWSteria_HW (clkdiv1.slowClock,
+				clkdiv2.slowClock,
+				clkdiv3.slowClock,
+				clkdiv4.slowClock,
+				clkdiv5.slowClock);
 
    // ----------------
    // Models for the four DDRs,
    // and their connection to awsteria_hw.
 
-   // DDR A (cached mem access, incl. bursts)
+`ifdef INCLUDE_DDR_A
    AXI4_16_64_512_0_Slave_IFC  ddr_A <- mkDDR_A_Model;
    mkConnection (awsteria_hw.ddr_A_M, ddr_A);
+`endif
 
 `ifdef INCLUDE_DDR_B
-   // DDR B (uncached mem access, no bursts)
    AXI4_16_64_512_0_Slave_IFC  ddr_B <- mkDDR_B_Model;
    mkConnection (awsteria_hw.ddr_B_M, ddr_B);
 `endif
 
 `ifdef INCLUDE_DDR_C
-   // DDR C (tie-off: unused for now)
    AXI4_16_64_512_0_Slave_IFC  ddr_C <- mkDDR_C_Model;
    mkConnection (awsteria_hw.ddr_C_M, ddr_C);
 `endif
 
 `ifdef INCLUDE_DDR_D
-   // DDR D (tie-off: unused for now)
    AXI4_16_64_512_0_Slave_IFC  ddr_D <- mkDDR_D_Model;
    mkConnection (awsteria_hw.ddr_D_M, ddr_D);
 `endif
@@ -90,22 +98,32 @@ module mkTop_HW_Side (Empty) ;
    // ================================================================
    // BEHAVIOR: start up
 
-   rule rl_connecting (rg_state == STATE_CONNECTING);
+   rule rl_start (rg_state == STATE_START);
       $display ("================================================================");
-      $display ("Bluespec AWSteria simulation v2.0");
-      $display ("Copyright (c) 2020-2021 Bluespec, Inc. All Rights Reserved.");
+      $display ("Bluespec AWSteria_Infra simulation v2.1");
+      $display ("Copyright (c) 2020-2022 Bluespec, Inc. All Rights Reserved.");
       $display ("================================================================");
 
-      // Open connection to remote host (host is client, we are server)
-      c_host_connect (default_tcp_port);
-      rg_state <= STATE_CONNECTED;
+      rg_state <= STATE_LISTEN;
    endrule
 
-   rule rl_start_when_connected (rg_state == STATE_CONNECTED);
+   rule rl_listen (rg_state == STATE_LISTEN);
+      $display ("INFO: Listening for connection from host-side on TCP port %0d",
+		default_tcp_port);
+      $display ("    (%0d: %m.rl_listen)", cur_cycle);
+      c_host_listen (default_tcp_port);
+      rg_state <= STATE_ACCEPT;
+   endrule
 
-      // Any post-connection initialization goes here
-
-      rg_state <= STATE_RUNNING;
+   rule rl_accept (rg_state == STATE_ACCEPT);
+      // $display ("rl_accept: try accept");
+      let success <- c_host_try_accept (?);
+      if (success == 1) begin
+	 $display ("INFO: Accepted connection from host-side on TCP port %0d",
+		   default_tcp_port);
+	 $display ("    (%0d: %m.rl_accept)", cur_cycle);
+	 rg_state <= STATE_RUNNING;
+      end
    endrule
 
    // ================================================================

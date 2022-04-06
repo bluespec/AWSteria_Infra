@@ -1,13 +1,12 @@
-// This file was generated from spec file 'AWS_FPGA_Spec'
+// This file was auto-generated from spec file 'AWS_FPGA_Spec'
 
 #include  <stdio.h>
 #include  <stdlib.h>
 #include  <stdint.h>
+#include  <inttypes.h>
 #include  <string.h>
 
 #include  "Bytevec.h"
-
-// static int verbosity = 0;
 
 // ================================================================
 // State constructor and initializer
@@ -193,7 +192,7 @@ void AXI4L_Rd_Data_d32_u0_from_bytevec (AXI4L_Rd_Data_d32_u0 *ps,
 
 int Bytevec_struct_to_bytevec (Bytevec_state *p_state)
 {
-    int verbosity2 = 0;    // local verbosity for this function
+    int verbosity = 0;    // local verbosity for this function
 
     // ---- Fill in credits for BSV-to-C channels
     uint32_t total_credits = 0;
@@ -226,9 +225,9 @@ int Bytevec_struct_to_bytevec (Bytevec_state *p_state)
         p_state->head_AXI4_Wr_Addr_i16_a64_u0 += 1;
         p_state->size_AXI4_Wr_Addr_i16_a64_u0 -= 1;
         p_state->credits_AXI4_Wr_Addr_i16_a64_u0 -= 1;
-        if (verbosity2 != 0) {
+        if (verbosity != 0) {
             fprintf (stdout, "Bytevec_struct_to_bytevec: encoded AXI4_Wr_Addr_i16_a64_u0\n");
-            fprintf (stdout, "  head %0lx  size %0lx  credits %0lx\n",
+            fprintf (stdout, "  head %0" PRIx64 "  size %0" PRIx64 "  credits %0" PRIx64 "\n",
                      p_state->head_AXI4_Wr_Addr_i16_a64_u0,
                      p_state->size_AXI4_Wr_Addr_i16_a64_u0,
                      p_state->credits_AXI4_Wr_Addr_i16_a64_u0);
@@ -248,9 +247,9 @@ int Bytevec_struct_to_bytevec (Bytevec_state *p_state)
         p_state->head_AXI4_Wr_Data_d512_u0 += 1;
         p_state->size_AXI4_Wr_Data_d512_u0 -= 1;
         p_state->credits_AXI4_Wr_Data_d512_u0 -= 1;
-        if (verbosity2 != 0) {
+        if (verbosity != 0) {
             fprintf (stdout, "Bytevec_struct_to_bytevec: encoded AXI4_Wr_Data_d512_u0\n");
-            fprintf (stdout, "  head %0lx  size %0lx  credits %0lx\n",
+            fprintf (stdout, "  head %0" PRIx64 "  size %0" PRIx64 "  credits %0" PRIx64 "\n",
                      p_state->head_AXI4_Wr_Data_d512_u0,
                      p_state->size_AXI4_Wr_Data_d512_u0,
                      p_state->credits_AXI4_Wr_Data_d512_u0);
@@ -270,9 +269,9 @@ int Bytevec_struct_to_bytevec (Bytevec_state *p_state)
         p_state->head_AXI4_Rd_Addr_i16_a64_u0 += 1;
         p_state->size_AXI4_Rd_Addr_i16_a64_u0 -= 1;
         p_state->credits_AXI4_Rd_Addr_i16_a64_u0 -= 1;
-        if (verbosity2 != 0) {
+        if (verbosity != 0) {
             fprintf (stdout, "Bytevec_struct_to_bytevec: encoded AXI4_Rd_Addr_i16_a64_u0\n");
-            fprintf (stdout, "  head %0lx  size %0lx  credits %0lx\n",
+            fprintf (stdout, "  head %0" PRIx64 "  size %0" PRIx64 "  credits %0" PRIx64 "\n",
                      p_state->head_AXI4_Rd_Addr_i16_a64_u0,
                      p_state->size_AXI4_Rd_Addr_i16_a64_u0,
                      p_state->credits_AXI4_Rd_Addr_i16_a64_u0);
@@ -292,9 +291,9 @@ int Bytevec_struct_to_bytevec (Bytevec_state *p_state)
         p_state->head_AXI4L_Wr_Addr_a32_u0 += 1;
         p_state->size_AXI4L_Wr_Addr_a32_u0 -= 1;
         p_state->credits_AXI4L_Wr_Addr_a32_u0 -= 1;
-        if (verbosity2 != 0) {
+        if (verbosity != 0) {
             fprintf (stdout, "Bytevec_struct_to_bytevec: encoded AXI4L_Wr_Addr_a32_u0\n");
-            fprintf (stdout, "  head %0lx  size %0lx  credits %0lx\n",
+            fprintf (stdout, "  head %0" PRIx64 "  size %0" PRIx64 "  credits %0" PRIx64 "\n",
                      p_state->head_AXI4L_Wr_Addr_a32_u0,
                      p_state->size_AXI4L_Wr_Addr_a32_u0,
                      p_state->credits_AXI4L_Wr_Addr_a32_u0);
@@ -314,9 +313,9 @@ int Bytevec_struct_to_bytevec (Bytevec_state *p_state)
         p_state->head_AXI4L_Wr_Data_d32 += 1;
         p_state->size_AXI4L_Wr_Data_d32 -= 1;
         p_state->credits_AXI4L_Wr_Data_d32 -= 1;
-        if (verbosity2 != 0) {
+        if (verbosity != 0) {
             fprintf (stdout, "Bytevec_struct_to_bytevec: encoded AXI4L_Wr_Data_d32\n");
-            fprintf (stdout, "  head %0lx  size %0lx  credits %0lx\n",
+            fprintf (stdout, "  head %0" PRIx64 "  size %0" PRIx64 "  credits %0" PRIx64 "\n",
                      p_state->head_AXI4L_Wr_Data_d32,
                      p_state->size_AXI4L_Wr_Data_d32,
                      p_state->credits_AXI4L_Wr_Data_d32);
@@ -336,9 +335,9 @@ int Bytevec_struct_to_bytevec (Bytevec_state *p_state)
         p_state->head_AXI4L_Rd_Addr_a32_u0 += 1;
         p_state->size_AXI4L_Rd_Addr_a32_u0 -= 1;
         p_state->credits_AXI4L_Rd_Addr_a32_u0 -= 1;
-        if (verbosity2 != 0) {
+        if (verbosity != 0) {
             fprintf (stdout, "Bytevec_struct_to_bytevec: encoded AXI4L_Rd_Addr_a32_u0\n");
-            fprintf (stdout, "  head %0lx  size %0lx  credits %0lx\n",
+            fprintf (stdout, "  head %0" PRIx64 "  size %0" PRIx64 "  credits %0" PRIx64 "\n",
                      p_state->head_AXI4L_Rd_Addr_a32_u0,
                      p_state->size_AXI4L_Rd_Addr_a32_u0,
                      p_state->credits_AXI4L_Rd_Addr_a32_u0);
@@ -350,7 +349,7 @@ int Bytevec_struct_to_bytevec (Bytevec_state *p_state)
     if (total_credits != 0) {
         p_state->bytevec_C_to_BSV [0] = 1 + 5;    // packet size
         p_state->bytevec_C_to_BSV [5] = 0;    // chan id = credits-only
-        if (verbosity2 != 0)
+        if (verbosity != 0)
             fprintf (stdout, "Bytevec_struct_to_bytevec: bytevec is credits-only\n");
         return 1;
     }
@@ -367,7 +366,7 @@ int Bytevec_struct_to_bytevec (Bytevec_state *p_state)
 
 int Bytevec_struct_from_bytevec (Bytevec_state *p_state)
 {
-    int verbosity2 = 0;    // local verbosity for this function
+    int verbosity = 0;    // local verbosity for this function
 
     // ---- Restore credits for remote C-to-BSV receive buffers
     p_state->credits_AXI4_Wr_Addr_i16_a64_u0 += p_state->bytevec_BSV_to_C [1];
@@ -385,7 +384,7 @@ int Bytevec_struct_from_bytevec (Bytevec_state *p_state)
                                        p_state->bytevec_BSV_to_C + 7 + 1);
         // ---- Enqueue the struct
         p_state->size_AXI4_Wr_Resp_i16_u0 += 1;
-        if (verbosity2 != 0)
+        if (verbosity != 0)
             fprintf (stdout, "Bytevec_struct_from_bytevec: received AXI4_Wr_Resp_i16_u0 struct\n");
         return 1;
     }
@@ -398,7 +397,7 @@ int Bytevec_struct_from_bytevec (Bytevec_state *p_state)
                                        p_state->bytevec_BSV_to_C + 7 + 1);
         // ---- Enqueue the struct
         p_state->size_AXI4_Rd_Data_i16_d512_u0 += 1;
-        if (verbosity2 != 0)
+        if (verbosity != 0)
             fprintf (stdout, "Bytevec_struct_from_bytevec: received AXI4_Rd_Data_i16_d512_u0 struct\n");
         return 1;
     }
@@ -411,7 +410,7 @@ int Bytevec_struct_from_bytevec (Bytevec_state *p_state)
                                        p_state->bytevec_BSV_to_C + 7 + 1);
         // ---- Enqueue the struct
         p_state->size_AXI4L_Wr_Resp_u0 += 1;
-        if (verbosity2 != 0)
+        if (verbosity != 0)
             fprintf (stdout, "Bytevec_struct_from_bytevec: received AXI4L_Wr_Resp_u0 struct\n");
         return 1;
     }
@@ -424,11 +423,11 @@ int Bytevec_struct_from_bytevec (Bytevec_state *p_state)
                                        p_state->bytevec_BSV_to_C + 7 + 1);
         // ---- Enqueue the struct
         p_state->size_AXI4L_Rd_Data_d32_u0 += 1;
-        if (verbosity2 != 0)
+        if (verbosity != 0)
             fprintf (stdout, "Bytevec_struct_from_bytevec: received AXI4L_Rd_Data_d32_u0 struct\n");
         return 1;
     }
-    if (verbosity2 != 0)
+    if (verbosity != 0)
         fprintf (stdout, "Bytevec_struct_from_bytevec: bytevec is credits-only\n");
     return 0;
 }
@@ -441,7 +440,7 @@ int Bytevec_struct_from_bytevec (Bytevec_state *p_state)
 int Bytevec_enqueue_AXI4_Wr_Addr_i16_a64_u0 (Bytevec_state *p_state,
                                              AXI4_Wr_Addr_i16_a64_u0 *p_struct)
 {
-    int verbosity2 = 0;
+    int verbosity = 0;
     if (p_state->size_AXI4_Wr_Addr_i16_a64_u0 >= C_TO_BSV_FIFO_SIZE) return 0;
 
     uint64_t tail_index = p_state->head_AXI4_Wr_Addr_i16_a64_u0 +
@@ -451,9 +450,9 @@ int Bytevec_enqueue_AXI4_Wr_Addr_i16_a64_u0 (Bytevec_state *p_state,
             p_struct,
             sizeof (AXI4_Wr_Addr_i16_a64_u0));
     p_state->size_AXI4_Wr_Addr_i16_a64_u0 += 1;
-    if (verbosity2 != 0) {
+    if (verbosity != 0) {
         fprintf (stdout, "Bytevec_enqueue_AXI4_Wr_Addr_i16_a64_u0:\n");
-        fprintf (stdout, "  head %0lx  size %0lx  credits %0lx\n",
+        fprintf (stdout, "  head %0" PRIx64 "  size %0" PRIx64 "  credits %0" PRIx64 "\n",
                  p_state->head_AXI4_Wr_Addr_i16_a64_u0,
                  p_state->size_AXI4_Wr_Addr_i16_a64_u0,
                  p_state->credits_AXI4_Wr_Addr_i16_a64_u0);
@@ -470,7 +469,7 @@ int Bytevec_enqueue_AXI4_Wr_Addr_i16_a64_u0 (Bytevec_state *p_state,
 int Bytevec_enqueue_AXI4_Wr_Data_d512_u0 (Bytevec_state *p_state,
                                           AXI4_Wr_Data_d512_u0 *p_struct)
 {
-    int verbosity2 = 0;
+    int verbosity = 0;
     if (p_state->size_AXI4_Wr_Data_d512_u0 >= C_TO_BSV_FIFO_SIZE) return 0;
 
     uint64_t tail_index = p_state->head_AXI4_Wr_Data_d512_u0 +
@@ -480,9 +479,9 @@ int Bytevec_enqueue_AXI4_Wr_Data_d512_u0 (Bytevec_state *p_state,
             p_struct,
             sizeof (AXI4_Wr_Data_d512_u0));
     p_state->size_AXI4_Wr_Data_d512_u0 += 1;
-    if (verbosity2 != 0) {
+    if (verbosity != 0) {
         fprintf (stdout, "Bytevec_enqueue_AXI4_Wr_Data_d512_u0:\n");
-        fprintf (stdout, "  head %0lx  size %0lx  credits %0lx\n",
+        fprintf (stdout, "  head %0" PRIx64 "  size %0" PRIx64 "  credits %0" PRIx64 "\n",
                  p_state->head_AXI4_Wr_Data_d512_u0,
                  p_state->size_AXI4_Wr_Data_d512_u0,
                  p_state->credits_AXI4_Wr_Data_d512_u0);
@@ -499,7 +498,7 @@ int Bytevec_enqueue_AXI4_Wr_Data_d512_u0 (Bytevec_state *p_state,
 int Bytevec_enqueue_AXI4_Rd_Addr_i16_a64_u0 (Bytevec_state *p_state,
                                              AXI4_Rd_Addr_i16_a64_u0 *p_struct)
 {
-    int verbosity2 = 0;
+    int verbosity = 0;
     if (p_state->size_AXI4_Rd_Addr_i16_a64_u0 >= C_TO_BSV_FIFO_SIZE) return 0;
 
     uint64_t tail_index = p_state->head_AXI4_Rd_Addr_i16_a64_u0 +
@@ -509,9 +508,9 @@ int Bytevec_enqueue_AXI4_Rd_Addr_i16_a64_u0 (Bytevec_state *p_state,
             p_struct,
             sizeof (AXI4_Rd_Addr_i16_a64_u0));
     p_state->size_AXI4_Rd_Addr_i16_a64_u0 += 1;
-    if (verbosity2 != 0) {
+    if (verbosity != 0) {
         fprintf (stdout, "Bytevec_enqueue_AXI4_Rd_Addr_i16_a64_u0:\n");
-        fprintf (stdout, "  head %0lx  size %0lx  credits %0lx\n",
+        fprintf (stdout, "  head %0" PRIx64 "  size %0" PRIx64 "  credits %0" PRIx64 "\n",
                  p_state->head_AXI4_Rd_Addr_i16_a64_u0,
                  p_state->size_AXI4_Rd_Addr_i16_a64_u0,
                  p_state->credits_AXI4_Rd_Addr_i16_a64_u0);
@@ -528,7 +527,7 @@ int Bytevec_enqueue_AXI4_Rd_Addr_i16_a64_u0 (Bytevec_state *p_state,
 int Bytevec_enqueue_AXI4L_Wr_Addr_a32_u0 (Bytevec_state *p_state,
                                           AXI4L_Wr_Addr_a32_u0 *p_struct)
 {
-    int verbosity2 = 0;
+    int verbosity = 0;
     if (p_state->size_AXI4L_Wr_Addr_a32_u0 >= C_TO_BSV_FIFO_SIZE) return 0;
 
     uint64_t tail_index = p_state->head_AXI4L_Wr_Addr_a32_u0 +
@@ -538,9 +537,9 @@ int Bytevec_enqueue_AXI4L_Wr_Addr_a32_u0 (Bytevec_state *p_state,
             p_struct,
             sizeof (AXI4L_Wr_Addr_a32_u0));
     p_state->size_AXI4L_Wr_Addr_a32_u0 += 1;
-    if (verbosity2 != 0) {
+    if (verbosity != 0) {
         fprintf (stdout, "Bytevec_enqueue_AXI4L_Wr_Addr_a32_u0:\n");
-        fprintf (stdout, "  head %0lx  size %0lx  credits %0lx\n",
+        fprintf (stdout, "  head %0" PRIx64 "  size %0" PRIx64 "  credits %0" PRIx64 "\n",
                  p_state->head_AXI4L_Wr_Addr_a32_u0,
                  p_state->size_AXI4L_Wr_Addr_a32_u0,
                  p_state->credits_AXI4L_Wr_Addr_a32_u0);
@@ -557,7 +556,7 @@ int Bytevec_enqueue_AXI4L_Wr_Addr_a32_u0 (Bytevec_state *p_state,
 int Bytevec_enqueue_AXI4L_Wr_Data_d32 (Bytevec_state *p_state,
                                        AXI4L_Wr_Data_d32 *p_struct)
 {
-    int verbosity2 = 0;
+    int verbosity = 0;
     if (p_state->size_AXI4L_Wr_Data_d32 >= C_TO_BSV_FIFO_SIZE) return 0;
 
     uint64_t tail_index = p_state->head_AXI4L_Wr_Data_d32 +
@@ -567,9 +566,9 @@ int Bytevec_enqueue_AXI4L_Wr_Data_d32 (Bytevec_state *p_state,
             p_struct,
             sizeof (AXI4L_Wr_Data_d32));
     p_state->size_AXI4L_Wr_Data_d32 += 1;
-    if (verbosity2 != 0) {
+    if (verbosity != 0) {
         fprintf (stdout, "Bytevec_enqueue_AXI4L_Wr_Data_d32:\n");
-        fprintf (stdout, "  head %0lx  size %0lx  credits %0lx\n",
+        fprintf (stdout, "  head %0" PRIx64 "  size %0" PRIx64 "  credits %0" PRIx64 "\n",
                  p_state->head_AXI4L_Wr_Data_d32,
                  p_state->size_AXI4L_Wr_Data_d32,
                  p_state->credits_AXI4L_Wr_Data_d32);
@@ -586,7 +585,7 @@ int Bytevec_enqueue_AXI4L_Wr_Data_d32 (Bytevec_state *p_state,
 int Bytevec_enqueue_AXI4L_Rd_Addr_a32_u0 (Bytevec_state *p_state,
                                           AXI4L_Rd_Addr_a32_u0 *p_struct)
 {
-    int verbosity2 = 0;
+    int verbosity = 0;
     if (p_state->size_AXI4L_Rd_Addr_a32_u0 >= C_TO_BSV_FIFO_SIZE) return 0;
 
     uint64_t tail_index = p_state->head_AXI4L_Rd_Addr_a32_u0 +
@@ -596,9 +595,9 @@ int Bytevec_enqueue_AXI4L_Rd_Addr_a32_u0 (Bytevec_state *p_state,
             p_struct,
             sizeof (AXI4L_Rd_Addr_a32_u0));
     p_state->size_AXI4L_Rd_Addr_a32_u0 += 1;
-    if (verbosity2 != 0) {
+    if (verbosity != 0) {
         fprintf (stdout, "Bytevec_enqueue_AXI4L_Rd_Addr_a32_u0:\n");
-        fprintf (stdout, "  head %0lx  size %0lx  credits %0lx\n",
+        fprintf (stdout, "  head %0" PRIx64 "  size %0" PRIx64 "  credits %0" PRIx64 "\n",
                  p_state->head_AXI4L_Rd_Addr_a32_u0,
                  p_state->size_AXI4L_Rd_Addr_a32_u0,
                  p_state->credits_AXI4L_Rd_Addr_a32_u0);

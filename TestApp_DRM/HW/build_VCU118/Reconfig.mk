@@ -1,4 +1,4 @@
-# Copyright (c) 2021 Bluespec, Inc.  All Rights Reserved.
+# Copyright (c) 2021-2022 Bluespec, Inc.  All Rights Reserved.
 
 # These are commands to program the Xilinx PCIe-connected FPGA (e.g.,
 # VCU118) with various partial bitfiles, using "partial reconfiguration".

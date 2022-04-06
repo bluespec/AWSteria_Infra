@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2021 Bluespec, Inc.  All Rights Reserved
+// Copyright (c) 2013-2022 Bluespec, Inc.  All Rights Reserved
 
 package C_Imports;
 
@@ -72,14 +72,20 @@ Bit #(16) default_tcp_port = 30000;
 // Connect to remote host on tcp_port (host is client, we are server)
 
 import "BDPI"
-function Action  c_host_connect (Bit #(16)  tcp_port);
+function Action  c_host_listen (Bit #(16)  tcp_port);
+
+// ================================================================
+// Connect to remote host on tcp_port (host is client, we are server)
+
+import "BDPI"
+function ActionValue #(Bit #(8))  c_host_try_accept (Bit #(8) dummy);
 
 // ================================================================
 // Disconnect from remote host.
 // Return fail/ok.
 
 import "BDPI"
-function Action  c_host_disconnect (Bit #(8)  dummy);
+function Action  c_host_disconnect (Bit #(8) dummy);
 
 // ================================================================
 // Receive bytevec from remote host

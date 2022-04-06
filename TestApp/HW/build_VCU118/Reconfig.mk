@@ -1,4 +1,4 @@
-# Copyright (c) 2021 Bluespec, Inc.  All Rights Reserved.
+# Copyright (c) 2021-2022 Bluespec, Inc.  All Rights Reserved.
 
 # These are commands to program the Xilinx PCIe-connected FPGA (e.g.,
 # VCU118) with various partial bitfiles, using "partial reconfiguration".
@@ -27,8 +27,11 @@ help:
 # Original garnet repo example
 PARTIAL_BITFILE_GARNET_EXAMPLE ?= /home/nikhil/git_clones/CTSRD-CHERI_garnet/example/build/example_pblock_partition_partial.bit
 
-# AWSteria_HW TestApp (no reclocking, running at 250 MHz)
-PARTIAL_BITFILE_TESTAPP_250MHZ ?= ~/garnet/example6/build/AWSteria_pblock_partition_partial.bit
+# AWSteria_HW TestApp (running at 250 MHz)
+PARTIAL_BITFILE_TESTAPP_250MHZ ?= ~/git_clones/CTSRD-CHERI_garnet/garnet_TestApp_HW_250MHz/build/AWSteria_pblock_partition_partial.bit
+
+# AWSteria_HW TestApp (OLD: no reclocking, running at 250 MHz)
+PARTIAL_BITFILE_TESTAPP_250MHZ ?= ~/git_clones/CTSRD-CHERI_garnet/example_TestApp/build/AWSteria_pblock_partition_partial.bit
 
 # AWSteria_HW TestApp (with reclocking, running at 100 MHz)
 PARTIAL_BITFILE_TESTAPP_100MHZ ?= ~/garnet/example_TestApp_reclocked/build/AWSteria_pblock_partition_partial.bit

@@ -1,6 +1,6 @@
 ###  -*-Makefile-*-
 
-# Copyright (c) 2020-2021 Bluespec, Inc.  All Rights Reserved
+# Copyright (c) 2020-2022 Bluespec, Inc.  All Rights Reserved
 
 # ================================================================
 
@@ -19,7 +19,7 @@ else
   $(info  INFO: AWSTERIA_INFRA_REPO = $(AWSTERIA_INFRA_REPO))
 endif
 
-$(info INFO: Making executable $(EXE) for AWSteria TestApp host side on VCU118)
+$(info INFO: Making executable $(EXE) for AWSteria TestApp_DRM host side on VCU118)
 
 # ================================================================
 # Source files
@@ -27,13 +27,13 @@ $(info INFO: Making executable $(EXE) for AWSteria TestApp host side on VCU118)
 # ----------------
 # App host side
 
-SRCS_C = ../main.c
+SRCS_C = $(AWSTERIA_INFRA_REPO)/TestApp_DRM/Host/main.c
 
 # ----------------
 # AWSteria infra
 
-SRCS_H += $(AWSTERIA_INFRA_REPO)/Include_API/AWSteria_Host_lib.h \
-	  $(AWSTERIA_INFRA_REPO)/Platform_VCU118/Host/AWSteria_Platform.h
+SRCS_H += $(AWSTERIA_INFRA_REPO)/Include_API/AWSteria_Host_lib.h
+SRCS_H += $(AWSTERIA_INFRA_REPO)/Platform_VCU118/Host/AWSteria_Platform.h
 
 SRCS_C += $(AWSTERIA_INFRA_REPO)/Platform_VCU118/Host/AWSteria_Host_lib.c
 
@@ -43,7 +43,8 @@ CFLAGS += -std=gnu11 -g -Wall -Werror -pthread -laccelize_drmc
 
 CFLAGS += -D PLATFORM_VCU118
 
-CFLAGS += -I $(AWSTERIA_INFRA_REPO)/Include_API  -I $(AWSTERIA_INFRA_REPO)/Platform_VCU118/Host
+CFLAGS += -I $(AWSTERIA_INFRA_REPO)/Include_API
+CFLAGS += -I $(AWSTERIA_INFRA_REPO)/Platform_VCU118/Host
 
 CC     = clang $(CFLAGS)
 

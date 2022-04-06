@@ -1,4 +1,4 @@
-// This file was generated from spec file 'AWS_FPGA_Spec'
+// This file was auto-generated from spec file 'AWS_FPGA_Spec'
 
 package Bytevec;
 

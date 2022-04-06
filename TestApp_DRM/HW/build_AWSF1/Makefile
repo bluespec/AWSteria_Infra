@@ -1,6 +1,6 @@
 ###  -*-Makefile-*-
 
-# Copyright (c) 2020-2021 Bluespec, Inc.  All Rights Reserved
+# Copyright (c) 2020-2022 Bluespec, Inc.  All Rights Reserved
 
 # ================================================================
 
@@ -41,7 +41,7 @@ endif
 # BSC_PATH for Test App
 
 # The Test App
-BSC_PATH := $(BSC_PATH):..
+BSC_PATH := $(BSC_PATH):$(AWSTERIA_INFRA_REPO)/TestApp_DRM/HW
 
 # From AWSteria
 BSC_PATH := $(BSC_PATH):$(AWSTERIA_INFRA_REPO)/Include_API
@@ -62,8 +62,11 @@ TOPMODULE = mkAWSteria_HW
 # ================================================================
 # bsc compilation flags
 
-# Depending on platform, can also add DDR C and D
+# AWSF1 has DDR A, B, C and D
+INCLUDE_DDRS += -D INCLUDE_DDR_A
 INCLUDE_DDRS += -D INCLUDE_DDR_B
+INCLUDE_DDRS += -D INCLUDE_DDR_C
+INCLUDE_DDRS += -D INCLUDE_DDR_D
 
 BSC_COMPILATION_FLAGS += $(INCLUDE_DDRS) \
 	-keep-fires -aggressive-conditions -no-warn-action-shadowing \

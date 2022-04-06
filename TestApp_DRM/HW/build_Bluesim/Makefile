@@ -12,6 +12,7 @@ help:
 	@echo "    make full_clean    Restore to pristine state."
 	@echo ""
 	@echo "  Current bsc compiler flags: $(BSC_COMPILATION_FLAGS)"
+	@echo "  Please define TARGET=VCU118 or TARGET=AWSF1 for proper DDR setup"
 
 # ================================================================
 # Defs
@@ -36,19 +37,37 @@ endif
 
 PLATFORM_SIM = $(AWSTERIA_INFRA_REPO)/Platform_Sim
 
+# Default target
+TARGET ?= VCU118
+
 #================================================================
 # BSC flags
 
-BSC_COMPILATION_FLAGS += -D SIM_FOR_VCU118
-# BSC_COMPILATION_FLAGS += -D SIM_FOR_AWSF1
+ifeq ($(TARGET),VCU118)
 
-BSC_COMPILATION_FLAGS += -D INCLUDE_DDR_B
+  BSC_COMPILATION_FLAGS += -D SIM_FOR_VCU118
+  BSC_COMPILATION_FLAGS += -D INCLUDE_DDR_A
+  BSC_COMPILATION_FLAGS += -D INCLUDE_DDR_B
+  $(info  INFO: TARGET is VCU118 (has DDR A and B))
+
+else ifeq ($(TARGET),AWSF1)
+
+  BSC_COMPILATION_FLAGS += -D SIM_FOR_AWSF1
+  BSC_COMPILATION_FLAGS += -D INCLUDE_DDR_A
+  BSC_COMPILATION_FLAGS += -D INCLUDE_DDR_B
+  BSC_COMPILATION_FLAGS += -D INCLUDE_DDR_C
+  BSC_COMPILATION_FLAGS += -D INCLUDE_DDR_D
+  $(info  INFO: TARGET is AWSF1 (has DDR A, B, C and D))
+
+else
+  $(error ERROR: please define TARGET=VCU118 or TARGET=AWSF1 for proper DDR setup)
+endif
 
 #================================================================
 # BSC_PATH for AWSteria_Infra TestApp
 
 # The Test App
-BSC_PATH := $(BSC_PATH):..
+BSC_PATH := $(BSC_PATH):$(AWSTERIA_INFRA_REPO)/TestApp_DRM/HW
 
 # From AWSteria_Infra
 BSC_PATH := $(BSC_PATH):$(AWSTERIA_INFRA_REPO)/Include_API

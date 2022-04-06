@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Bluespec, Inc.  All Rights Reserved
+// Copyright (c) 2020-2022 Bluespec, Inc.  All Rights Reserved
 
 // ================================================================
 // Client communications over TCP/IP
@@ -32,6 +32,7 @@
 #include <sys/types.h>        /*  socket types              */
 #include <arpa/inet.h>        /*  inet (3) funtions         */
 #include <fcntl.h>            /* To set non-blocking mode   */
+#include <netinet/tcp.h>
 
 // ----------------
 // Project includes
@@ -51,20 +52,20 @@ static int sockfd = 0;
 uint32_t  tcp_client_open (const char *server_host, const uint16_t server_port)
 {
     if (server_host == NULL) {
-	fprintf (stdout, "tcp_client_open (): server_host is NULL\n");
+	fprintf (stdout, "%s: server_host is NULL\n", __FUNCTION__);
 	return status_err;
     }
     if (server_port == 0) {
-	fprintf (stdout, "tcp_client_open (): server_port is 0\n");
+	fprintf (stdout, "%s: server_port is 0\n", __FUNCTION__);
 	return status_err;
     }
 
-    fprintf (stdout, "tcp_client_open: connecting to '%s' port %0d\n",
-	     server_host, server_port);
+    fprintf (stdout, "%s: connecting to '%s' port %0d\n",
+	     __FUNCTION__, server_host, server_port);
 
     // Create the socket
     if ( (sockfd = socket (AF_INET, SOCK_STREAM, 0)) < 0 ) {
-	fprintf (stdout, "tcp_client_open (): Error creating socket.\n");
+	fprintf (stdout, "%s: Error creating socket.\n", __FUNCTION__);
 	return status_err;
     }
 
@@ -77,17 +78,25 @@ uint32_t  tcp_client_open (const char *server_host, const uint16_t server_port)
 
     // Set the remote IP address
     if (inet_aton (server_host, & servaddr.sin_addr) <= 0 ) {
-	fprintf (stdout, "tcp_client_open (): Invalid remote IP address.\n");
+	fprintf (stdout, "%s: Invalid remote IP address.\n", __FUNCTION__);
 	return status_err;
     }
 
     // connect() to the remote server
     if (connect (sockfd, (struct sockaddr *) &servaddr, sizeof(servaddr) ) < 0 ) {
-	fprintf (stdout, "tcp_client_open (): Error calling connect()\n");
+	fprintf (stdout, "%s: Error calling connect()\n", __FUNCTION__);
 	return status_err;
     }
 
-    fprintf (stdout, "tcp_client_open: connected\n");
+    // This code copied from riscv-openocd's jtag_vpi.c, where they say:
+    //    "This increases performance dramatically for local
+    //     connections, which is the most likely arrangement ..."
+    if (servaddr.sin_addr.s_addr == htonl(INADDR_LOOPBACK)) {
+	int flag = 1;
+	setsockopt (sockfd, IPPROTO_TCP, TCP_NODELAY, (char *) & flag, sizeof(int));
+    }
+
+    fprintf (stdout, "%s: connected\n", __FUNCTION__);
     return status_ok;
 }
 
@@ -96,8 +105,12 @@ uint32_t  tcp_client_open (const char *server_host, const uint16_t server_port)
 
 uint32_t  tcp_client_close (uint32_t dummy)
 {
-    if (sockfd > 0)
+    if (sockfd > 0) {
+	fprintf (stdout, "%s\n", __FUNCTION__);
+	shutdown (sockfd, SHUT_RDWR);
 	close (sockfd);
+	sleep (1);
+    }
 
     return  status_ok;
 }
@@ -112,7 +125,7 @@ uint32_t  tcp_client_send (const uint32_t data_size, const uint8_t *data)
     n = write (sockfd, data, data_size);
 
     if (n < 0) {
-	fprintf (stdout, "ERROR: tcp_client_send() = %0d\n", n);
+	fprintf (stdout, "ERROR: %s() = %0d\n", __FUNCTION__, n);
 	return status_err;
     }
     return status_ok;
@@ -134,7 +147,7 @@ uint32_t  tcp_client_recv (bool do_poll, const uint32_t data_size, uint8_t *data
 	int n = poll (& x_pollfd, 1, 0);
 
 	if (n < 0) {
-	    fprintf (stdout, "ERROR: tcp_client_recv (): poll () failed\n");
+	    fprintf (stdout, "ERROR: %s: poll () failed\n", __FUNCTION__);
 	    exit (1);
 	}
 
@@ -148,7 +161,7 @@ uint32_t  tcp_client_recv (bool do_poll, const uint32_t data_size, uint8_t *data
     while (n_recd < data_size) {
 	int n = read (sockfd, & (data [n_recd]), (data_size - n_recd));
 	if ((n < 0) && (errno != EAGAIN) && (errno != EWOULDBLOCK)) {
-	    fprintf (stdout, "ERROR: tcp_client_recv (): read () failed on byte 0\n");
+	    fprintf (stdout, "ERROR: %s: read () failed on byte 0\n", __FUNCTION__);
 	    exit (1);
 	}
 	else if (n > 0) {

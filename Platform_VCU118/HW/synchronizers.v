@@ -1,4 +1,4 @@
-// Copyright (c) 2021 Rishiyur S. Nikhil and Bluespec, Inc.
+// Copyright (c) 2021-2022 Rishiyur S. Nikhil and Bluespec, Inc.
 
 // This is mostly a Verilog Wrapper for Xilinx IP modules
 //     'xpm_cdc_sync_rst'
