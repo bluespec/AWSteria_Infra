@@ -466,9 +466,9 @@ module cl_AWSteria #(parameter NUM_DDR=4)
    mkAWSteria_HW #()
    awsteria_HW   (.CLK   (clk_main_a0),
 		    .RST_N (mkAWSteria_HW_sync_rst_n),
-         .CLK_clk1(clk_main_a0),
-		     .CLK_clk2(clk_main_a0),
-		     .CLK_clk3(clk_main_a0),
+         .CLK_clk1(clk_extra_a1),
+		     .CLK_clk2(clk_extra_a2),
+		     .CLK_clk3(clk_extra_a3),
 		     .CLK_clk4(clk_main_a0),
 		     .CLK_clk5(clk_main_a0),
 		  // ----------------
