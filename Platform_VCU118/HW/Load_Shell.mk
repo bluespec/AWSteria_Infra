@@ -9,6 +9,7 @@ HELP_TEXT = \
 "    Override this with your Garnet shell bitfile location, if necessary."
 
 GARNET_SHELL_BITFILE ?= ~/git_clones/CTSRD-CHERI_garnet/shell/prebuilt/empty.bit
+
 # ================================================================
 
 .PHONY: help
