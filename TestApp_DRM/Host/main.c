@@ -150,7 +150,6 @@ void buf_write_AXI4L (uint8_t *wbuf, const uint64_t addr)
 {
     int rc;
     uint32_t *p32 = (uint32_t *) wbuf;
-  
    if (verbosity_AXI4L_W != 0)
 	fprintf (stdout, "%s: addr 0x%0lx  data 0x%0x\n",
 		 __FUNCTION__, addr, *p32);
