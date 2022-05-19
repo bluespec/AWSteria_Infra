@@ -32,18 +32,18 @@
 void *AWSteria_Host_state = NULL;
 
 
-int read_register( uint32_t offset, uint32_t* value, void* user_p ) {
+int read_DRM_register( uint32_t offset, uint32_t* value, void* user_p ) {
   return  AWSteria_AXI4L_read (AWSteria_Host_state, drm_controller_base_addr + offset, value);
 }
 
-int write_register( uint32_t offset, uint32_t value, void* user_p ) {
+int write_DRM_register( uint32_t offset, uint32_t value, void* user_p ) {
 
   return  AWSteria_AXI4L_write (AWSteria_Host_state, drm_controller_base_addr + offset, value);
 
 }
 
 // Define asynchronous error callback
-void asynch_error( const char* err_msg, void* user_p ) {
+void asynch_error_DRM( const char* err_msg, void* user_p ) {
     fprintf( stderr, "%s", err_msg );
 }
 
@@ -400,10 +400,10 @@ int main (int argc, char *argv [])
         "./conf.json",
         "./cred.json",
         // Read/write register functions callbacks
-        read_register,
-        write_register,
+        read_DRM_register,
+        write_DRM_register,
         // Asynchronous error callback
-        asynch_error,
+        asynch_error_DRM,
         &ctx))
         {
         // In the C case, the last error message is stored inside the
