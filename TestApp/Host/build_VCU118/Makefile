@@ -39,14 +39,17 @@ SRCS_C += $(AWSTERIA_INFRA_REPO)/Platform_VCU118/Host/AWSteria_Host_lib.c
 
 # ================================================================
 
-CFLAGS += -std=gnu11 -g -Wall -Werror -pthread -laccelize_drmc
-
+CFLAGS += -std=gnu11 -g -Wall -Werror 
 CFLAGS += -D PLATFORM_VCU118 -D SIM_FOR_VCU118
+
+ifdef USE_DRM
+CFLAGS += -pthread -laccelize_drmc
+endif
 
 CFLAGS += -I $(AWSTERIA_INFRA_REPO)/Include_API
 CFLAGS += -I $(AWSTERIA_INFRA_REPO)/Platform_VCU118/Host
 
-CC     = clang $(CFLAGS)
+CC     = gcc $(CFLAGS)
 
 EXE    = exe_Host_VCU118
 
