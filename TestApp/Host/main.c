@@ -21,16 +21,17 @@
 // Project includes
 
 #include "AWSteria_Platform.h"
-#include "accelize/drmc.h"
 #include "AWSteria_Host_lib.h"
 
+void *AWSteria_Host_state = NULL;
 
+#ifdef USE_DRM
+#include "accelize/drmc.h"
 #include <stdio.h>
 
 // Define functions to read and write FPGA registers to use them as
 // callbacks in DrmManager.
 #define drm_controller_base_addr 0
-void *AWSteria_Host_state = NULL;
 
 
 int read_register( uint32_t offset, uint32_t* value, void* user_p ) {
@@ -46,6 +47,7 @@ int write_register( uint32_t offset, uint32_t value, void* user_p ) {
 void asynch_error( const char* err_msg, void* user_p ) {
     fprintf( stderr, "%s", err_msg );
 }
+#endif
 
 // ================================================================
 // On AWS F1, FPGA Developer AMI (CentOS 7), gcc  does not seem to
@@ -65,10 +67,10 @@ int getentropy (void *buf, size_t buflen) {
 
 // ================================================================
 
-int verbosity_AXI4_R = 1;
-int verbosity_AXI4_W = 1;
-int verbosity_AXI4L_R = 1;
-int verbosity_AXI4L_W = 1;
+int verbosity_AXI4_R = 0;
+int verbosity_AXI4_W = 0;
+int verbosity_AXI4L_R = 0;
+int verbosity_AXI4L_W = 0;
 
 bool test_DDR_A = false;
 bool test_DDR_B = false;
@@ -508,7 +510,8 @@ int main (int argc, char *argv [])
 
 
     test2 ();
-
+	
+#ifdef USE_DRM
     // Instantiate DrmManager with previously defined functions and
     // configuration files
 
@@ -536,7 +539,7 @@ int main (int argc, char *argv [])
     if ( DrmManager_activate( drm_manager, false ) )
     fprintf( stderr, "%s", drm_manager->error_message );
     else fprintf (stdout, "DRM activation sucessfull \n");
-
+#endif
 
     // ----------------------------------------------------------------
     // Fill wbuf with random data
@@ -620,12 +623,15 @@ int main (int argc, char *argv [])
     fprintf (stdout, "n_AXI4L_reads  = %0ld (4 bytes each)\n", n_AXI4L_reads);
     fprintf (stdout, "n_AXI4L_writes = %0ld (4 bytes each)\n", n_AXI4L_writes);
     fprintf (stdout, "----------------\n");
-
+	
+#ifdef USE_DRM
     // DRM deactivate and free    
     if ( DrmManager_deactivate( drm_manager, false ) )
     fprintf( stderr, "%s", drm_manager->error_message );
     if ( DrmManager_free( &drm_manager ) )
     fprintf( stderr, "%s", drm_manager->error_message );
+#endif
+	
     // ----------------------------------------------------------------
     // Shutdown FPGA PCIe or simulation libraries
 
