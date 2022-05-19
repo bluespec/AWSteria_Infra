@@ -43,7 +43,19 @@ puts "AWS FPGA: ([clock format [clock seconds] -format %T]) Reading developer's 
 # reading .v, .vh, nor .inc files
 
 # read_verilog -sv [glob $ENC_SRC_DIR/*.?v]
+
 read_verilog -sv [glob $ENC_SRC_DIR/*.sv] [glob $ENC_SRC_DIR/*.v]
+if { [info exists ::env(DRM_HDK_AWS)] } {
+    set path_to_drm_hdk $::env(DRM_HDK_AWS)
+    read_vhdl [glob $path_to_drm_hdk/common/vhdl/xilinx/*.vhdl ] -library drm_library
+    read_vhdl $path_to_drm_hdk/controller/rtl/core/drm_ip_controller.vhdl -library drm_library
+    read_verilog -sv [glob $path_to_drm_hdk/controller/rtl/core/*.sv]
+    read_verilog -sv [glob $path_to_drm_hdk/controller/rtl/syn/*.sv]
+    read_vhdl [ glob $path_to_drm_hdk/common/vhdl/xilinx/*.vhdl ] -library drm_library
+    read_vhdl [ glob $path_to_drm_hdk/bluespec.com_awsteria_testapp_1.0.0/core/*.vhdl ] -library drm_library
+    read_vhdl [ glob $path_to_drm_hdk/bluespec.com_awsteria_testapp_1.0.0/syn/*.vhdl ] -library drm_library
+    read_verilog -sv [ glob $path_to_drm_hdk/bluespec.com_awsteria_testapp_1.0.0/syn/*.sv ]
+}
 
 #---- End of section replaced by User ----
 

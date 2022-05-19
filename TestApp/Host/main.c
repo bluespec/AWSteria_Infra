@@ -23,6 +23,32 @@
 #include "AWSteria_Platform.h"
 #include "AWSteria_Host_lib.h"
 
+void *AWSteria_Host_state = NULL;
+
+#ifdef USE_DRM
+#include "accelize/drmc.h"
+#include <stdio.h>
+
+// Define functions to read and write FPGA registers to use them as
+// callbacks in DrmManager.
+#define drm_controller_base_addr 0
+
+
+int read_DRM_register( uint32_t offset, uint32_t* value, void* user_p ) {
+  return  AWSteria_AXI4L_read (AWSteria_Host_state, drm_controller_base_addr + offset, value);
+}
+
+int write_DRM_register( uint32_t offset, uint32_t value, void* user_p ) {
+  return  AWSteria_AXI4L_write (AWSteria_Host_state, drm_controller_base_addr + offset, value);
+
+}
+
+// Define asynchronous error callback
+void asynch_error_DRM( const char* err_msg, void* user_p ) {
+    fprintf( stderr, "%s", err_msg );
+}
+#endif
+
 // ================================================================
 // On AWS F1, FPGA Developer AMI (CentOS 7), gcc  does not seem to
 // define getentropy(), so we define it here.
@@ -57,7 +83,6 @@ uint64_t out_of_bounds_addr;
 
 // ================================================================
 
-void *AWSteria_Host_state = NULL;
 
 uint64_t n_AXI4_reads    = 0;
 uint64_t AXI4_read_bytes = 0;
@@ -397,7 +422,9 @@ void print_help (int argc, char *argv [])
 
 int main (int argc, char *argv [])
 {
-    int rc;
+    int rc=0;
+
+
 
     if ((argc > 1)
 	&& ((strcmp (argv [1], "--help") == 0)
@@ -481,6 +508,39 @@ int main (int argc, char *argv [])
     AWSteria_Host_state = AWSteria_Host_init ();
     if (AWSteria_Host_state == NULL) goto ret_err;
 
+
+    test2 ();
+	
+#ifdef USE_DRM
+    // Instantiate DrmManager with previously defined functions and
+    // configuration files
+
+    DrmManager* drm_manager = NULL;
+    int ctx = 0;
+
+    if (DrmManager_alloc(
+
+        &drm_manager,
+        // Configuration files paths
+        "conf.json",
+        "cred.json",
+        // Read/write register functions callbacks
+        read_DRM_register,
+        write_DRM_register,
+        // Asynchronous error callback
+        asynch_error_DRM,
+        &ctx))
+        {
+        // In the C case, the last error message is stored inside the
+        // "DrmManager"
+        fprintf( stderr, "%s", drm_manager->error_message );
+        }
+
+    if ( DrmManager_activate( drm_manager, false ) )
+    fprintf( stderr, "%s", drm_manager->error_message );
+    else fprintf (stdout, "DRM activation sucessfull \n");
+#endif
+
     // ----------------------------------------------------------------
     // Fill wbuf with random data
 
@@ -563,13 +623,23 @@ int main (int argc, char *argv [])
     fprintf (stdout, "n_AXI4L_reads  = %0ld (4 bytes each)\n", n_AXI4L_reads);
     fprintf (stdout, "n_AXI4L_writes = %0ld (4 bytes each)\n", n_AXI4L_writes);
     fprintf (stdout, "----------------\n");
-
+	
+#ifdef USE_DRM
+    // DRM deactivate and free    
+    if ( DrmManager_deactivate( drm_manager, false ) )
+    fprintf( stderr, "%s", drm_manager->error_message );
+    if ( DrmManager_free( &drm_manager ) )
+    fprintf( stderr, "%s", drm_manager->error_message );
+#endif
+	
     // ----------------------------------------------------------------
     // Shutdown FPGA PCIe or simulation libraries
 
     fprintf (stdout, "Finalizing FPGA lib or simulation lib\n");
     rc = AWSteria_Host_shutdown (AWSteria_Host_state);
     if (rc != 0) goto ret_err;
+    // ----------------------------------------------------------------
+
 
     return 0;
 

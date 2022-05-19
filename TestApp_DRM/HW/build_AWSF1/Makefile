@@ -56,7 +56,7 @@ BSC_PATH := $(BSC_PATH):$(FLUTE_REPO)/src_Testbench/Fabrics/Adapters
 # ================================================================
 # Top-level file and module
 
-TOPFILE   = $(AWSTERIA_INFRA_REPO)/TestApp/HW/AWSteria_HW.bsv
+TOPFILE   = $(AWSTERIA_INFRA_REPO)/TestApp_DRM/HW/AWSteria_HW.bsv
 TOPMODULE = mkAWSteria_HW
 
 # ================================================================
@@ -105,6 +105,7 @@ for_AWSF1_HDK:
 # RTL from bsc library
 	cp -p  $(BLUESPEC_HOME)/lib/Verilog/FIFO2.v        cl_AWSteria_TestApp/design/
 	cp -p  $(BLUESPEC_HOME)/lib/Verilog/SizedFIFO.v    cl_AWSteria_TestApp/design/
+	cp -p  $(BLUESPEC_HOME)/lib/Verilog/SizedFIFO0.v    cl_AWSteria_TestApp/design/
 	@echo "INFO: aws-fpga HDK custom-logic dir is ready: cl_AWSteria_TestApp/"
 
 # ================================================================
