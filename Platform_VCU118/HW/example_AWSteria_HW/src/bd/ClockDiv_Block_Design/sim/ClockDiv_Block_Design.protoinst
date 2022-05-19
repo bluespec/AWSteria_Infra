@@ -1,9 +1,0 @@
-{
-	"version": "1.0",
-	"modules": {
-		"ClockDiv_Block_Design": {
-			"proto_instances": {
-			}
-		}
-	}
-}
