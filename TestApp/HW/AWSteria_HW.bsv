@@ -131,7 +131,16 @@ module mkAXI4_16_64_512_0_Fabric_2_N (AXI4_16_64_512_0_Fabric_2_N_IFC);
 endmodule
 
 // ****************************************************************
+// TEMPORARY HACK. The Makefile for Verilator expects this module
+// (because of a particular app, AWSteria_RISCV_Virtio
+
+(* synthesize *)
+module mkAWSteria_System (Empty);
+endmodule
+
+// ****************************************************************
 // Module: synthesized instance of AWSteria HW-side top-level (the DUT)
+// Here we do not use the extra clocks clk1, clk2, ...
 
 // For host_AXI4_S interface (wd_id, wd_addr, wd_data, wd_user)
 typedef AXI4_Slave_IFC #(16, 64, 512, 0)  AXI4_16_64_512_0_S_IFC;

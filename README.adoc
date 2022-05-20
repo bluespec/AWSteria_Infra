@@ -1,7 +1,7 @@
 = AWSteria_Infra
-Rishiyur S. Nikhil, Bluespec, Inc. (c) 2021
+Rishiyur S. Nikhil, Bluespec, Inc. (c) 2021-2022
 :revnumber: v1.0
-:revdate: 2021-09-22
+:revdate: 2022-05-19
 :sectnums:
 :toc:
 :toclevels: 5
@@ -390,13 +390,16 @@ image::Fig_050_AWSteria_Infra_TestApp.png[align="center", width=650]
 // SUBSECTION
 === Building and running with Bluesim or Verilator simulation
 
-* In `TestApp/Host/build_sim` do `make` to create the host-side executable `exe_Host_sim`.
+* In `TestApp/Host/build_sim` do `make exe_Host_sim` to create the
+  host-side executable `exe_Host_sim`.
 
-* In `TestApp/HW/build_Bluesim` do `make all` to create the HW-side simulation executable `exe_HW_sim`.
+* In `TestApp/HW/build_Bluesim` do `make all` to create the HW-side
+  simulation executable `exe_HW_sim`.
 +
 or,
 +
-in `TestApp/HW/build_Verilator` do `make all` to create the HW-side simulation executable `exe_HW_sim`.
+in `TestApp/HW/build_Verilator` do `make all` to create the HW-side
+simulation executable `exe_HW_sim`.
 
 * Run the hardware side executable in one process (e.g., in one
     terminal window) It will await a TCP connection on a TCP port from

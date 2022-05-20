@@ -52,7 +52,7 @@ typedef AXI4_Lite_Slave_IFC #(32, 32, 0)  AXI4L_32_32_0_S_IFC;
 typedef AXI4_Master_IFC #(16, 64, 512, 0)  AXI4_16_64_512_0_M_IFC;
 
 (* synthesize *)
-module mkAWSteria_HW #(Clock b_CLK, Reset b_RST_N)
+module mkAWSteria_HW #(Clock clk1, Clock clk2, Clock clk3, Clock clk4, Clock clk5)
    (AWSteria_HW_IFC #(AXI4_Slave_IFC #(16, 64, 512, 0),
 		      AXI4_Lite_Slave_IFC #(32, 32, 0),
 		      AXI4_Master_IFC #(16, 64, 512, 0)));

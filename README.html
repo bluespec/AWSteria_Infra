@@ -7,7 +7,7 @@
 <meta name="generator" content="Asciidoctor 2.0.10">
 <meta name="description" content="Infrastructure for host+FPGA apps, and an example test app.">
 <meta name="keywords" content="AWS, F1, Shell, Instance AFI, AMI, DCP, Design Checkpoint, Custom Logic, Garnet">
-<meta name="author" content="Rishiyur S. Nikhil, Bluespec, Inc. (c) 2021">
+<meta name="author" content="Rishiyur S. Nikhil, Bluespec, Inc. (c) 2021-2022">
 <title>AWSteria_Infra</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
@@ -443,9 +443,9 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div id="header">
 <h1>AWSteria_Infra</h1>
 <div class="details">
-<span id="author" class="author">Rishiyur S. Nikhil, Bluespec, Inc. (c) 2021</span><br>
+<span id="author" class="author">Rishiyur S. Nikhil, Bluespec, Inc. (c) 2021-2022</span><br>
 <span id="revnumber">version v1.0,</span>
-<span id="revdate">2021-09-22</span>
+<span id="revdate">2022-05-19</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Contents</div>
@@ -1022,15 +1022,18 @@ transfers.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>In <code>TestApp/Host/build_sim</code> do <code>make</code> to create the host-side executable <code>exe_Host_sim</code>.</p>
+<p>In <code>TestApp/Host/build_sim</code> do <code>make exe_Host_sim</code> to create the
+host-side executable <code>exe_Host_sim</code>.</p>
 </li>
 <li>
-<p>In <code>TestApp/HW/build_Bluesim</code> do <code>make all</code> to create the HW-side simulation executable <code>exe_HW_sim</code>.</p>
+<p>In <code>TestApp/HW/build_Bluesim</code> do <code>make all</code> to create the HW-side
+simulation executable <code>exe_HW_sim</code>.</p>
 <div class="paragraph">
 <p>or,</p>
 </div>
 <div class="paragraph">
-<p>in <code>TestApp/HW/build_Verilator</code> do <code>make all</code> to create the HW-side simulation executable <code>exe_HW_sim</code>.</p>
+<p>in <code>TestApp/HW/build_Verilator</code> do <code>make all</code> to create the HW-side
+simulation executable <code>exe_HW_sim</code>.</p>
 </div>
 </li>
 <li>
@@ -1900,7 +1903,7 @@ This would be a minor change to host side C code.</p>
 <div id="footer">
 <div id="footer-text">
 Version v1.0<br>
-Last updated 2021-11-16 13:02:56 -0500
+Last updated 2022-05-19 20:22:54 -0400
 </div>
 </div>
 </body>

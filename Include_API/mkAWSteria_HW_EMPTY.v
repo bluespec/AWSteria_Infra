@@ -83,8 +83,11 @@
 // ddr_B_M_arregion               O     4 reg
 // ddr_B_M_rready                 O     1 reg
 // m_halted                       O     1 reg
-// CLK_b_CLK                      I     1 unused
-// RST_N_b_RST_N                  I     1 unused
+// CLK_clk1                       I     1 unused
+// CLK_clk2                       I     1 unused
+// CLK_clk3                       I     1 unused
+// CLK_clk4                       I     1 unused
+// CLK_clk5                       I     1 unused
 // CLK                            I     1 clock
 // RST_N                          I     1 reset
 // host_AXI4_S_awvalid            I     1
@@ -168,8 +171,11 @@
   `define BSV_RESET_EDGE negedge
 `endif
 
-module mkAWSteria_HW(CLK_b_CLK,
-		     RST_N_b_RST_N,
+module mkAWSteria_HW(CLK_clk1,
+                     CLK_clk2,
+                     CLK_clk3,
+                     CLK_clk4,
+                     CLK_clk5,
 		     CLK,
 		     RST_N,
 
@@ -409,8 +415,11 @@ module mkAWSteria_HW(CLK_b_CLK,
 		     m_halted,
 
 		     m_glcount_glcount);
-  input  CLK_b_CLK;
-  input  RST_N_b_RST_N;
+  input  CLK_clk1;
+  input  CLK_clk2;
+  input  CLK_clk3;
+  input  CLK_clk4;
+  input  CLK_clk5;
   input  CLK;
   input  RST_N;
 

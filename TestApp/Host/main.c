@@ -508,9 +508,6 @@ int main (int argc, char *argv [])
     AWSteria_Host_state = AWSteria_Host_init ();
     if (AWSteria_Host_state == NULL) goto ret_err;
 
-
-    test2 ();
-	
 #ifdef USE_DRM
     // Instantiate DrmManager with previously defined functions and
     // configuration files
