@@ -134,7 +134,8 @@ void *AWSteria_Host_init (void)
 			  fpga_pci_attach_flags,
 			  & p_state->pci_bar_handle);
     if (rc != 0) {
-	fprintf (stdout, "    FAILED: rc = %0d\n", rc);
+	fprintf (stdout, "    %s(): call to fpga_pci_attach() FAILED: rc = %0d\n", __FUNCTION__, rc);
+	fprintf (stdout, "    Note: this must be run under 'sudo'\n");
 	return NULL;
     }
     if (verbosity > 0)
