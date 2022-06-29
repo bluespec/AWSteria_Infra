@@ -1,7 +1,7 @@
 = AWSteria_Infra
 Rishiyur S. Nikhil, Bluespec, Inc. (c) 2021-2022
 :revnumber: v1.0
-:revdate: 2022-05-19
+:revdate: 2022-06-25
 :sectnums:
 :toc:
 :toclevels: 5
@@ -42,7 +42,7 @@ The infrastructure provides:
 
 We also provide a small Test Application (in `TestApp/`) to test that
 the infrastructure is working properly on each platform.  TestApp is
-also useful during development of support for new platforms.
+also useful during porting of AWSteria_Infra to for new platforms.
 
 About the name "`AWSteria`": pronounced like the Italian word
 "`Osteria`" which is a tavern or pub (and rhymes with
@@ -60,12 +60,11 @@ user-application, AWSteria_Infra, and the APIs.
 
 image::Fig_010_AWSteria_Infra_Architecture.png[align="center", width=600]
 
-AWSteria_Infra Implementations are provided for HDL simulation, for
-Xilinx VCU118 boards, and for Amazon AWS F1.
+AWSteria_Infra implementations are provided for:
 
-The API is inspired by Xilinx XDMA facilities (at
-https://github.com/Xilinx/dma_ip_drivers[]) and the "`shell`" in the
-Amazon AWS F1 HDK/SDK (at https://github.com/aws/aws-fpga.git[]).
+    * HDL simulation (Bluesim and Verilator simulation)
+    * Xilinx VCU118 boards (using Xilinx XDMA facilities, see https://github.com/Xilinx/dma_ip_drivers[])
+    * Amazon AWS F1 (using the "`shell`" in the Amazon AWS F1 HDK/SDK, see https://github.com/aws/aws-fpga.git[])
 
 // ----------------------------------------------------------------
 // SUBSECTION
@@ -74,16 +73,19 @@ Amazon AWS F1 HDK/SDK (at https://github.com/aws/aws-fpga.git[]).
 AWSteria_Infra defines the top-level Verilog or Bluespec BSV interface
 for your app hardware.  This interface has several ports:
 
-* Two sets of clock-and-reset (a default and an extra).
+* A default clock and reset, plus 5 extra clocks at various slower speeds.
 
-* An AXI4 M interface (manager/master) through which the host communicates
-    with your hardware (wide interface, high bandwidth, typically used for moving data).
+* One AXI4 M interface (manager) through which the host communicates
+    with your hardware (wide interface, high bandwidth, typically used
+    for moving data).
 
-* An AXI4-Lite M interface (manager/master) through which the host
-    communicates with your hardware (32-bit wide, typically used for control/status).
+* One AXI4-Lite M interface (manager) through which the host
+    communicates with your hardware (32-bit wide, typically used for
+    control/status).
 
-* One to four An AXI4 S interface (subordinate/slave) through which
-    your hardware connects to DDR memories on the FPGA board.
+* From one to four AXI4 S interfaces (subordinate) through which your
+    hardware connects to DDR memories on the FPGA board (wide
+    interface, high bandwidth, typically used for moving data).
 
 * A few miscellanous utility ports (evironment-ready input, DUT-halted output, 4ns counter input).
 
@@ -98,10 +100,13 @@ application-specific logic (including instantiating sub-modules, etc.)
 
 The port list looks like this, in summary:
 ----
-    module mkAWSteria_HW (CLK,
+    module mkAWSteria_HW (CLK_clk1,
+                          CLK_clk2,
+                          CLK_clk3,
+                          CLK_clk4,
+                          CLK_clk5,
+                          CLK,
                           RST_N,
-                          CLK_b_CLK,
-                          RST_N_b_RST_N,
 
                           ... AXI4 M interface ports for host communication ...
                           ... AXI4-Lite M interface ports for host communication ...
@@ -112,9 +117,9 @@ The port list looks like this, in summary:
                           m_glcount_glcount);
 ----
 
-Here, `CLK` and `RST_N` are the default clock and reset,
-and `CLK_b_CLK` and `RST_N_b_RST_N` are the extra clock-reset pair
-(your app can ignore the extra pair if they are not needed).
+Here, `CLK` and `RST_N` are the default clock and reset, and
+`CLK_clk1` through `CLK_clk5` are the extra clocks (your app can
+ignore them they are not needed).
 
 If you are coding in BSV, use the following files as a starting point:
 
@@ -131,7 +136,7 @@ module with the required module name and port list.
 The BSV module header looks like this:
 
 ----
-    module mkAWSteria_HW #(Clock b_CLK, Reset b_RST_N)
+    module mkAWSteria_HW #(Clock clk1, Clock clk2, Clock clk3, Clock clk4, Clock clk5)
        (AWSteria_HW_IFC #(AXI4_Slave_IFC #(16, 64, 512, 0),
                           AXI4_Lite_Slave_IFC #(32, 32, 0),
                           AXI4_Master_IFC #(16, 64, 512, 0)));
@@ -162,12 +167,12 @@ and AXI4-Lite M ports described above.
     Include_API/AWSteria_Host_lib.h
 ----
 
-Briefly, it contains an intialization and an shutdown call, a pair of
+Briefly, it contains an intialization and a shutdown call, a pair of
 read/write functions to communicate via the AXI4 M port, and a pair of
 read/write functions to communicate via the AXI4-Lite M port.
 
-Host side code can be written in any language environment.  To
-communicate with the hardware side it should invoke the C host-side
+The app's host side code can be written in any programming language.
+To communicate with the hardware side it should invoke the C host-side
 API.  `AWSteria_Infra` provides C code implementing the API for each
 platform.
 
@@ -181,8 +186,8 @@ AWSteria_Infra for simulation.
 * The host side and hardware side run as two processes on a standard computer.
 * The hardware side runs in simulation, Bluesim or Verilator
     simulation (it can be ported easily to other Verilog simulators).
-* The AWSteria_Infra host-hardware communication is emulated over TCP/IP.
-* The AWSteria_Infra DDR memory interfaces are connected to memory models.
+* The AWSteria_Infra host-hardware communication (AXI4 and AXI4 Lite) is emulated over TCP/IP.
+* The AWSteria_Infra AXI4 DDR memory interfaces are connected to simple memory models.
 
 This is illustrated in the following diagram:
 
@@ -192,11 +197,12 @@ The "`Test Application`" and "`Porting your application`" sections
 below illustrate how to build and run an application on AWSteria_Infra
 in simulation.
 
-In general, you won't have to modify anything in this directory or
-build anything in this directory; it just provides resources for your
+In general, you won't have to modify or build anything in this
+`Platform_Sim/` directory; it just provides resources for your
 application-build.
 
-Note: the following source files:
+Note: the following source files provide infrastructure for emulating
+AXI4 and AXI4 Lite over TCP/IP:
 
 ----
     Platform_Sim/
@@ -207,7 +213,7 @@ Note: the following source files:
         ├── Bytevec.bsv
 ----
 
-are auto-generated by the Python program in:
+These are auto-generated by the Python program in:
 
 ----
     Platform_Sim/
@@ -223,13 +229,7 @@ The `Platform_VCU118/` directory provides an implementation of
 AWSteria_Infra for a standard Debian/Ubuntu computer with a Xilinx
 VCU118 FPGA board attached with a PCIe bus.  It uses the "`Garnet`"
 repository from University of Cambridge (https://github.com/CTSRD-CHERI/garnet[]).
-
-The implementation offers an option where your hardware-side app runs
-at the Garnet default clock speed of 250 MHz, and an option where your
-hardware runs at a slower clock speed of 100 MHz.  The latter option
-is achieved through a "`reclocking`" layer.
-
-These are illustrated in the following diagram:
+This is illustrated in the following diagram:
 
 image::Fig_030_AWSteria_Infra_VCU118.png[align="center", width=650]
 
@@ -237,8 +237,8 @@ The "`Test Application`" and "`Porting your application`" sections
 below illustrate how to build and run an application on AWSteria_Infra
 and Garnet on VCU118.
 
-In general, you won't have to modify anything or build anything in in
-`Platform_VCU118/`; it just provides resources for your
+In general, you won't have to modify or build anything in this
+`Platform_VCU118/` directory; it just provides resources for your
 application-build.
 
 // ----------------------------------------------------------------
@@ -262,10 +262,31 @@ The `dma_to_device` tool optionally takes data from a file, to be written to the
 // SUBSECTION
 === VCU118 Hardware side
 
-`HW/AWSteria_HW_reclocked/` is a Vivado Block Design project that was
-used to create the "`reclocking layer`" for `AWSteria_HW_IFC.bsv` that
-allows the app to run at slower clock speeds than the Garnet-supplied
-250 MHz.  I.e., it creates a module which is "`shim`" that:
+`HW/AWSteria_ClockDiv/` is a Vivado "`Block Design`" project which
+instantiates a Xilinx IP clock-divider to provide the extra clocks in
+`AWSteria_HW` app interface, which allows the app (or parts of the
+app) to run at slower clock speeds than the Garnet-supplied 250 MHz
+which is used as the default app clock.  The Block Design creation has
+already been has already been done, in Vivado.  Unless you want to
+change the clock speed configurations, or change the interfaces, this
+Block Design project does not have to be repeated.
+
+`HW/example_AWSteria_HW/` is a template directory for Garnet, and is
+copied into the app's build directories (see VCU118 flow for Test
+Application below).
+
+*THE FOLLOWING IS OBSOLETE AND WILL BE REMOVED; PLEASE IGNORE*
+
+`HW/AWSteria_HW_reclocked/` is a Vivado "`Block Design`" project that
+was used to instantiate a Xilinx IP clock-divider to provide the extra
+clocks in `AWSteria_HW_IFC.bsv`, which allows the app (or parts of the
+app) to run at slower clock speeds than the Garnet-supplied 250 MHz
+which is used as the default clock.  The Block Design creation has
+already been has already been done, in Vivado.  Unless you want to
+change the clock speed configurations, or change the interfaces, this
+Block Design project does not have to be repeated.
+
+I.e., it creates a module which is "`shim`" that:
 
 * Instantiates a app module (with the  `AWSteria_HW_IFC.bsv` interface), and
 
@@ -278,8 +299,6 @@ allows the app to run at slower clock speeds than the Garnet-supplied
 
   ** Instantiates clock crossings between corresponding the outer and inner interfaces.
 
-This allows the user's design (inner app module instance) to run at a slower clock.
-
 In Vivado, the "Generate Block Design" action creates and populates the
 following directory:
 
@@ -288,13 +307,6 @@ following directory:
 ----
 
 which is copied into `example_AWSteria_HW_reclocked/src/bd` (see below).
-
-The Block Design creation has already been has already been done, in
-Vivado.  Unless you want to change the clock speed configurations, or
-change the interfaces, this Block Design project does not have to be
-repeated.
-
-TODO: Instead of copying `.bd/` it should be possible to copy just a Tcl script that encodes the Block Design.
 
 `HW/example_AWSteria_HW/` and `HW/example_AWSteria_HW_reclocked/` are
 template directories for Garnet, and are copied into the app's build
@@ -328,8 +340,8 @@ The "`Test Application`" and "`Porting your application`" sections
 below illustrate how to build and run an application on AWSteria_Infra
 on AWS F1.
 
-In general, you won't have to modify anything in this directory or
-build anything in this directory; it just provides resources for your
+In general, you won't have to modify or build anything in this
+`Platform_AWSF1/` directory; it just provides resources for your
 application-build.
 
 // ----------------------------------------------------------------
@@ -372,15 +384,15 @@ out the "`empty`" module provided in
 
 The hardware side is simple: it connects the host AXI4-Lite interface
 to an AXI4-Lite-to-AXI4 adapter which, along with the host AXI4
-interface connects to a 2x2 AXI4 crossbar switch which, in turn,
+interface, connects to a 2x2 AXI4 crossbar switch which, in turn,
 connects to two AXI4 DDR interfaces.
 
-The host side simply writes random data to hardware-side DDRs, and
-reads them back to verify the data.  Writes and reads are performed
-over both the host AXI4 and AXI4 Lite interfaces, including writing
-through one and reading through the other.  The AXI4 interface is also
-exercised with large writes and reads, to exercise AXI4 burst
-transfers.
+The host side simply writes data to various addresses in the
+hardware-side DDRs, and reads them back to verify the data.  Writes
+and reads are performed over both the host AXI4 and AXI4 Lite
+interfaces, including writing through one and reading through the
+other.  The AXI4 interface is also exercised with large writes and
+reads, to exercise AXI4 burst transfers.
 
 This is illustrated in the following diagram:
 
@@ -421,7 +433,7 @@ with `make full_clean`.
 
 AWSteria_Infra support for Xilinx PCIe-based boards (e.g., VCU118) is
 built on top of the "`Garnet`" system.  Please see Section
-"`Prerequsites for Xilinx PCIe-based FPGA boards`" for background and
+"`Prerequisites for Xilinx PCIe-based FPGA boards`" for background and
 details.
 
 // ----------------
@@ -432,13 +444,6 @@ You will need to have installed Xilinx's Vivado tool suite, and have a
 Vivado license that includes synthesis for the FPGA on the VCU118.
 Building the hardware side for VCU118 involves some steps locally in
 the AWSteria_Infra repo, followed by a step in the "`Garnet`" repo.
-
-An app in AWSteria_Infra can either run at Garnet's full speed (250
-MHz), or it can run at a slower clock speed; AWSteria_Infra provides
-the slower clock, and suitable clock-crossing logic.
-
-We describe first the flow for a full speed app, and then the slight
-variation for a slower speed app.
 
 The following steps are performed in the AWSteria_Infra repo (the two
 `make` targets can be provided together):
@@ -479,7 +484,7 @@ to this point, until your design meets timing.
 
 // ----------------
 // SUBSUBSECTION
-===== Building the hardware side with a slower clock
+===== (OBSOLETE; WILL BE REMOVED; PLEASE IGNORE) Building the hardware side with a slower clock
 
 To build TestApp to run at the slower clock speed (100 MHz), the steps are analogous:
 
@@ -566,7 +571,7 @@ simulation (described earlier).
 // SUBSUBSECTION
 ==== Prerequisites: aws-fpga (SDK and HDK) and Vivado tool suite
 
-You can perform the builds on your own computers ("`on premisies`"),
+You can perform the builds on your own computers ("`on premises`"),
 but you may find it more convenient to build on the Amazon AWS cloud,
 using an "`FPGA Developer`" AMI (Amazon Machine Instance) because it
 has the prerequisite tools and licenses already installed.
@@ -594,16 +599,21 @@ If you are building on your own computers:
 // SUBSUBSUBSECTION
 ===== Generate/prepare your app RTL
 
-The following steps are performed in the AWSteria_Infra repo (these two
-`make` commands can be given as one):
+The following commands are performed in the `TestApp/HW/build_AWSF1`
+directory (or, provide both targets to a single `make` command):
 
-* In `TestApp/HW/build_AWSF1` do `make compile`. This will create
-    a directory `RTL/` and populate it with Verilog RTL generated
-    from the BSV source code by the Bluespec `bsc` compiler.
+----
+    $ make  compile
+    $ make  for_AWSF1_HDK
+----
 
-* In `TestApp/HW/build_AWSF1` do `make for_AWSF1_HDK`.  This will create a
-    directory `cl_AWSteria_TestApp/` that is ready to run through the
-    aws-fpga HDK flow.
+* The `compile` target creates a directory `RTL/` and populates it
+    with Verilog RTL generated from the BSV source code by the
+    Bluespec `bsc` compiler.
+
+* The `for_AWSF1_HDK` target creates and populates a directory
+    `cl_AWSteria_TestApp/` that is ready to run through the aws-fpga
+    HDK flow.
 
 // ----------------
 // SUBSUBSUBSECTION
@@ -631,8 +641,8 @@ Perform the "`create DCP`" (Design Checkpoint) action:
 This will create a background process that runs Vivado on the AWSteria
 TestApp RTL, eventually producing a "`Design Checkpoint`" (DCP).  The
 console output of the background process and the Vivado run are
-continuously logged in files whose names have this pattern, i.e., the
-prefix is the timestamp of when command was started:
+continuously logged in files whose names have this pattern (the prefix
+is the timestamp of when command was started):
 
 ----
     21_08_20-020656.nohup.out
