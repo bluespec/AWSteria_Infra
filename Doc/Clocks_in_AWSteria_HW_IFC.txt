@@ -1,0 +1,76 @@
+In the provided templates module for the app that uses Infra:
+    Verilog: Include_API/mkAWSteria_HW_EMPTY.v
+    BSV:     Include_API/AWSteria_HW_EMPTY.bsv
+the module mkAWSteria_HW has a default clock and reset, and is
+provided with some extra clocks, for convenience:
+
+                       Signal name
+		       -----------
+                     Verilog    BSV
+    default clock    CLK        (implicit)
+    default reset    RST_N      (implicit)
+    extra clock      CLK_clk1   CLK_clk1
+    extra clock      CLK_clk2   CLK_clk2
+    extra clock      CLK_clk3   CLK_clk3
+    extra clock      CLK_clk4   CLK_clk4
+    extra clock      CLK_clk5   CLK_clk5
+
+The exact frequencies for these clocks varies across platforms, and
+perhaps further on platform-specific build options.
+
+The application designer can run the whole app on the default clock,
+or use any of the slower clocks, in order to meet timing.  If more
+than one clock is used, the application should follow proper
+clock-domain discipline and incorporate suitable clock-domain-crossing
+logic.
+
+// ================================================================
+VCU118 (details in Platform_VCU118/HW/)
+
+We instantiate a Xilinx clock divider using Vivado's "clock wizard" to
+produce the clocks.
+
+The clock frequencies are:
+
+    default clk (CLK)    250 MHz
+    clk1                 125 MHz
+    clk2                 100 MHz
+    clk3                  50 MHz
+    clk4                  25 MHz
+    clk5                  10 MHz
+
+// ================================================================
+AWS F1 (details in Platform_AWSF1/HW/)
+
+We build using the flow recommended by the aws-fpga SDK
+    https://github.com/aws/aws-fpga/
+using "clock recipe A1":
+    https://github.com/aws/aws-fpga/blob/master/hdk/docs/clock_recipes.csv
+and feed the clocks supplied by the AWS shell directly.
+
+The clock frequencies are:
+
+    default clk (CLK)    250 MHz
+    clk1                 125 MHz
+    clk2                 375 MHz
+    clk3                 500 MHz
+    clk4                 250 MHz
+    clk5                 250 MHz
+
+// ================================================================
+Simulation (details in Platform_Sim/HW)
+
+We use BSV clock-dividers (see 'Platform_Sim/HW/Top_HW_Side.bsv') to
+divide the incoming clock by a few integer factors.
+
+Of course, in simulation the exact clock frequencies don't matter, but
+assuming a default clock of 250 MHz, the clock frequencies are:
+
+    default clk (CLK)    250   MHz
+    clk1                 125   MHz    (CLK / 2)
+    clk2                  83.3 MHz    (CLK / 3)
+    clk3                  50   MHz    (CLK / 5)
+    clk4                  25   MHz    (CLK / 10)
+    clk5                  10   MHz    (CLK / 25)
+
+// ================================================================

@@ -73,8 +73,7 @@ module mkDDR_A_Model (AXI4_16_64_512_0_Slave_IFC);
 			   "DDR_A.memhex512",       // memhex_filename
 			   ddr_A_base,              // byte_addr_base
 			   ddr_A_lim,               // byte_addr_lim
-			   'h_8000_0000);           // bytes_implemented (2 GB)
-
+			   'h_1_0000_0000);         // bytes_implemented (4 GB)
    AXI4_Deburster_IFC #(16, 64, 512, 0) deburster <- mkAXI4_Deburster;
    mkConnection (deburster.to_slave, ifc);
    return deburster.from_master;
@@ -96,7 +95,7 @@ module mkDDR_B_Model (AXI4_16_64_512_0_Slave_IFC);
 			   "DDR_B.memhex512",       // memhex_filename
 			   ddr_B_base,              // byte_addr_base
 			   ddr_B_lim,               // byte_addr_lim
-			   'h_8000_0000);           // bytes_implemented (2 GB)
+			   'h_1_0000_0000);         // bytes_implemented (4 GB)
    AXI4_Deburster_IFC #(16, 64, 512, 0) deburster <- mkAXI4_Deburster;
    mkConnection (deburster.to_slave, ifc);
    return deburster.from_master;
@@ -118,7 +117,7 @@ module mkDDR_C_Model (AXI4_16_64_512_0_Slave_IFC);
 			   "DDR_C.memhex512",       // memhex_filename
 			   ddr_C_base,              // byte_addr_base
 			   ddr_C_lim,               // byte_addr_lim
-			   'h_8000_0000);           // bytes_implemented (2 GB)
+			   'h_1_0000_0000);         // bytes_implemented (4 GB)
    AXI4_Deburster_IFC #(16, 64, 512, 0) deburster <- mkAXI4_Deburster;
    mkConnection (deburster.to_slave, ifc);
    return deburster.from_master;
@@ -140,7 +139,7 @@ module mkDDR_D_Model (AXI4_16_64_512_0_Slave_IFC);
 			   "DDR_D.memhex512",       // memhex_filename
 			   ddr_D_base,              // byte_addr_base
 			   ddr_D_lim,               // byte_addr_lim
-			   'h_8000_0000);           // bytes_implemented (2 GB)
+			   'h_1_0000_0000);         // bytes_implemented (4 GB)
    AXI4_Deburster_IFC #(16, 64, 512, 0) deburster <- mkAXI4_Deburster;
    mkConnection (deburster.to_slave, ifc);
    return deburster.from_master;
