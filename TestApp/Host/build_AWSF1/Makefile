@@ -46,11 +46,8 @@ CFLAGS += -D PLATFORM_AWSF1
 
 CFLAGS += -I $(AWSTERIA_INFRA_REPO)/Include_API
 CFLAGS += -I $(AWSTERIA_INFRA_REPO)/Platform_AWSF1/Host
-CFLAGS += -I $(SDK_DIR)/userspace/include
 
 CC     = gcc $(CFLAGS)
-
-LDLIBS = -lcrypto -lpthread
 
 EXE    = exe_Host_AWSF1
 
@@ -58,14 +55,14 @@ EXE    = exe_Host_AWSF1
 # Top-level target: the executable
 
 $(EXE): $(SRCS_H) $(SRCS_C)
-	$(CC) -g  -o $(EXE) $(SRCS_C) $(LDLIBS)
+	$(CC)  -o $(EXE) $(SRCS_C) $(LDLIBS)
 	@echo "INFO: created '$(EXE)'"
 
 # ================================================================
 
 .PHONY: clean
 clean:
-	rm -f  *.*~  Makefile*~  *.o
+	rm -f  *.*~  Makefile*~  *.o  exe_*
 
 .PHONY: full_clean
 full_clean:
