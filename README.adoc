@@ -1,13 +1,13 @@
-= AWSteria_Infra
+= AWSteria_Infra README
 Rishiyur S. Nikhil, Bluespec, Inc. (c) 2021-2022
 :revnumber: v1.0
-:revdate: 2022-05-19
+:revdate: 2022-07-01
 :sectnums:
 :toc:
 :toclevels: 5
 :toc: left
 :toc-title: Contents
-:description: Infrastructure for host+FPGA apps, and an example test app.
+:description: Infrastructure for host+FPGA apps
 :keywords: AWS, F1, Shell, Instance AFI, AMI, DCP, Design Checkpoint, Custom Logic, Garnet
 :imagesdir: Doc
 :data-uri:
@@ -41,8 +41,17 @@ The infrastructure provides:
     the hardware side to run at slower clock speeds if needed.
 
 We also provide a small Test Application (in `TestApp/`) to test that
-the infrastructure is working properly on each platform.  TestApp is
-also useful during development of support for new platforms.
+the infrastructure is working properly on each platform.  It has a
+simple HW-side that simply connects both the AXI4 and AXI4-Lite
+host-to-HW channels to the DDRs, and a simple host-side C program that
+simply exercises these channels, performing writes and readbacks to
+the DDRs, self-checking that the readback data is what was written.
+
+TestApp is also useful during porting of AWSteria_Infra to new
+platforms.  Please see
+link:Doc/How_to_Build_and_Run_TestApp.html[Doc/How_to_Build_and_Run_TestApp.html]
+for details on how to build and run TestApp on various platforms
+(including simulation, VCU118 and AWS F1).
 
 About the name "`AWSteria`": pronounced like the Italian word
 "`Osteria`" which is a tavern or pub (and rhymes with
@@ -60,12 +69,11 @@ user-application, AWSteria_Infra, and the APIs.
 
 image::Fig_010_AWSteria_Infra_Architecture.png[align="center", width=600]
 
-AWSteria_Infra Implementations are provided for HDL simulation, for
-Xilinx VCU118 boards, and for Amazon AWS F1.
+AWSteria_Infra implementations are provided for:
 
-The API is inspired by Xilinx XDMA facilities (at
-https://github.com/Xilinx/dma_ip_drivers[]) and the "`shell`" in the
-Amazon AWS F1 HDK/SDK (at https://github.com/aws/aws-fpga.git[]).
+    * HDL simulation (Bluesim and Verilator simulation)
+    * Xilinx VCU118 boards (using Xilinx XDMA facilities, see https://github.com/Xilinx/dma_ip_drivers[])
+    * Amazon AWS F1 (using the "`shell`" in the Amazon AWS F1 HDK/SDK, see https://github.com/aws/aws-fpga.git[])
 
 // ----------------------------------------------------------------
 // SUBSECTION
@@ -74,16 +82,19 @@ Amazon AWS F1 HDK/SDK (at https://github.com/aws/aws-fpga.git[]).
 AWSteria_Infra defines the top-level Verilog or Bluespec BSV interface
 for your app hardware.  This interface has several ports:
 
-* Two sets of clock-and-reset (a default and an extra).
+* A default clock and reset, plus 5 extra clocks at various slower speeds.
 
-* An AXI4 M interface (manager/master) through which the host communicates
-    with your hardware (wide interface, high bandwidth, typically used for moving data).
+* One AXI4 M interface (manager) through which the host communicates
+    with your hardware (wide interface, high bandwidth, typically used
+    for moving data).
 
-* An AXI4-Lite M interface (manager/master) through which the host
-    communicates with your hardware (32-bit wide, typically used for control/status).
+* One AXI4-Lite M interface (manager) through which the host
+    communicates with your hardware (32-bit wide, typically used for
+    control/status).
 
-* One to four An AXI4 S interface (subordinate/slave) through which
-    your hardware connects to DDR memories on the FPGA board.
+* From one to four AXI4 S interfaces (subordinate) through which your
+    hardware connects to DDR memories on the FPGA board (wide
+    interface, high bandwidth, typically used for moving data).
 
 * A few miscellanous utility ports (evironment-ready input, DUT-halted output, 4ns counter input).
 
@@ -98,10 +109,13 @@ application-specific logic (including instantiating sub-modules, etc.)
 
 The port list looks like this, in summary:
 ----
-    module mkAWSteria_HW (CLK,
+    module mkAWSteria_HW (CLK_clk1,
+                          CLK_clk2,
+                          CLK_clk3,
+                          CLK_clk4,
+                          CLK_clk5,
+                          CLK,
                           RST_N,
-                          CLK_b_CLK,
-                          RST_N_b_RST_N,
 
                           ... AXI4 M interface ports for host communication ...
                           ... AXI4-Lite M interface ports for host communication ...
@@ -112,9 +126,9 @@ The port list looks like this, in summary:
                           m_glcount_glcount);
 ----
 
-Here, `CLK` and `RST_N` are the default clock and reset,
-and `CLK_b_CLK` and `RST_N_b_RST_N` are the extra clock-reset pair
-(your app can ignore the extra pair if they are not needed).
+Here, `CLK` and `RST_N` are the default clock and reset, and
+`CLK_clk1` through `CLK_clk5` are the extra clocks (your app can
+ignore them they are not needed).
 
 If you are coding in BSV, use the following files as a starting point:
 
@@ -131,7 +145,7 @@ module with the required module name and port list.
 The BSV module header looks like this:
 
 ----
-    module mkAWSteria_HW #(Clock b_CLK, Reset b_RST_N)
+    module mkAWSteria_HW #(Clock clk1, Clock clk2, Clock clk3, Clock clk4, Clock clk5)
        (AWSteria_HW_IFC #(AXI4_Slave_IFC #(16, 64, 512, 0),
                           AXI4_Lite_Slave_IFC #(32, 32, 0),
                           AXI4_Master_IFC #(16, 64, 512, 0)));
@@ -162,12 +176,12 @@ and AXI4-Lite M ports described above.
     Include_API/AWSteria_Host_lib.h
 ----
 
-Briefly, it contains an intialization and an shutdown call, a pair of
+Briefly, it contains an intialization and a shutdown call, a pair of
 read/write functions to communicate via the AXI4 M port, and a pair of
 read/write functions to communicate via the AXI4-Lite M port.
 
-Host side code can be written in any language environment.  To
-communicate with the hardware side it should invoke the C host-side
+The app's host side code can be written in any programming language.
+To communicate with the hardware side it should invoke the C host-side
 API.  `AWSteria_Infra` provides C code implementing the API for each
 platform.
 
@@ -181,8 +195,8 @@ AWSteria_Infra for simulation.
 * The host side and hardware side run as two processes on a standard computer.
 * The hardware side runs in simulation, Bluesim or Verilator
     simulation (it can be ported easily to other Verilog simulators).
-* The AWSteria_Infra host-hardware communication is emulated over TCP/IP.
-* The AWSteria_Infra DDR memory interfaces are connected to memory models.
+* The AWSteria_Infra host-hardware communication (AXI4 and AXI4 Lite) is emulated over TCP/IP.
+* The AWSteria_Infra AXI4 DDR memory interfaces are connected to simple memory models.
 
 This is illustrated in the following diagram:
 
@@ -192,11 +206,12 @@ The "`Test Application`" and "`Porting your application`" sections
 below illustrate how to build and run an application on AWSteria_Infra
 in simulation.
 
-In general, you won't have to modify anything in this directory or
-build anything in this directory; it just provides resources for your
+In general, you won't have to modify or build anything in this
+`Platform_Sim/` directory; it just provides resources for your
 application-build.
 
-Note: the following source files:
+Note: the following source files provide infrastructure for emulating
+AXI4 and AXI4 Lite over TCP/IP:
 
 ----
     Platform_Sim/
@@ -207,7 +222,7 @@ Note: the following source files:
         ├── Bytevec.bsv
 ----
 
-are auto-generated by the Python program in:
+These are auto-generated by the Python program in:
 
 ----
     Platform_Sim/
@@ -223,13 +238,7 @@ The `Platform_VCU118/` directory provides an implementation of
 AWSteria_Infra for a standard Debian/Ubuntu computer with a Xilinx
 VCU118 FPGA board attached with a PCIe bus.  It uses the "`Garnet`"
 repository from University of Cambridge (https://github.com/CTSRD-CHERI/garnet[]).
-
-The implementation offers an option where your hardware-side app runs
-at the Garnet default clock speed of 250 MHz, and an option where your
-hardware runs at a slower clock speed of 100 MHz.  The latter option
-is achieved through a "`reclocking`" layer.
-
-These are illustrated in the following diagram:
+This is illustrated in the following diagram:
 
 image::Fig_030_AWSteria_Infra_VCU118.png[align="center", width=650]
 
@@ -237,8 +246,8 @@ The "`Test Application`" and "`Porting your application`" sections
 below illustrate how to build and run an application on AWSteria_Infra
 and Garnet on VCU118.
 
-In general, you won't have to modify anything or build anything in in
-`Platform_VCU118/`; it just provides resources for your
+In general, you won't have to modify or build anything in this
+`Platform_VCU118/` directory; it just provides resources for your
 application-build.
 
 // ----------------------------------------------------------------
@@ -262,10 +271,31 @@ The `dma_to_device` tool optionally takes data from a file, to be written to the
 // SUBSECTION
 === VCU118 Hardware side
 
-`HW/AWSteria_HW_reclocked/` is a Vivado Block Design project that was
-used to create the "`reclocking layer`" for `AWSteria_HW_IFC.bsv` that
-allows the app to run at slower clock speeds than the Garnet-supplied
-250 MHz.  I.e., it creates a module which is "`shim`" that:
+`HW/AWSteria_ClockDiv/` is a Vivado "`Block Design`" project which
+instantiates a Xilinx IP clock-divider to provide the extra clocks in
+`AWSteria_HW` app interface, which allows the app (or parts of the
+app) to run at slower clock speeds than the Garnet-supplied 250 MHz
+which is used as the default app clock.  The Block Design creation has
+already been has already been done, in Vivado.  Unless you want to
+change the clock speed configurations, or change the interfaces, this
+Block Design project does not have to be repeated.
+
+`HW/example_AWSteria_HW/` is a template directory for Garnet, and is
+copied into the app's build directories (see VCU118 flow for Test
+Application below).
+
+*THE FOLLOWING IS OBSOLETE AND WILL BE REMOVED; PLEASE IGNORE*
+
+`HW/AWSteria_HW_reclocked/` is a Vivado "`Block Design`" project that
+was used to instantiate a Xilinx IP clock-divider to provide the extra
+clocks in `AWSteria_HW_IFC.bsv`, which allows the app (or parts of the
+app) to run at slower clock speeds than the Garnet-supplied 250 MHz
+which is used as the default clock.  The Block Design creation has
+already been has already been done, in Vivado.  Unless you want to
+change the clock speed configurations, or change the interfaces, this
+Block Design project does not have to be repeated.
+
+I.e., it creates a module which is "`shim`" that:
 
 * Instantiates a app module (with the  `AWSteria_HW_IFC.bsv` interface), and
 
@@ -278,8 +308,6 @@ allows the app to run at slower clock speeds than the Garnet-supplied
 
   ** Instantiates clock crossings between corresponding the outer and inner interfaces.
 
-This allows the user's design (inner app module instance) to run at a slower clock.
-
 In Vivado, the "Generate Block Design" action creates and populates the
 following directory:
 
@@ -288,13 +316,6 @@ following directory:
 ----
 
 which is copied into `example_AWSteria_HW_reclocked/src/bd` (see below).
-
-The Block Design creation has already been has already been done, in
-Vivado.  Unless you want to change the clock speed configurations, or
-change the interfaces, this Block Design project does not have to be
-repeated.
-
-TODO: Instead of copying `.bd/` it should be possible to copy just a Tcl script that encodes the Block Design.
 
 `HW/example_AWSteria_HW/` and `HW/example_AWSteria_HW_reclocked/` are
 template directories for Garnet, and are copied into the app's build
@@ -328,8 +349,8 @@ The "`Test Application`" and "`Porting your application`" sections
 below illustrate how to build and run an application on AWSteria_Infra
 on AWS F1.
 
-In general, you won't have to modify anything in this directory or
-build anything in this directory; it just provides resources for your
+In general, you won't have to modify or build anything in this
+`Platform_AWSF1/` directory; it just provides resources for your
 application-build.
 
 // ----------------------------------------------------------------
@@ -352,495 +373,6 @@ on the FPGA board.
 
 // ================================================================
 // SECTION
-== Test Application
-
-The `TestApp/` directory provides a small and simple test application.
-When you create a new application, you could use this as a starting
-template and modify it for purpose (see Section "`Porting your
-application`" for more details).
-
-// ----------------------------------------------------------------
-// SUBSECTION
-=== App source code and intended behavior
-
-`TestApp/Host/main.c` is the host-side source code; it invokes the
-host side C API `Include_API/AWSteria_Host_lib.h`.
-
-`TestApp/HW/AWSteria_HW.bsv` is the hardware-side source code, filling
-out the "`empty`" module provided in
-`Include_API/AWSteria_HW_EMPTY.bsv`.
-
-The hardware side is simple: it connects the host AXI4-Lite interface
-to an AXI4-Lite-to-AXI4 adapter which, along with the host AXI4
-interface connects to a 2x2 AXI4 crossbar switch which, in turn,
-connects to two AXI4 DDR interfaces.
-
-The host side simply writes random data to hardware-side DDRs, and
-reads them back to verify the data.  Writes and reads are performed
-over both the host AXI4 and AXI4 Lite interfaces, including writing
-through one and reading through the other.  The AXI4 interface is also
-exercised with large writes and reads, to exercise AXI4 burst
-transfers.
-
-This is illustrated in the following diagram:
-
-image::Fig_050_AWSteria_Infra_TestApp.png[align="center", width=650]
-
-// ----------------------------------------------------------------
-// SUBSECTION
-=== Building and running with Bluesim or Verilator simulation
-
-* In `TestApp/Host/build_sim` do `make exe_Host_sim` to create the
-  host-side executable `exe_Host_sim`.
-
-* In `TestApp/HW/build_Bluesim` do `make all` to create the HW-side
-  simulation executable `exe_HW_sim`.
-+
-or,
-+
-in `TestApp/HW/build_Verilator` do `make all` to create the HW-side
-simulation executable `exe_HW_sim`.
-
-* Run the hardware side executable in one process (e.g., in one
-    terminal window) It will await a TCP connection on a TCP port from
-    the host side; it will then execute the hardware.
-
-* Run the host side executable in another process (e.g., in another
-    terminal window) It will connect using TCP to the hardware side
-    and then interact with the hardware side, displaying messages
-    about its actions (reading and writing to DDRs on the hardware
-    side).
-
-You will have to kill the HW-side process when done (e.g., using
-`^C`).  You can restore each build directory to its pristine state
-with `make full_clean`.
-
-// ----------------------------------------------------------------
-// SUBSECTION
-=== Building and running on Xilinx VCU118
-
-AWSteria_Infra support for Xilinx PCIe-based boards (e.g., VCU118) is
-built on top of the "`Garnet`" system.  Please see Section
-"`Prerequsites for Xilinx PCIe-based FPGA boards`" for background and
-details.
-
-// ----------------
-// SUBSUBSECTION
-==== Building the hardware side
-
-You will need to have installed Xilinx's Vivado tool suite, and have a
-Vivado license that includes synthesis for the FPGA on the VCU118.
-Building the hardware side for VCU118 involves some steps locally in
-the AWSteria_Infra repo, followed by a step in the "`Garnet`" repo.
-
-An app in AWSteria_Infra can either run at Garnet's full speed (250
-MHz), or it can run at a slower clock speed; AWSteria_Infra provides
-the slower clock, and suitable clock-crossing logic.
-
-We describe first the flow for a full speed app, and then the slight
-variation for a slower speed app.
-
-The following steps are performed in the AWSteria_Infra repo (the two
-`make` targets can be provided together):
-
-* In `TestApp/HW/build_VCU118` do `make compile`. This will create
-    a directory `RTL/` and populate it with Verilog RTL generated
-    from the BSV source code by the Bluespec `bsc` compiler.
-
-* In `TestApp/HW/build_VCU118` do `make for_garnet`.  This will
-    create a directory `example_TestApp/` that is ready to run
-    through the Garnet flow.
-
-Copy the `example_TestApp/` directory into the top-level of the
-Garnet repo; change to that directory, and `make`:
-
-----
-    ... copy example_TestApp directory to garnet repo ...
-    $ cd garnet/example_TestApp
-    $ make
-----
-Garnet will run Vivado on TestApp RTL, eventually producing a "`partial bitfile`":
-----
-    garnet/example_TestApp/build/AWSteria_pblock_partition_partial.bit
-----
-This takes about 1 hour on a 12-core, 1.1 GHz, Intel Core i7-10710U CPU.
-
-You should check that your design has met timing:
-----
-    $ grep ^Slack  build/timing_summary.rpt 
-----
-A line like this, showing "`negative slack`" indicates the design _did not_ meet timing:
-----
-    Slack (VIOLATED) : -0.592ns  (required time - arrival time)
-----
-If so, you need to fix your design and repeat the hardware-build steps
-to this point, until your design meets timing.
-
-
-// ----------------
-// SUBSUBSECTION
-===== Building the hardware side with a slower clock
-
-To build TestApp to run at the slower clock speed (100 MHz), the steps are analogous:
-
-* In `TestApp/HW/build_VCU118` do `make for_garnet_reclocked`.  This will
-    create a directory `example_TestApp_reclocked/` that is ready to run
-    through the Garnet flow.
-
-Copy the `example_TestApp_reclocked/` directory into the top-level of the
-Garnet repo; change to that directory, and `make`:
-
-----
-    ... copy example_TestApp_reclocked directory to garnet repo ...
-    $ cd garnet/example_TestApp
-    $ make
-----
-Garnet will run Vivado on TestApp RTL, eventually producing a "`partial bitfile`":
-----
-    garnet/example_TestApp_reclocked/build/AWSteria_pblock_partition_partial.bit
-----
-You should check that your design has met timing:
-----
-    $ grep ^Slack  build/timing_summary.rpt 
-----
-A line like this, showing "`negative slack`" indicates the design _did not_ meet timing:
-----
-    Slack (VIOLATED) : -0.592ns  (required time - arrival time)
-----
-If so, you need to fix your design and repeat the hardware-build steps
-to this point, until your design meets timing.
-
-// ----------------
-// SUBSUBSECTION
-==== Loading the partial bitfile into the VCU118 FPGA
-
-We should have already loaded the Garnet fixed bitfile (the Garnet
-"`shell`").  Loading the partial bitfile for TestApp requires the
-`xvsecctl` tool and `xvsec` driver.  (See Section "`Prerequsites for
-Xilinx PCIe-based FPGA boards`").
-
-Example Makefile fragment to perform the partial bitfile reconfiguration:
-
-----
-BUS           = 0x07
-DEVICE_NO     = 0x0
-CAPABILITY_ID = 0x1
-BITFILE       = garnet/example_TestApp/build/AWSteria_pblock_partition_partial.bit
-
-reconfig:
-        sudo xvsecctl -b $(BUS) -F $(DEVICE_NO) -c $(CAPABILITY_ID) -p $(BITFILE)
-----
-
-The file `AWSteria_Infra/TestApp/HW/build_VCU118/Reconfig.mk` is a
-makefile showing this command for various partial bitfiles (Garnet
-example, TestApp 250 MHz and 100 MHz, etc.).
-
-// ----------------
-// SUBSUBSECTION
-==== Building the host side on VCU118
-
-In `TestApp/Host/build_VCU118` do
-
-----
-    make  exe_Host_VCU118
-----
-to create the host-side executable `exe_Host_VCU118`.
-
-// ----------------
-// SUBSUBSECTION
-==== Running the application
-
-IMPORTANT: please be familiar with Section "`Prerequsites for Xilinx
-PCIe-based FPGA boards`" below and ensure everything is in place.
-
-
-Then, run the executable.  It will interact with the hardware on the
-FPGA.  The console output should be exactly the same as running in
-simulation (described earlier).
-
-// ----------------------------------------------------------------
-// SUBSECTION
-=== Building and running on Amazon AWS F1
-
-// ----------------
-// SUBSUBSECTION
-==== Prerequisites: aws-fpga (SDK and HDK) and Vivado tool suite
-
-You can perform the builds on your own computers ("`on premisies`"),
-but you may find it more convenient to build on the Amazon AWS cloud,
-using an "`FPGA Developer`" AMI (Amazon Machine Instance) because it
-has the prerequisite tools and licenses already installed.
-
-If you are building on your own computers:
-
-* Please clone Amazon's aws-fpga repo, which can be found at
-    https://github.com/aws/aws-fpga.git[].  Initialize them as
-    described in its README, sourcing `hdk_setup.sh` and
-    `sdk_setup.sh`.  The former is needed for the hardware build,
-    below, and the latter is needed for the host-side software build.
-
-* Please install the Amazon AWS Command Line Interface `aws` as described in
-    https://aws.amazon.com/cli/[].
-
-* You need to have installed Xilinx's Vivado tool suite and have a
-    Vivado license for synthesis for the FPGA part that is on AWS F1
-    instances.
-
-// ----------------
-// SUBSUBSECTION
-==== Building the hardware side
-
-// ----------------
-// SUBSUBSUBSECTION
-===== Generate/prepare your app RTL
-
-The following steps are performed in the AWSteria_Infra repo (these two
-`make` commands can be given as one):
-
-* In `TestApp/HW/build_AWSF1` do `make compile`. This will create
-    a directory `RTL/` and populate it with Verilog RTL generated
-    from the BSV source code by the Bluespec `bsc` compiler.
-
-* In `TestApp/HW/build_AWSF1` do `make for_AWSF1_HDK`.  This will create a
-    directory `cl_AWSteria_TestApp/` that is ready to run through the
-    aws-fpga HDK flow.
-
-// ----------------
-// SUBSUBSUBSECTION
-===== AWS HDK step to create a DCP
-
-This step is performed on a machine where you have installed the
-Amazon AWS aws-fpga repo, in particular its HDK (see Prerequisites
-section above). You should have initialized the HDK by sourcing
-`hdk_setup.sh` (which will also define the environment variable
-`HDK_DIR`).  The repo has more detailed documentation, if you need it.
-
-If you created `cl_AWSteria_TestApp/` directory (previous section) on
-a different machine, please copy it to the machine with aws-fpga
-machine.
-
-Perform the "`create DCP`" (Design Checkpoint) action:
-
-----
-    $ cd  <wherever>/cl_AWSteria_TestApp/
-    $ export CL_DIR=$(pwd)
-    $ cd build/scripts
-    $ ./aws_build_dcp_from_cl.sh  -ignore_memory_requirement
-----
-
-This will create a background process that runs Vivado on the AWSteria
-TestApp RTL, eventually producing a "`Design Checkpoint`" (DCP).  The
-console output of the background process and the Vivado run are
-continuously logged in files whose names have this pattern, i.e., the
-prefix is the timestamp of when command was started:
-
-----
-    21_08_20-020656.nohup.out
-    21_08_20-020656.vivado.log
-----
-
-You can monitor Vivado's progress by watching these log files, e.g.,
-
-----
-    tail -f 21_08_20-020656.vivado.log
-----
-
-The `aws_build_dcp_from_cl.sh` step optionally can take an
-aws-fpga "`clock recipe`" argument.  Examples:
-
-----
-    $ ./aws_build_dcp_from_cl.sh  -ignore_memory_requirement  -clock_recipe_a A1
-    $ ./aws_build_dcp_from_cl.sh  -ignore_memory_requirement  -clock_recipe_a A2
-----
-
-The default clock recipe is A0, and builds for 125 MHz; A1 is for 250
-MHz, and A2 is for 16.67 MHz.  Details about clock recipes can be found at:
-****
-https://github.com/aws/aws-fpga/blob/master/hdk/docs/clock_recipes.csv
-****
-
-The DCP build for the default clock recipe (A0, 125 MHz) takes about
-1:40 hours running in an "`FPGA Developer`" AMI on an Amazon
-z1d.2xlarge machine.
-
-You should check that your design has met timing for the selected clock recipe:
-----
-    $ cd  <wherever>/cl_AWSteria_TestApp/build/scripts
-    $ grep ^Slack ../reports/21_08_20-020656.timing_summary_route_design.rpt
-----
-A line like this, showing "`negative slack`" indicates the design _did not_ meet timing:
-----
-    Slack (VIOLATED) : -0.592ns  (required time - arrival time)
-----
-If so, you need to fix your design and repeat the hardware-build steps
-to this point, until your design meets timing.
-
-Your DCP should be available in a tarfile here (the timestamp will differ):
-----
-    <wherever>/cl_AWSteria_TestApp/build/checkpoints/to_aws/21_08_20-020656.Developer_CL.tar
-----
-
-// ----------------
-// SUBSUBSUBSECTION
-===== AWS HDK step to create an AFI from the DCP
-
-Once your DCP is ready, you need to upload it into a folder in an
-Amazon S3 cloud storage "`bucket`".  If you don't already have a
-bucket-and-folder, you can create it and list its contents like this
-(this is a one-time step; you can reuse this bucket/folder in
-subsequent builds):
-
-----
-    $ aws s3 mb  s3://my_bucket/my_folder/
-    $ aws s3 ls  s3://my_bucket/my_folder/
-----
-
-Copy your DCP tarfile into the S3 folder:
-----
-    TO_AWS_DIR  = <wherever>/cl_AWSteria_TestApp/build/checkpoints/to_aws
-    DCP_TARFILE = 21_08_20-020656.Developer_CL.tar
-    $ aws s3 cp  $(TO_AWS_DIR)/$(DCP_TARFILE)  s3://my_bucket/my_folder/
-    $ aws s3 ls  s3://my_bucket/my_folder/
-----
-
-Note: AWS requires you to have "`permission`" to create folders and
-upload files; it may complain "`Unable to locate credentials`".
-You'll need to follow the usual steps for this:
-
-* Go to your Amazon AWS Management Console in your brower;
-
-* Select "`Command Line or Programmatic Access`" which pops up a window
-    "`Get credentials for AWSPowerUserAccess`", and
-
-* Follow one of the options there for establishing your credentials
-  (e.g., copy the environment variable defs to your clipboard and
-  paste them into your command shell).
-
-Once uploaded, you can issue the command to create an AWS AFI (AWS F1
-Image).  You must provide a name for your AFI and a brief description,
-and specify the Amazon AWS cloud "region" in which you work. Example:
-
-----
-    $ aws ec2 create-fpga-image \
-        --region us-west-2 \
-        --name AWSteria_TestApp \
-        --description "Testapp for AWSteria Infrastructure on AWS F1" \
-        --input-storage-location Bucket=my_bucket,Key=my_folder/$(DCP_TARFILE) \
-        --logs-storage-location Bucket=my_bucket,Key=my_folder
-----
-
-This will submit (to some mysterious process in the AWS cloud), a
-request to create your AFI from your DCP checkpoint, but it will
-immmediately print out two unique IDs for this AFI:
-
-----
-{
-    "FpgaImageId": "afi-0bf39b6143abf492c",
-    "FpgaImageGlobalId": "agfi-0a4fd4a251c7e8690"
-}
-----
-_Please make a careful note of these IDs, as you will need it for subsequent steps!_
-
-You can monitor progress of your AFI creation with:
-----
-    $ aws ec2 describe-fpga-images --fpga-image-ids  "afi-0bf39b6143abf492c"
-----
-
-whose initial output will look like this (note that State is
-"`pending`", and UpdateTime is the same as CreateTime):
-
-----
-        {
-            "UpdateTime": "2021-08-20T17:18:16.000Z",
-            "Name": "RSNAWSteriaTestApp",
-            "Tags": [],
-            "FpgaImageGlobalId": "agfi-0a4fd4a251c7e8690",
-            "Public": false,
-            "State": {
-                "Code": "pending"
-            },
-            "OwnerId": "845509001885",
-            "FpgaImageId": "afi-0bf39b6143abf492c",
-            "CreateTime": "2021-08-20T17:18:16.000Z",
-            "Description": "ASWteria TestApp 125 MHz"
-        }
-----
-
-After about 50-60 minutes, your AFI will be ready, and the output of
-the command will change to the following.  Note, State will be
-"`available`" and the UpdateTime will have been updated to the AFI
-creation time.
-
-----
-        {
-            "UpdateTime": "2021-08-20T18:10:49.000Z", 
-            "Name": "RSNAWSteriaTestApp", 
-            "Tags": [], 
-            "PciId": {
-                "SubsystemVendorId": "0xfedc", 
-                "VendorId": "0x1d0f", 
-                "DeviceId": "0xf001", 
-                "SubsystemId": "0x1d51"
-            }, 
-            "FpgaImageGlobalId": "agfi-0a4fd4a251c7e8690", 
-            "Public": false, 
-            "State": {
-                "Code": "available"
-            }, 
-            "ShellVersion": "0x04261818", 
-            "OwnerId": "845509001885", 
-            "FpgaImageId": "afi-0bf39b6143abf492c", 
-            "CreateTime": "2021-08-20T17:18:16.000Z", 
-            "Description": "ASWteria TestApp 125 MHz"
-        }
-----
-Note: the `aws ec2 create-fpga-image` command has options to notify
-completion by sending you an email, instead of manual monitoring.
-
-Your AFI is now ready to load onto an AWS F1 FPGA and run, interacting with your host-side app software.
-
-// ----------------
-// SUBSUBSECTION
-==== Loading the AFI (with bitfile) into the AWS F1 FPGA
-
-On an Amazon AWS F1 instance, load your AFI (your app's hardware side)
-into the FPGA as follows:
-
-----
-    $ sudo fpga-load-local-image -S 0 -I "agfi-0a4fd4a251c7e8690"
-----
-
-The `fpga-load-local-image` program becomes available when cloned the
-aws-fpga repo and sourced `sdk_setup.sh` (see Prerequisites section
-above).
-
-You can check on the status of your loaded AFI in the FPGA using
-either of the following commands (the latter is much more verbose):
-
-----
-    $ sudo fpga-describe-local-image -S 0 -R -H
-    $ sudo fpga-describe-local-image -S 0 -R -H -M
-----
-
-// ----------------
-// SUBSUBSECTION
-==== Building and running the host side on AWSF1
-
-In `TestApp/Host/build_AWSF1` do `make` to create the host-side
-executable `exe_Host_AWSF1`.
-
-Then, run the executable.
-
-----
-    $ sudo ./exe_Host_AWSF1
-----
-
-It will interact with the hardware on the FPGA.  The console output
-should be exactly the same as running in simulation (described
-earlier).
-
-// ================================================================
-// SECTION
 == Porting your application to use AWSteria_Infra
 
 The small `TestApp` example and its build-and-run flow provides a
@@ -848,7 +380,7 @@ template for coding, building and running your app.  The
 `Include_API/` files provide "`empty`" Verilog and BSV modules for
 convenience, which you can use as your starting point.
 
-Create your own app directory as a sibling to `TestApp`, with the same
+Create your own app directory similar to `TestApp/`, with the same
 structure (you can omit any of these platform-directories that you
 don't need):
 
@@ -870,169 +402,8 @@ don't need):
 Create Makefiles in each `build_xxx` directory, using those in the
 corresponding directories in TestApp as a starting template.
 
-Follow the build-and-run flows described for TestApp.
-
-// ================================================================
-// SECTION
-== Prerequsites for Xilinx PCIe-based FPGA boards: XDMA and XVSEC drivers and Garnet
-
-// ----------------
-// SUBSECTION
-=== Xilinx XDMA and XVSEC drivers
-
-Please install Xilinx's XDMA and XVSEC drivers on your host Linux
-machine, where your Xilinx PCIe-based board (e.g., VCU118) is
-attached.  The drivers, build and installation instructions are at:
-https://github.com/Xilinx/dma_ip_drivers.git[].
-
-XDMA installation will install the `xdma` driver in your Linux kernel.
-After intallation you'll see files like this `/dev/xdma*` on your
-Linux host.  See instructions at:
-
-****
-https://github.com/Xilinx/dma_ip_drivers/tree/master/XDMA/linux-kernel[]
-****
-
-XVSEC installation will install the `xvssecctl` tool and driver, which
-is used for "`partial reconfiguration`" of the FPGA with a partial
-bitfile.  After intallation you'll see files like this `/dev/xvsec*`
-on your Linux host, and the following executable tool:
-`/usr/local/sbin/xvsecctl`.  See instructions at:
-
-****
-https://github.com/Xilinx/dma_ip_drivers/tree/master/XVSEC/linux-kernel/docs[]
-****
-
-VSEC (Vendor Specific Extended Capability) is a feature of PCIe.
-
-// ----------------
-// SUBSUBSECTION
-==== Useful utilities for querying and installing drivers
-
-List PCI devices on system:
-
-----
-    $ lspci                              List all devices on PCI
-    $ man lspci                          for help on lspci
-
-    $ lspci -d 10ee:903f                 List Xilinx devices on PCI (vendoe, device id)
-    07:00.0 Serial controller: Xilinx Corporation Device 903f
-----
-
-Check which drivers are currently loaded in the OS kernel:
-
-----
-    $ lsmod                              List all loaded drivers
-    $ lsmod | grep -e xdma -e xvsec      Filter for xdma and xvsec
-----
-
-Loading a driver from the OS kernel (starting):
-
-----
-    $ sudo modprobe xvsec
-----
-
-When xdma and xvsec drivers are loaded, we can see related "`devices`" like this:
-
-----
-    $ ls /dev/xdma*  /dev/xvsec*
-----
-
-We can see which version of a driver was loaded by examining host system messages, or using `modinfo`:
-
-----
-    $ sudo dmesg | grep -i xdma
-    ...
-    [    4.533329] xdma:xdma_mod_init: Xilinx XDMA Reference Driver xdma v2020.1.8
-    ...
-
-    $ sudo modinfo xvsec
-    ...
-    version:        2020.2.0
-    ...
-----
-
-Unloading a driver from the OS kernel (removing/stopping):
-
-----
-    $ sudo rmmod -s xvsec
-----
-
-// ----------------
-// SUBSECTION
-=== Garnet
-
-AWSteria_Infra support for Xilinx PCIe-based boards (e.g., VCU118) is
-built on top of the "`Garnet`" system, and thus follows Garnet-build
-flows.  The Garnet repo from Cambridge University, UK is at
-https://github.com/CTSRD-CHERI/garnet[].
-
-Once cloned, we need to perform the following one-time step in the
-top-level directory to prepare some components that are used by
-AWSteria_Infra apps:
-
-----
-    $ make ip
-----
-
-Garnet provides PCIe and DDR infrastructure for VCU118, and a 250 MHz
-clock and reset.  Please clone Garnet and follow the instructions
-there to build and run the provided simple example.
-
-The Garnet flow installs two separate bitfiles on the VCU118, in two
-separate steps.  The first bitfile is for a component called the
-"`shell`" and contains fixed, unchanging support for PCIe and DDR4s.
-This component needs to be loaded just onc, using standard
-bitfile-loading mechanisms (USB, jtag, Flash, ...).
-
-The second bitfile is a "`partial bitfile`" containing the application
-logic.  This partial bitfile is loaded using Xilinx's "`partial
-reconfiguration`" mechanism, which uses Xilinx's XVSEC driver.
-
-The second bitfile can be repeatedly re-loaded with different
-application design iterations, or with different applications, without
-having to reload the "`shell`" bitfile.
-
-The flow for AWSteria_Infra results in such a partial bitfile which
-plugs into the Garnet "`shell`" environment.
-
-// ----------------
-// SUBSECTION
-=== Steps for running AWSteria_Infra on Garnet on Xilinx PCIe-based boards
-
-*One-time steps:*
-
-* Load the Xilinx XDMA driver into the host's OS kernel if not already
-  running.  We recommend configuring the host OS so that XDMA is
-  automatically started on each reboot.
-
-* Load the the Garnet "`shell`" (fixed bitfile) into the FPGA using
-  normal bitfile-loading procedures.  This does not require PCIe or
-  XDMA or XVSEC drivers; it's usually done over USB or jtag.  Example:
-+
-----
-    $cd  $(AWSTERIA_INFRA_REPO)/Platform_VCU118/HW
-    $ ./program_fpga  $(GARNET_REPO)/shell/prebuilt/empty.bit
-----
-+
-`program_fpga` is a Tcl script for Vivado to program the FPGA using
-USB.  As a convenience, this command is also in the `Load_Shell.mk`
-makefile, so you can just say `make load_shell` (edit the path to the
-Garnet shell bitfile, if needed).
-
-* Reboot the host, so that the host's PCI probing and XDMA recognize
-    the PCI IP in the just-loaded FPGA bitfile.
-
-* Load the Xilinx XVSEC driver into the OS kernel if not already running.
-
-*Repeated steps* for each new application, or each design iteration of an appilication:
-
-* Use the Xilinx `xvsecctl` command-line tool to load the
-  AWSteria_Infra application's FPGA-side _partial bitfile_.
-  `xvsecctl` performs "`partial reconfiguration`" using the Xilinx XVSEC driver.
-
-Then, the application's host-side can interact with the
-FPGA-side. This communication uses the Xilinx XDMA driver.
+Follow the build-and-run flows described for TestApp, modifying the
+Makefiles as necessary for your source files.
 
 // ================================================================
 // SECTION
