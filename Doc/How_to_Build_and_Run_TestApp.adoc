@@ -465,7 +465,7 @@ aws-fpga "`clock recipe`" argument.  Examples:
 ----
 
 The default clock recipe is A0, and builds for 125 MHz; A1 is for 250
-MHz, and A2 is for 16.67 MHz.  Details about clock recipes can be found at:
+MHz, and A2 is for 15.625 MHz.  Details about clock recipes can be found at:
 ****
 https://github.com/aws/aws-fpga/blob/master/hdk/docs/clock_recipes.csv
 ****
