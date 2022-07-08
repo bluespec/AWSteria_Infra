@@ -462,13 +462,16 @@ module cl_AWSteria #(parameter NUM_DDR=4)
 			    .rst_n   (1'b1),
 			    .in_bus  (sync_rst_n),
 			    .out_bus (mkAWSteria_HW_sync_rst_n));
-// build with -clock_recipe_a A1 -clock_recipe_b B1 -clock_recipe_c C2  
+
    mkAWSteria_HW #()
-   awsteria_HW   (.CLK   (clk_main_a0), // 250 MHz
+   awsteria_HW   (.CLK   (clk_main_a0),
 		  .RST_N (mkAWSteria_HW_sync_rst_n),
-      .CLK_clk1(clk_extra_a1), // 125 MHz
-		  .CLK_clk2(clk_extra_c1), // 100 MHz
-		  .CLK_clk3(clk_extra_b1), // 62.5 MHz
+      .CLK_clk1(clk_extra_a1),
+		  .CLK_clk2(clk_extra_a2),
+		  .CLK_clk3(clk_extra_a3),
+		  .CLK_clk4(1'b0),
+		  .CLK_clk5(1'b0),
+	
 		  .CLK_clk4(1'b0),
 		  .CLK_clk5(1'b0),
 		  // ----------------
