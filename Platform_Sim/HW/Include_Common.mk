@@ -30,11 +30,6 @@ BSC_PATH := $(BSC_PATH):+
 TOPFILE   ?= $(AWSTERIA_INFRA_REPO)/Platform_Sim/HW/Top_HW_Side.bsv
 TOPMODULE ?= mkTop_HW_Side
 
-# ----------------
-# Final simulation executable
-
-SIM_EXE_FILE = exe_HW_sim
-
 # ================================================================
 # bsc compilation flags
 

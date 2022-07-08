@@ -1,66 +1,65 @@
 ###  -*-Makefile-*-
 
-# ================================================================
+# Copyright (c) 2020-2022 Bluespec, Inc.  All Rights Reserved
 
+# Makefile to build HW-side simulation (Bluesim)
+# for AWSteria_Infra's TestApp for VCU118 or AWS F1.
+
+# ================================================================
 .PHONY: help
-help:
-	@echo "Usage:"
-	@echo "    make compile       Use bsc to compile for Bluesim"
-	@echo "    make simulator     Use bsc create Bluesim executable"
+help:  show_resource_paths
+	@echo "Available targets for 'make':"
+	@echo "  compile       Use bsc to compile for Bluesim"
+	@echo "  simulator     Use bsc create Bluesim executable"
 	@echo ""
-	@echo "    make clean         Remove build_dir (for intermediate files)."
-	@echo "    make full_clean    Restore to pristine state."
+	@echo "  clean         Remove intermediate files."
+	@echo "  full_clean    Restore to pristine state."
 	@echo ""
-	@echo "  Current bsc compiler flags: $(BSC_COMPILATION_FLAGS)"
-	@echo "  Please define TARGET=VCU118 or TARGET=AWSF1 for proper DDR setup"
+	@echo "Simulation executable: $(SIM_EXE_FILE)"
+	@echo "TARGET = $(TARGET)     (can be PLATFORM_VCU118 or PLATFORM_AWSF1)"
+	@echo "Current BSC_COMPILATION_FLAGS (bsc compiler flags):"
+	@echo "  $(BSC_COMPILATION_FLAGS)"
+	@echo "Current BSC_PATH (bsc compiler path):"
+	@echo "  $(BSC_PATH)"
 
 # ================================================================
-# Defs
+# Defs of resources etc.
 
-ifndef FLUTE_REPO
-  $(error ERROR: please define FLUTE_REPO, i.e., path to Flute repo)
-else
-  $(info  INFO: FLUTE_REPO is $(FLUTE_REPO))
-endif
+$(info INFO: use 'make help' to show current settings.)
+$(info INFO: Including Makefile_Params.mk which should define paths to external resources.)
 
-ifndef AWSTERIA_INFRA_REPO
-  $(error ERROR: please define AWSTERIA_INFRA_REPO, i.e., path to AWSteria_Infra repo)
-else
-  $(info  INFO: AWSTERIA_INFRA_REPO is $(AWSTERIA_INFRA_REPO))
-endif
+include Makefile_Params.mk
 
-ifndef BLUESPEC_HOME
-  $(error ERROR: please define BLUESPEC_HOME, i.e., path to bsc installation)
-else
-  $(info  INFO: BLUESPEC_HOME is $(BLUESPEC_HOME))
-endif
+# Default target platform
+TARGET ?= PLATFORM_VCU118
 
-PLATFORM_SIM = $(AWSTERIA_INFRA_REPO)/Platform_Sim
-
-# Default target
-TARGET ?= VCU118
+# Top-level file and module
+TOPFILE   ?= $(AWSTERIA_INFRA_REPO)/Platform_Sim/HW/Top_HW_Side.bsv
+TOPMODULE ?= mkTop_HW_Side
 
 #================================================================
-# BSC flags
+# Target-specific defs
 
-ifeq ($(TARGET),VCU118)
+ifeq ($(TARGET),PLATFORM_VCU118)
 
-  BSC_COMPILATION_FLAGS += -D SIM_FOR_VCU118
   BSC_COMPILATION_FLAGS += -D INCLUDE_DDR_A
   BSC_COMPILATION_FLAGS += -D INCLUDE_DDR_B
-  $(info  INFO: TARGET is VCU118 (has DDR A and B))
+  BSC_PATH := $(AWSTERIA_INFRA_REPO)/Platform_VCU118/HW
 
-else ifeq ($(TARGET),AWSF1)
+  SIM_EXE_FILE ?= exe_HW_VCU118_sim
 
-  BSC_COMPILATION_FLAGS += -D SIM_FOR_AWSF1
+else ifeq ($(TARGET),PLATFORM_AWSF1)
+
   BSC_COMPILATION_FLAGS += -D INCLUDE_DDR_A
   BSC_COMPILATION_FLAGS += -D INCLUDE_DDR_B
   BSC_COMPILATION_FLAGS += -D INCLUDE_DDR_C
   BSC_COMPILATION_FLAGS += -D INCLUDE_DDR_D
-  $(info  INFO: TARGET is AWSF1 (has DDR A, B, C and D))
+  BSC_PATH := $(AWSTERIA_INFRA_REPO)/Platform_AWSF1/HW
+
+  SIM_EXE_FILE ?= exe_HW_AWSF1_sim
 
 else
-  $(error ERROR: please define TARGET=VCU118 or TARGET=AWSF1 for proper DDR setup)
+  $(error ERROR: please define TARGET=PLATFORM_VCU118 or TARGET=PLATFORM_AWSF1 for proper DDR setup)
 endif
 
 #================================================================
@@ -73,16 +72,66 @@ BSC_PATH := $(BSC_PATH):$(AWSTERIA_INFRA_REPO)/TestApp/HW
 BSC_PATH := $(BSC_PATH):$(AWSTERIA_INFRA_REPO)/Include_API
 BSC_PATH := $(BSC_PATH):$(AWSTERIA_INFRA_REPO)/Platform_Sim/HW
 
-# From Flute
-BSC_PATH := $(BSC_PATH):$(FLUTE_REPO)/src_Core/BSV_Additional_Libs
-BSC_PATH := $(BSC_PATH):$(FLUTE_REPO)/src_Testbench/Fabrics/AXI4
-BSC_PATH := $(BSC_PATH):$(FLUTE_REPO)/src_Testbench/Fabrics/AXI4_Lite
-BSC_PATH := $(BSC_PATH):$(FLUTE_REPO)/src_Testbench/Fabrics/Adapters
+# From External Resources
+BSC_PATH := $(BSC_PATH):$(BSV_ADDITIONAL_LIBS)
+BSC_PATH := $(BSC_PATH):$(AMBA_FABRICS)/AXI4
+BSC_PATH := $(BSC_PATH):$(AMBA_FABRICS)/AXI4_Lite
+BSC_PATH := $(BSC_PATH):$(AMBA_FABRICS)/Adapters
 
-#================================================================
-# Common boilerplate rules, and simulator-specific rules
+# Path to default bsc libs
+BSC_PATH := $(BSC_PATH):+
 
-include $(PLATFORM_SIM)/HW/Include_Common.mk
-include $(PLATFORM_SIM)/HW/Include_Bluesim.mk
+# ================================================================
+# bsc compilation flags
+
+BSC_COMPILATION_FLAGS += \
+	-keep-fires -aggressive-conditions -no-warn-action-shadowing -no-show-timestamps -check-assert \
+	-suppress-warnings G0020    \
+	+RTS -K128M -RTS  -show-range-conflict
+
+# ================================================================
+# Compile Bluesim intermediate files from BSV sources (needs Bluespec 'bsc' compiler)
+
+TMP_DIRS  = -bdir build_dir  -simdir build_dir  -info-dir build_dir
+
+build_dir:
+	mkdir -p $@
+
+.PHONY: compile
+compile: build_dir
+	@echo "INFO: Re-compiling Core (CPU, Caches)"
+	bsc -u -elab -sim  $(TMP_DIRS)  $(BSC_COMPILATION_FLAGS)  -p $(BSC_PATH)  $(TOPFILE)
+	@echo "INFO: Re-compiled  Core (CPU, Caches)"
+
+# ----------------------------------------------------------------
+# Compile and link intermediate files into a Bluesim executable
+
+BSC_C_FLAGS += \
+	-Xl -v \
+	-Xc -O3 -Xc++ -O3 \
+
+# You may have to remove this line above
+# for Bluespec_2019.05.beta2-debian9stretch-amd64
+#	-Xc++  -D_GLIBCXX_USE_CXX11_ABI=0 \
+
+.PHONY: simulator
+simulator:
+	@echo "INFO: linking bsc-compiled objects into Bluesim executable"
+	bsc -sim -parallel-sim-link 8  +RTS -K1G -RTS \
+		$(TMP_DIRS) \
+		-e $(TOPMODULE) -o ./$(SIM_EXE_FILE) \
+		$(BSC_C_FLAGS) \
+		$(AWSTERIA_INFRA_REPO)/Platform_Sim/HW/C_Imported_Functions.c
+	@echo "INFO: linked bsc-compiled objects into Bluesim executable"
+
+# ================================================================
+
+.PHONY: clean
+clean:
+	rm -r -f  *~  build_dir  obj_dir
+
+.PHONY: full_clean
+full_clean: clean
+	rm -r -f  $(SIM_EXE_FILE)  $(SIM_EXE_FILE).so
 
 # ================================================================
