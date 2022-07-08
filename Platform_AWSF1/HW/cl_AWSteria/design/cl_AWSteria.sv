@@ -471,9 +471,6 @@ module cl_AWSteria #(parameter NUM_DDR=4)
 		  .CLK_clk3(clk_extra_a3),
 		  .CLK_clk4(1'b0),
 		  .CLK_clk5(1'b0),
-	
-		  .CLK_clk4(1'b0),
-		  .CLK_clk5(1'b0),
 		  // ----------------
 		  // DMA_PCIS connection
 		  .host_AXI4_S_awvalid  (sh_cl_dma_pcis_awvalid),
