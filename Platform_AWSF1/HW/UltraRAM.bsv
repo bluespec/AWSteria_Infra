@@ -140,7 +140,7 @@ endfunction
 // ================================================================
 // Local constants and types
 
-typedef 26 NBPipe;
+typedef 17 NBPipe;
 
 // Module state
 typedef enum {STATE_POWER_ON_RESET,

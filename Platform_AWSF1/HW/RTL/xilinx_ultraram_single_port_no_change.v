@@ -21,7 +21,7 @@ module xilinx_ultraram_single_port_no_change #(
     output reg [DWIDTH-1:0] dout  // Data Output
    );
 
-(* ram_style = "ultra" *) (* cascade_height  = 2 *)
+(* ram_style = "ultra" *) // (* cascade_height  = 2 *)
 reg [DWIDTH-1:0] mem[(1<<AWIDTH)-1:0];        // Memory Declaration
 reg [DWIDTH-1:0] memreg;
 reg [DWIDTH-1:0] mem_pipe_reg[NBPIPE-1:0];    // Pipelines for memory
