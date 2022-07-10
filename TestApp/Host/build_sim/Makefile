@@ -2,26 +2,59 @@
 
 # Copyright (c) 2020-2022 Bluespec, Inc.  All Rights Reserved
 
-# ================================================================
+# Makefile to create Host-side executable
+# for AWSteria_Infra's TestApp
+# where HW-side is Bluesim or Verilator simulation for VCU118 or AWS F1.
 
+# ================================================================
 .PHONY: help
-help:
-	@echo "Usage:"
-	@echo "    make $(EXE)        create the host-side executable"
-	@echo "    make clean         delete temporary files/dirs but keep the executable"
-	@echo "    make full_clean    delete temporary files/dirs and delete the executable"
-	@echo "  Please define TARGET=VCU118 or TARGET=AWSF1 for proper DDR setup"
+help:  show_resource_paths
+	@echo "Available targets for 'make':"
+	@echo "  $(HOST_EXE_FILE)        create the host-side executable"
+	@echo ""
+	@echo "  clean         delete temporary files/dirs but keep the executable"
+	@echo "  full_clean    delete temporary files/dirs and delete the executable"
+	@echo ""
+	@echo "TARGET = $(TARGET)     (can be PLATFORM_VCU118 or PLATFORM_AWSF1)"
+	@echo "Host-side executable: $(HOST_EXE_FILE)"
+	@echo "Current CFLAGS (C compiler flags):"
+	@echo "  $(CFLAGS)"
+	@echo "Current CPATH (C compiler path):"
+	@echo "  $(CPATH)"
+
+# ================================================================
+# Defs of resources etc.
+
+$(info INFO: use 'make help' to show current settings.)
+$(info INFO: Including Makefile_Params.mk which should define paths to external resources.)
+
+include Makefile_Params.mk
+
+# Default target platform
+TARGET ?= PLATFORM_VCU118
 
 #================================================================
+# Target-specific defs
 
-ifndef AWSTERIA_INFRA_REPO
-  $(error ERROR: please define AWSTERIA_INFRA_REPO (path to AWSteria_Infra repo))
+ifeq ($(TARGET),PLATFORM_VCU118)
+
+  SRCS_H += $(AWSTERIA_INFRA_REPO)/Platform_VCU118/Host/AWSteria_Platform.h
+
+  CPATH += -I $(AWSTERIA_INFRA_REPO)/Platform_VCU118/Host
+
+  HOST_EXE_FILE ?= exe_Host_VCU118
+
+else ifeq ($(TARGET),PLATFORM_AWSF1)
+
+  SRCS_H += $(AWSTERIA_INFRA_REPO)/Platform_AWSF1/Host/AWSteria_Platform.h
+
+  CPATH += -I $(AWSTERIA_INFRA_REPO)/Platform_AWSF1/Host
+
+  HOST_EXE_FILE ?= exe_Host_AWSF1
+
 else
-  $(info  INFO: AWSTERIA_INFRA_REPO = $(AWSTERIA_INFRA_REPO))
+  $(error ERROR: please define TARGET=PLATFORM_VCU118 or TARGET=PLATFORM_AWSF1 for proper DDR setup)
 endif
-
-# Default target
-TARGET ?= VCU118
 
 # ================================================================
 # Source files
@@ -36,7 +69,6 @@ SRCS_C = $(AWSTERIA_INFRA_REPO)/TestApp/Host/main.c
 
 SRCS_H += \
 	$(AWSTERIA_INFRA_REPO)/Include_API/AWSteria_Host_lib.h \
-	$(AWSTERIA_INFRA_REPO)/Platform_Sim/Host/AWSteria_Platform.h \
 	$(AWSTERIA_INFRA_REPO)/Platform_Sim/Host/Bytevec.h \
 	$(AWSTERIA_INFRA_REPO)/Platform_Sim/Host/TCP_Client_Lib.h
 
@@ -46,29 +78,13 @@ SRCS_C += \
 	$(AWSTERIA_INFRA_REPO)/Platform_Sim/Host/TCP_Client_Lib.c
 
 # ================================================================
-# Config AWSteria_Infra simulation for different targets
-
-ifeq ($(TARGET),VCU118)
-
-  CFLAGS += -D SIM_FOR_VCU118
-  $(info  INFO: TARGET is VCU118 (has DDR A and B))
-
-else ifeq ($(TARGET),AWSF1)
-
-  CFLAGS += -D SIM_FOR_AWSF1
-  $(info  INFO: TARGET is AWSF1 (has DDR A, B, C and D))
-
-else
-  $(error ERROR: please define TARGET=VCU118 or TARGET=AWSF1 for proper DDR setup)
-endif
-
-# ================================================================
 # C compilation
 
+CFLAGS += -D $(TARGET)
 CFLAGS += -std=gnu11 -g -Wall -Werror
 
-CFLAGS += -I $(AWSTERIA_INFRA_REPO)/Include_API
-CFLAGS += -I $(AWSTERIA_INFRA_REPO)/Platform_Sim/Host
+CPATH  += -I $(AWSTERIA_INFRA_REPO)/Include_API
+CPATH  += -I $(AWSTERIA_INFRA_REPO)/Platform_Sim/Host
 
 CC     = gcc $(CFLAGS)
 
@@ -77,9 +93,9 @@ EXE    = exe_Host_sim
 # ================================================================
 # Top-level target: the executable
 
-$(EXE): $(SRCS_H) $(SRCS_C)
-	$(CC) -g  -o $(EXE) $(SRCS_C)
-	@echo "INFO: Created host-side executable $(EXE)"
+$(HOST_EXE_FILE): $(SRCS_H) $(SRCS_C)
+	$(CC) -o $(HOST_EXE_FILE) $(CFLAGS) $(CPATH) $(SRCS_C)
+	@echo "INFO: Created host-side executable $(HOST_EXE_FILE)"
 
 # ================================================================
 
@@ -89,6 +105,6 @@ clean:
 
 .PHONY: full_clean
 full_clean:
-	rm -f  *.*~  Makefile*~  *.o  exe_*
+	rm -f  *.*~  Makefile*~  *.o  $(HOST_EXE_FILE)
 
 # ================================================================
