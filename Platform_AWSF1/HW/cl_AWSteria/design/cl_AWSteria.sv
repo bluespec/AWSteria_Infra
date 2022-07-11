@@ -118,7 +118,7 @@ module cl_AWSteria #(parameter NUM_DDR=4)
 
    lib_pipe #(.WIDTH(1), .STAGES(4))
    PIPE_RST_N (.clk(clk_main_a0), .rst_n(1'b1), .in_bus(rst_main_n), .out_bus(pipe_rst_n));
-   
+
    always_ff @(negedge pipe_rst_n or posedge clk_main_a0)
      if (! pipe_rst_n)
        begin
@@ -136,7 +136,7 @@ module cl_AWSteria #(parameter NUM_DDR=4)
 
    logic sh_cl_flr_assert_q;
 
-   //FLR response 
+   //FLR response
    always_ff @(negedge sync_rst_n or posedge clk_main_a0)
      if (! sync_rst_n)
        begin
@@ -220,7 +220,7 @@ module cl_AWSteria #(parameter NUM_DDR=4)
    // From cl_ports to sh_ddr
    logic [7:0]  v_ddr4_stats_addr_q[2:0];
    logic [2:0]  v_ddr4_stats_wr_q;
-   logic [2:0]  v_ddr4_stats_rd_q; 
+   logic [2:0]  v_ddr4_stats_rd_q;
    logic [31:0] v_ddr4_stats_wdata_q[2:0];
 
    // From sh_ddr to cl_ports
@@ -280,7 +280,7 @@ module cl_AWSteria #(parameter NUM_DDR=4)
    PIPE_DDR_STAT_ACK2 (.clk(clk_main_a0), .rst_n(sync_rst_n),
 		       .in_bus({v_ddr4_stats_ack_q[2], v_ddr4_stats_int_q[2], v_ddr4_stats_rdata_q[2]}),
 		       .out_bus({ddr_sh_stat_ack2, ddr_sh_stat_int2, ddr_sh_stat_rdata2})
-		       ); 
+		       );
 
    assign v_ddr4_axi4_awburst [0] = 2'b01;
    assign v_ddr4_axi4_awburst [1] = 2'b01;
@@ -331,8 +331,8 @@ module cl_AWSteria #(parameter NUM_DDR=4)
       .M_A_DQS_DP(M_A_DQS_DP),
       .M_A_DQS_DN(M_A_DQS_DN),
       .cl_RST_DIMM_A_N(cl_RST_DIMM_A_N),
-   
-   
+
+
       .CLK_300M_DIMM1_DP(CLK_300M_DIMM1_DP),
       .CLK_300M_DIMM1_DN(CLK_300M_DIMM1_DN),
       .M_B_ACT_N(M_B_ACT_N),
@@ -416,28 +416,28 @@ module cl_AWSteria #(parameter NUM_DDR=4)
       // DDR A, B, D stats connected to local ddr4 stats bus
 
       .sh_ddr_stat_addr0  (v_ddr4_stats_addr_q[0]) ,
-      .sh_ddr_stat_wr0    (v_ddr4_stats_wr_q[0]     ) , 
-      .sh_ddr_stat_rd0    (v_ddr4_stats_rd_q[0]     ) , 
-      .sh_ddr_stat_wdata0 (v_ddr4_stats_wdata_q[0]  ) , 
+      .sh_ddr_stat_wr0    (v_ddr4_stats_wr_q[0]     ) ,
+      .sh_ddr_stat_rd0    (v_ddr4_stats_rd_q[0]     ) ,
+      .sh_ddr_stat_wdata0 (v_ddr4_stats_wdata_q[0]  ) ,
       .ddr_sh_stat_ack0   (v_ddr4_stats_ack_q[0]    ) ,
       .ddr_sh_stat_rdata0 (v_ddr4_stats_rdata_q[0]  ),
       .ddr_sh_stat_int0   (v_ddr4_stats_int_q[0]    ),
 
       .sh_ddr_stat_addr1  (v_ddr4_stats_addr_q[1]) ,
-      .sh_ddr_stat_wr1    (v_ddr4_stats_wr_q[1]     ) , 
-      .sh_ddr_stat_rd1    (v_ddr4_stats_rd_q[1]     ) , 
-      .sh_ddr_stat_wdata1 (v_ddr4_stats_wdata_q[1]  ) , 
+      .sh_ddr_stat_wr1    (v_ddr4_stats_wr_q[1]     ) ,
+      .sh_ddr_stat_rd1    (v_ddr4_stats_rd_q[1]     ) ,
+      .sh_ddr_stat_wdata1 (v_ddr4_stats_wdata_q[1]  ) ,
       .ddr_sh_stat_ack1   (v_ddr4_stats_ack_q[1]    ) ,
       .ddr_sh_stat_rdata1 (v_ddr4_stats_rdata_q[1]  ),
       .ddr_sh_stat_int1   (v_ddr4_stats_int_q[1]    ),
 
       .sh_ddr_stat_addr2  (v_ddr4_stats_addr_q[2]) ,
-      .sh_ddr_stat_wr2    (v_ddr4_stats_wr_q[2]     ) , 
-      .sh_ddr_stat_rd2    (v_ddr4_stats_rd_q[2]     ) , 
-      .sh_ddr_stat_wdata2 (v_ddr4_stats_wdata_q[2]  ) , 
+      .sh_ddr_stat_wr2    (v_ddr4_stats_wr_q[2]     ) ,
+      .sh_ddr_stat_rd2    (v_ddr4_stats_rd_q[2]     ) ,
+      .sh_ddr_stat_wdata2 (v_ddr4_stats_wdata_q[2]  ) ,
       .ddr_sh_stat_ack2   (v_ddr4_stats_ack_q[2]    ) ,
       .ddr_sh_stat_rdata2 (v_ddr4_stats_rdata_q[2]  ),
-      .ddr_sh_stat_int2   (v_ddr4_stats_int_q[2]    ) 
+      .ddr_sh_stat_int2   (v_ddr4_stats_int_q[2]    )
       );
 
    // ================================================================
@@ -466,11 +466,10 @@ module cl_AWSteria #(parameter NUM_DDR=4)
    mkAWSteria_HW #()
    awsteria_HW   (.CLK   (clk_main_a0),
 		  .RST_N (mkAWSteria_HW_sync_rst_n),
-      .CLK_clk1(clk_extra_a1),
-		  .CLK_clk2(clk_extra_a2),
-		  .CLK_clk3(clk_extra_a3),
-		  .CLK_clk4(1'b0),
-		  .CLK_clk5(1'b0),
+		  // ----------------
+
+      `include "cl_AWSteria_clocks.vh"
+
 		  // ----------------
 		  // DMA_PCIS connection
 		  .host_AXI4_S_awvalid  (sh_cl_dma_pcis_awvalid),
@@ -738,4 +737,4 @@ module cl_AWSteria #(parameter NUM_DDR=4)
 // ****************************************************************
 // ****************************************************************
 
-endmodule   
+endmodule
