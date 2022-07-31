@@ -57,13 +57,13 @@ void *AWSteria_Host_init (void)
     awsteria_host_state.p_bytevec_state = mk_Bytevec_state ();
     if (awsteria_host_state.p_bytevec_state == NULL) {
 	fprintf (stdout, "ERROR: %s: mk_Bytevec_state failed\n", __FUNCTION__);
-	exit (1);
+	return NULL;
     }
 
     uint32_t status = tcp_client_open (DEFAULT_HOSTNAME, DEFAULT_PORT);
     if (status == status_err) {
-	fprintf (stdout, "ERROR: %s: failed\n", __FUNCTION__);
-	exit (1);
+	fprintf (stdout, "ERROR: %s: tcp_client_open() failed\n", __FUNCTION__);
+	return NULL;
     }
 
     if (verbosity_init > 0)
