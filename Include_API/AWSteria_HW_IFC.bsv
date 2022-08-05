@@ -14,6 +14,9 @@ package AWSteria_HW_IFC;
 // Number of DDRs supported
 // Options: A, AB, ABC, ABCD
 
+import ClientServer ::*;
+import Vector ::*;
+
 `ifdef INCLUDE_DDR_D
 typedef 4  N_DDRs;
 `elsif INCLUDE_DDR_C
@@ -23,6 +26,14 @@ typedef 2  N_DDRs;
 `else
 typedef 1  N_DDRs;
 `endif
+
+typedef 16 N_INT;
+
+(* always_ready, always_enabled *)
+interface Host_Interrupts_IFC#(numeric type nint);
+   method Bit#(nint) irq_req;
+   method Action irq_ack(Bit#(nint) x);
+endinterface
 
 // ****************************************************************
 // The top-level interface for the BSV design inside AWSteria
@@ -36,6 +47,8 @@ interface AWSteria_HW_IFC #(type host_AXI4_S_IFC,     // facing host
 
    // AXI4-Lite facing host (in AWS, this connects to the 'OCL' interface)
    interface host_AXI4L_S_IFC  host_AXI4L_S;
+
+   interface Host_Interrupts_IFC#(N_INT) host_interrupts;
 
    // Facing from 1 to 4 DDRs
    interface ddr_AXI4_M_IFC  ddr_A_M;

@@ -79,7 +79,6 @@ module cl_AWSteria #(parameter NUM_DDR=4)
 `include "unused_pcim_template.inc"
 `include "unused_cl_sda_template.inc"
 `include "unused_sh_bar1_template.inc"
-`include "unused_apppf_irq_template.inc"
 
    // Unused 'full' signals
    assign  cl_sh_dma_rd_full = 1'b0;
@@ -725,6 +724,10 @@ module cl_AWSteria #(parameter NUM_DDR=4)
 		  .ddr_D_M_rresp    (v_ddr4_axi4_rresp [2]),
 		  .ddr_D_M_rlast    (v_ddr4_axi4_rlast [2]),
 		  .ddr_D_M_rready   (v_ddr4_axi4_rready [2]),
+
+		  // interrupts
+		  .host_interrupts_irq_req (cl_sh_apppf_irq_req),
+		  .host_interrupts_irq_ack_x (sh_cl_apppf_irq_ack),
 
 		  // ----------------
 		  // Misc signals

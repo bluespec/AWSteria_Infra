@@ -39,6 +39,8 @@ import C_Imports :: *;
 import AWSteria_HW_IFC :: *;
 import AWSteria_HW     :: *;
 
+import Interrupts_Sim ::*;
+
 // ================================================================
 // Top-level module.
 // Instantiates the SoC.
@@ -400,6 +402,23 @@ module mkTop_HW_Side (Empty) ;
       awsteria_hw.m_glcount (rg_counter);
       rg_counter <= rg_counter + 1;
    endrule
+
+   // interrupts
+
+   Interrupts_Sim#(N_INT) int_sim <- mkInterrupts_Sim;
+
+   mkConnection(int_sim.irq_req, awsteria_hw.host_interrupts.irq_req);
+   mkConnection(int_sim.irq_ack, awsteria_hw.host_interrupts.irq_ack);
+
+`ifdef BYTEVEC_INTERRUPTS
+   rule rl_sim_interrupts_out;
+      let tmp <-int_sim.interrupts_out.get;
+      toPut(comms.fi_Interrupt).put(unpack(tmp));
+   endrule
+`else
+   let int_sim_socket <- mkInterrupts_Sim_Socket(30001);
+   mkConnection(int_sim.interrupts_out, int_sim_socket);
+`endif
 
    // ================================================================
    // INTERFACE

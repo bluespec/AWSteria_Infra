@@ -27,11 +27,6 @@ module top_garnet_AWSteria (
 );
 
    // ================================================================
-   // Interrupts; we don't generate interrupts, and we ignore acks
-
-   assign irq_req = 16'b0;
-
-   // ================================================================
    // Signals for narrowing AXI ID signals emerging from blupont_HW_Side
    // and driving outputs of this top-module.
 
@@ -263,6 +258,10 @@ module top_garnet_AWSteria (
 		       .ddr_B_M_rresp    (DDRB_M_AXI_rresp),
 		       .ddr_B_M_rdata    (DDRB_M_AXI_rdata),
 		       .ddr_B_M_rlast    (DDRB_M_AXI_rlast),
+
+		       // interrupts
+		       .host_interrupts_irq_req (irq_req),
+		       .host_interrupts_irq_ack_x (irq_ack),
 
 		       // ----------------
 		       // Misc module inputs

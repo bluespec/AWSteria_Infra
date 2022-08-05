@@ -36,7 +36,8 @@ simulator:
 		$(TMP_DIRS) \
 		-e $(TOPMODULE) -o ./$(SIM_EXE_FILE) \
 		$(BSC_C_FLAGS) \
-		$(AWSTERIA_INFRA_REPO)/Platform_Sim/HW/C_Imported_Functions.c
+		$(AWSTERIA_INFRA_REPO)/Platform_Sim/HW/C_Imported_Functions.c \
+		$(AWSTERIA_INFRA_REPO)/Platform_Sim/HW/sim_socket.c
 	@echo "INFO: linked bsc-compiled objects into Bluesim executable"
 
 # ================================================================

@@ -89,3 +89,9 @@ function  void  c_host_send2 (byte unsigned  dummy);
 // ****************************************************************
 // ****************************************************************
 // ****************************************************************
+
+import "DPI-C" function int socket_open(input int port);
+import "DPI-C" function int socket_accept(input int fd);
+import "DPI-C" function int socket_putchar(input int fd, input int c);
+import "DPI-C" function int socket_getchar(input int fd);
+import "DPI-C" function int socket_send32(input int fd, input int c);

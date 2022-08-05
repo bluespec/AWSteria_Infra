@@ -168,4 +168,8 @@ function ActionValue #(Bit #(32))  c_trace_file_close (Bit #(8) dummy);
 // ****************************************************************
 // ****************************************************************
 
+import "BDPI" function ActionValue#(Int#(64)) socket_open(Int#(64) port);
+import "BDPI" function ActionValue#(Int#(64)) socket_accept(Int#(64) sock);
+import "BDPI" function ActionValue#(Int#(64)) socket_send32(Int#(64) fd, Bit#(32) data);
+
 endpackage

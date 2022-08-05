@@ -86,7 +86,8 @@ simulator:
 		--cc  --exe --build -j 4 -o $(SIM_EXE_FILE)  $(TOPMODULE).v \
 		--top-module $(TOPMODULE) \
 		$(VERILATOR_RESOURCES)/sim_main.cpp \
-		$(AWSTERIA_INFRA_REPO)/Platform_Sim/HW/C_Imported_Functions.c
+		$(AWSTERIA_INFRA_REPO)/Platform_Sim/HW/C_Imported_Functions.c \
+		$(AWSTERIA_INFRA_REPO)/Platform_Sim/HW/sim_socket.c
 	mv  $(VERILATOR_MAKE_DIR)/$(SIM_EXE_FILE)  .
 	@echo "----------------"
 	@echo "INFO: Created verilator executable:    $(SIM_EXE_FILE)"

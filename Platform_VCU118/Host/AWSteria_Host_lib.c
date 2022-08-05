@@ -17,6 +17,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <limits.h>
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -49,6 +50,9 @@ typedef struct {
     // For AXI4L
     int  pci_AXI4L_fd;
     void *map_base;
+
+    // interrupts
+    int fd_int[AWSTERIA_INTERRUPT_COUNT];
 } AWSteria_Host_State;
 
 static int verbosity_init   = 0;
@@ -362,3 +366,29 @@ int AWSteria_Host_shutdown (void *opaque)
 }
 
 // ================================================================
+
+#define XDMA_SLOT_ID  0
+
+int AWSteria_get_interrupt_fd(void *opaque, unsigned int interrupt)
+{
+	assert(interrupt < AWSTERIA_INTERRUPT_COUNT);
+	int fd;
+	char filename[PATH_MAX];
+	AWSteria_Host_State *p_state = opaque;
+
+	fd = p_state->fd_int[interrupt];
+	if (fd > 0)
+		return fd;
+
+	snprintf(filename, sizeof(filename), "/dev/xdma%d_events_%d",
+		 XDMA_SLOT_ID, interrupt);
+
+	fd = open(filename, O_RDONLY);
+	if (fd == -1)
+		perror("open() failed");
+
+	if (fd > 0)
+		p_state->fd_int[interrupt] = fd;
+
+	return fd;
+}

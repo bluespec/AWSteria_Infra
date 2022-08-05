@@ -60,3 +60,7 @@ int AWSteria_AXI4L_write (void *awsteria_host_state,
 //     awsteria_host_state contains a pci_bar_handle_t handle for the two calls.
 
 // ================================================================
+
+#define AWSTERIA_INTERRUPT_COUNT 16
+
+int AWSteria_get_interrupt_fd(void *awsteria_host_state, unsigned int interrupt);

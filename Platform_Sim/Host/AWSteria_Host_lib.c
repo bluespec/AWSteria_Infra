@@ -14,6 +14,13 @@
 #include <string.h>
 #include <unistd.h>
 #include <assert.h>
+#include <errno.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/un.h>
+#include <netinet/in.h>
+#include <netinet/ip.h>
+#include <netinet/tcp.h>
 
 // ----------------
 // Project includes
@@ -33,6 +40,9 @@
 
 typedef struct {
     Bytevec_state *p_bytevec_state;
+    int fd_int_sim;
+    int fd_int[AWSTERIA_INTERRUPT_COUNT];
+    int fd_int_in[AWSTERIA_INTERRUPT_COUNT];
 } AWSteria_Host_State;
 
 static
@@ -64,6 +74,37 @@ void *AWSteria_Host_init (void)
     if (status == status_err) {
 	fprintf (stdout, "ERROR: %s: tcp_client_open() failed\n", __FUNCTION__);
 	return NULL;
+    }
+
+    // open socket to simulator for interrupts
+    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    assert(sockfd >= 0);
+
+    struct sockaddr_in sockaddr;
+    sockaddr.sin_family = AF_INET;
+    sockaddr.sin_port = htons(DEFAULT_PORT+1);
+    sockaddr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+
+    int ret = connect(sockfd, (struct sockaddr *)&sockaddr, sizeof(sockaddr));
+    assert(ret >= 0);
+
+    if (sockaddr.sin_addr.s_addr == htonl(INADDR_LOOPBACK)) {
+	int flag = 1;
+	setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(int));
+    }
+
+    awsteria_host_state.fd_int_sim = sockfd;
+
+    for (int i = 0; i < AWSTERIA_INTERRUPT_COUNT; i++) {
+	int sv[2];
+
+	if (socketpair(AF_LOCAL, SOCK_STREAM, 0, sv)) {
+	    perror("socketpair() failed");
+	    exit (1);
+	}
+
+	awsteria_host_state.fd_int[i] = sv[0];
+	awsteria_host_state.fd_int_in[i] = sv[1];
     }
 
     if (verbosity_init > 0)
@@ -149,6 +190,68 @@ bool do_comms (void)
 
 	activity = true;
     }
+
+    // Interrupts
+#ifdef BYTEVEC_INTERRUPTS
+    Interrupt interrupt;
+    while (Bytevec_dequeue_Interrupt(awsteria_host_state.p_bytevec_state, &interrupt)) {
+	if (interrupt.interrupt >= AWSTERIA_INTERRUPT_COUNT) {
+	    fprintf (stdout, "WARNING: %s: interrupt out of range: %d\n",
+		     __FUNCTION__, interrupt.interrupt);
+	    continue;
+	}
+
+	uint32_t data = 1;
+	int fd = awsteria_host_state.fd_int_in[interrupt.interrupt];
+
+	int ret = send(fd, &data, sizeof(data), MSG_DONTWAIT);
+	if (ret == -1 && (ret == EAGAIN || ret == EWOULDBLOCK))
+	    fprintf (stdout, "WARNING: %s: interrupt dropped: %d\n",
+		     __FUNCTION__, interrupt.interrupt);
+	else if (ret != 4)
+	    fprintf (stdout, "WARNING: %s: send failed\n", __FUNCTION__);
+
+	activity = true;
+    }
+#else
+    int ret;
+    uint32_t nint;
+    uint32_t data = 1;
+    int fd;
+
+    while (true) {
+	ret = recv(awsteria_host_state.fd_int_sim, &nint, sizeof(nint), MSG_DONTWAIT);
+	if (ret == -1 && (errno == EAGAIN || errno == EWOULDBLOCK))
+	    break;
+
+	if (ret != sizeof(nint)) {
+	    fprintf (stdout, "WARNING: %s: recv failed (%d, %d)\n", __FUNCTION__, ret, errno);
+	    break;
+	}
+
+	if (nint >= AWSTERIA_INTERRUPT_COUNT) {
+	    fprintf (stdout, "WARNING: %s: interrupt out of range: %d\n",
+		     __FUNCTION__, nint);
+	    continue;
+	}
+
+	if (verbosity_do_comms > 1)
+	    fprintf (stdout, "interrupt %d\n", nint);
+
+	fd = awsteria_host_state.fd_int_in[nint];
+	data = 1;
+
+	ret = send(fd, &data, sizeof(data), MSG_DONTWAIT);
+	if (ret == -1 && (ret == EAGAIN || ret == EWOULDBLOCK))
+	    fprintf (stdout, "WARNING: %s: interrupt dropped: %d\n",
+		     __FUNCTION__, nint);
+	else if (ret != sizeof(data))
+	    fprintf (stdout, "WARNING: %s: send failed\n", __FUNCTION__);
+
+	activity = true;
+    }
+#endif
+
     return activity;
 }
 
@@ -800,3 +903,12 @@ int AWSteria_AXI4L_write (void *p_state,
 }
 
 // ================================================================
+
+int AWSteria_get_interrupt_fd(void *p_state, unsigned int interrupt)
+{
+	assert(interrupt < AWSTERIA_INTERRUPT_COUNT);
+
+	do_comms();
+
+	return awsteria_host_state.fd_int[interrupt];
+}
