@@ -1,0 +1,15 @@
+*~
+config.mk
+awsf1.mk
+vcu118.mk
+bluesim.mk
+verilator.mk
+irqtest
+sim
+RTL/
+garnet_*_HW_250MHz/
+*_pblock_partition_partial.bit
+vcd/
+*.log
+cl_AWSteria_irqtest/
+bsc_tmp_dir/

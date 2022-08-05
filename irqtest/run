@@ -1,0 +1,32 @@
+#!/bin/bash
+
+_wait() {
+    local f="$1"
+
+    if echo "$f" | grep -qE '^[0-9]+$'; then
+	while ! lsof -n -P -i :$f >& /dev/null; do
+            sleep 0.1
+	done
+    else
+	while [ ! -e "$f" ]; do
+	    sleep 0.1
+	done
+    fi
+}
+
+_cleanup() {
+    kill $pids $userpids 2>/dev/null
+    sleep 2
+    kill -9 $pids $userpids 2>/dev/null
+}
+
+trap _cleanup SIGINT SIGTERM EXIT
+
+#stdbuf -oL -eL ./sim +trace >& sim.log &
+./sim >& sim.log &
+pids="$pids $!"
+_wait 30000
+
+./irqtest >& irqtest.log
+
+exit 0
