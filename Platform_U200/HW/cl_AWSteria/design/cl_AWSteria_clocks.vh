@@ -1,0 +1,5 @@
+.CLK_clk1(clk_extra_a1),
+.CLK_clk2(clk_extra_a2),
+.CLK_clk3(clk_extra_a3),
+.CLK_clk4(1'b0),
+.CLK_clk5(1'b0),
