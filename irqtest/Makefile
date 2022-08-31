@@ -8,7 +8,7 @@ NAME=$(notdir $(CURDIR))
 default:
 -include config.mk
 
-# board is one of: vcu118 awsf1
+# board is one of: vcu118 awsf1 u200
 #
 # simulator is unset for fpga or one of: bluesim verilator
 #
@@ -28,6 +28,9 @@ GARNET_DIR ?= $(realpath ../..)/garnet
 AWS_FPGA_REPO_DIR ?= $(realpath ../../aws-fpga)
 
 export AWSTERIA_INFRA_REPO FLUTE_REPO BLUESPEC_HOME AMBA_FABRICS BSV_ADDITIONAL_LIBS BSC_LIBS
+
+# for aws-hdk wrapper
+export AWS_FPGA=$(AWS_FPGA_REPO_DIR)
 
 # Derp.  This is because the example makefiles are insistent that they
 # be provided BLUESPEC_HOME, but apparently not clever enough to use
@@ -63,6 +66,22 @@ clean: clean_vcu118
 clean_vcu118:
 	$(RM) $(NAME)_pblock_partition_partial.bit
 .PHONY: clean_vcu118
+endef
+
+define gen_recipes__u200 =
+export CL_DIR=$$(realpath .)/cl_AWSteria_irqtest
+default: synth
+synth: u200.mk
+	$$(MAKE) -f $$^ compile
+	$$(MAKE) -f $$^ for_U200_HDK
+	sed -i -e 's,^encrypt,#encrypt,' $$(CL_DIR)/build/scripts/encrypt.tcl
+	sed -i -e 's,write_checkpoint -encrypt,write_checkpoint,' $$(CL_DIR)/build/scripts/create_dcp_from_cl.tcl
+	cp $(BLUESPEC_HOME)/lib/Verilog/FIFO10.v $$(CL_DIR)/design/
+	cd $$(CL_DIR)/build/scripts && aws-hdk ./aws_build_bit_from_cl.sh -foreground
+clean: clean_u200
+clean_u200:
+	$(RM) -r $$(CL_DIR)
+.PHONY: clean_u200
 endef
 
 define gen_recipes_bluesim_awsf1 =
@@ -102,6 +121,9 @@ awsf1.mk: ../TestApp/HW/build_AWSF1/Makefile
 
 vcu118.mk: ../TestApp/HW/build_VCU118/Makefile
 	sed -e 's,TestApp/HW,$(NAME),g;s,TestApp,$(NAME),g;/# BSC_PATH for/a BSC_PATH := $$(BSC_PATH):$$(AWSTERIA_INFRA_REPO)/HW' $^ > $@
+
+u200.mk: ../TestApp/HW/build_AWSF1/Makefile
+	sed -e 's,TestApp/HW,$(NAME),g;s,TestApp,$(NAME),g;s,AWSF1,U200,g;/# BSC_PATH for/a BSC_PATH := $$(BSC_PATH):$$(AWSTERIA_INFRA_REPO)/HW' $^ > $@
 
 bluesim.mk: ../TestApp/HW/build_Bluesim/Makefile
 	sed -e 's,TestApp/HW,$(NAME),g;s,TestApp,$(NAME),g;/# BSC_PATH for/a BSC_PATH := $$(BSC_PATH):$$(AWSTERIA_INFRA_REPO)/HW' -e 's,C_Imported_Functions.c,& $$(AWSTERIA_INFRA_REPO)/Platform_Sim/HW/sim_socket.c,' $^ > $@
@@ -144,7 +166,7 @@ clean:
 	-$(MAKE) -f vcu118.mk full_clean
 	-$(MAKE) -f bluesim.mk full_clean
 	-$(MAKE) -f verilator.mk full_clean
-	$(RM) awsf1.mk vcu118.mk bluesim.mk verilator.mk
+	$(RM) awsf1.mk vcu118.mk u200.mk bluesim.mk verilator.mk
 	$(RM) $(NAME) sim
 	$(RM) $(obj)
 

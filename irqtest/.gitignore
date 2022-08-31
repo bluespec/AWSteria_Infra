@@ -2,6 +2,7 @@
 config.mk
 awsf1.mk
 vcu118.mk
+u200.mk
 bluesim.mk
 verilator.mk
 irqtest
