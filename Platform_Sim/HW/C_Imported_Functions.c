@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2022 Bluespec, Inc.  All Rights Reserved
+// Copyright (c) 2013-2023 Bluespec, Inc.  All Rights Reserved
 
 // ================================================================
 // These are functions imported into BSV during Bluesim or Verilog simulation.
@@ -403,7 +403,7 @@ void c_host_recv (uint8_t *bytevec, uint8_t bytevec_size)
 	    n_recd += n;
 	}
 	else {    // n == 0: EOF
-	    fprintf (stdout, "%s: Connection closed by remote host\n", __FUNCTION__);
+	    fprintf (stdout, "Connection closed by remote host (in %s())\n", __FUNCTION__);
 	    exit (1);
 	}
     }
@@ -426,7 +426,7 @@ void c_host_recv (uint8_t *bytevec, uint8_t bytevec_size)
 	    n_recd += n;
 	}
 	else {    // n == 0: EOF
-	    fprintf (stdout, "%s: Connection closed by remote host\n", __FUNCTION__);
+	    fprintf (stdout, "Connection closed by remote host (in %s())\n", __FUNCTION__);
 	    exit (1);
 	}
     }
@@ -486,7 +486,7 @@ uint8_t c_host_recv2 (uint8_t dummy)
 	    n_recd += n;
 	}
 	else {    // n == 0: EOF
-	    fprintf (stdout, "%s: Connection closed by remote host\n", __FUNCTION__);
+	    fprintf (stdout, "Connection closed by remote host (in %s())\n", __FUNCTION__);
 	    exit (1);
 	}
     }
@@ -509,7 +509,7 @@ uint8_t c_host_recv2 (uint8_t dummy)
 	    n_recd += n;
 	}
 	else {    // n == 0: EOF
-	    fprintf (stdout, "%s: Connection closed by remote host\n", __FUNCTION__);
+	    fprintf (stdout, "Connection closed by remote host (in %s())\n", __FUNCTION__);
 	    exit (1);
 	}
     }

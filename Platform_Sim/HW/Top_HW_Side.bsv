@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2022 Bluespec, Inc. All Rights Reserved.
+// Copyright (c) 2013-2023 Bluespec, Inc. All Rights Reserved.
 // Author: Rishiyur S. Nikhil
 
 package Top_HW_Side;
@@ -100,8 +100,8 @@ module mkTop_HW_Side (Empty) ;
 
    rule rl_start (rg_state == STATE_START);
       $display ("================================================================");
-      $display ("Bluespec AWSteria_Infra simulation v2.1");
-      $display ("Copyright (c) 2020-2022 Bluespec, Inc. All Rights Reserved.");
+      $display ("Bluespec Catamaran simulation v2.2");
+      $display ("Copyright (c) 2020-2023 Bluespec, Inc. All Rights Reserved.");
       $display ("================================================================");
 
       rg_state <= STATE_LISTEN;
@@ -110,7 +110,8 @@ module mkTop_HW_Side (Empty) ;
    rule rl_listen (rg_state == STATE_LISTEN);
       $display ("INFO: Listening for connection from host-side on TCP port %0d",
 		default_tcp_port);
-      $display ("    (%0d: %m.rl_listen)", cur_cycle);
+      if (verbosity != 0)
+	 $display ("    (%0d: %m.rl_listen)", cur_cycle);
       c_host_listen (default_tcp_port);
       rg_state <= STATE_ACCEPT;
    endrule
@@ -121,7 +122,8 @@ module mkTop_HW_Side (Empty) ;
       if (success == 1) begin
 	 $display ("INFO: Accepted connection from host-side on TCP port %0d",
 		   default_tcp_port);
-	 $display ("    (%0d: %m.rl_accept)", cur_cycle);
+	 if (verbosity != 0)
+	    $display ("    (%0d: %m.rl_accept)", cur_cycle);
 	 rg_state <= STATE_RUNNING;
       end
    endrule

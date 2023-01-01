@@ -186,10 +186,13 @@ module mkMem_Model #(Integer    verbosity,
    // ================================================================
    // BEHAVIOR
 
-   Reg #(Bool) rg_info_done <- mkReg (False);
+   // ----------------
+   // For debugging only
 
-   rule rl_info (! rg_info_done);
-      rg_info_done <= True;
+   Reg #(Bool) rg_display_info <- mkReg (False);    // To get debugging info => True
+
+   rule rl_info (rg_display_info);
+      rg_display_info <= False;
 
       $display ("INFO: %m");
       $display ("    base 0x%16h  lim 0x%16h    implemented 0x%16h",
