@@ -1,11 +1,12 @@
-# Copyright (c) 2020-2022 Bluespec, Inc.  All Rights Reserved
+# Copyright (c) 2020-2023 Bluespec, Inc.  All Rights Reserved
 
 # Makefile to build HW-side simulation executable (Verilator)
 # for AWSteria_Infra's TestApp for VCU118 or AWS F1.
 
 # ================================================================
 .PHONY: help
-help:  show_Makefile_Params
+help:  show_resource_paths
+	@echo ""
 	@echo "Available targets for 'make':"
 	@echo "  generate_verilog    Generate RTL (using bsc)"
 	@echo "  simulator           Create simulation executable (using Verilator)"
@@ -142,10 +143,15 @@ VERILATOR_FLAGS += -I$(BSC_LIBS)
 
 VERILATOR_FLAGS += -Mdir $(VERILATOR_MAKE_DIR)
 VERILATOR_FLAGS += -O3 --x-assign fast --x-initial fast --noassert
-VERILATOR_FLAGS += --stats -CFLAGS -O3 -CFLAGS -DVL_DEBUG -LDFLAGS -static
+VERILATOR_FLAGS += --stats -CFLAGS -O3 -CFLAGS -DVL_DEBUG
+# VERILATOR_FLAGS += -LDFLAGS -static
 
 # VERILATOR_FLAGS += --threads 6  --threads-dpi pure
 VERILATOR_FLAGS += --trace  -CFLAGS -DVM_TRACE
+
+# The next line is needed in Verilator from v5.000 onwards
+# Comment it out for earlier versions of Verilator
+VERILATOR_FLAGS += --no-timing
 
 .PHONY: simulator
 simulator:

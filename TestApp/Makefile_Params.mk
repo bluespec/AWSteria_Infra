@@ -6,10 +6,11 @@
 AWSTERIA_INFRA_REPO ?= $(HOME)/Git/BlueCloudV_Infra
 AMBA_FABRICS        ?= $(HOME)/Git/AMBA_Fabrics
 BSV_ADDITIONAL_LIBS ?= $(HOME)/Git/BSV_Additional_Libs
-BSC_LIBS            ?= $(HOME)/NoBak/bsc-2022.01-ubuntu-20.04/lib/Verilog
+BSC_LIBS            ?= $(HOME)/NoBak/bsc/inst/lib/Verilog
 
 .PHONY: show_resource_paths
 show_resource_paths:
+	@echo ""
 	@echo "Makefile params:"
 	@echo "  AWSTERIA_INFRA_REPO = $(AWSTERIA_INFRA_REPO)"
 	@echo "  AMBA_FABRICS        = $(AMBA_FABRICS)"
