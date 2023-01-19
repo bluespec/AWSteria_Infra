@@ -1,6 +1,6 @@
 ###  -*-Makefile-*-
 
-# Copyright (c) 2018-2022 Bluespec, Inc. All Rights Reserved
+# Copyright (c) 2018-2023 Bluespec, Inc. All Rights Reserved
 
 # This file is not a standalone Makefile, but 'include'd by other Makefiles
 
@@ -54,10 +54,14 @@ VERILATOR_MAKE_DIR  = Verilator_Make
 
 VERILATOR_FLAGS += -Mdir $(VERILATOR_MAKE_DIR)
 VERILATOR_FLAGS += -O3 --x-assign fast --x-initial fast --noassert
-VERILATOR_FLAGS += --stats -CFLAGS -O3 -CFLAGS -DVL_DEBUG -LDFLAGS -static
+VERILATOR_FLAGS += --stats -CFLAGS -O3 -CFLAGS -DVL_DEBUG
+# VERILATOR_FLAGS += -LDFLAGS -static
 
 # VERILATOR_FLAGS += --threads 6  --threads-dpi pure
 VERILATOR_FLAGS += --trace  -CFLAGS -DVM_TRACE
+
+# The next line is needed for Verilator 5.000 onwards
+VERILATOR_FLAGS += --no-timing
 
 .PHONY: simulator
 simulator:

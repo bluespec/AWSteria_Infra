@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Bluespec, Inc.  All Rights Reserved
+// Copyright (c) 2020-2023 Bluespec, Inc.  All Rights Reserved
 
 // This library implements the AWSteria host-side API routines
 // Bluesim and Verilator sim.
@@ -438,7 +438,7 @@ int AWSteria_AXI4_write_aux (uint8_t *buffer, const size_t size, const uint64_t 
     // Send the AXI4 WR_ADDR bus request
 
     if (verbosity_AXI4_write >= 3)
-	fprintf (stdout, "\n%s: awaddr %0lx awlen %0d awsize %0x awburst %0x\n",
+	fprintf (stdout, "\n%s: awaddr %0" PRIx64 " awlen %0d awsize %0x awburst %0x\n",
 		 __FUNCTION__, wra.awaddr, wra.awlen, wra.awsize, wra.awburst);
 
     uint64_t iters = 0;

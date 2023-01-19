@@ -1,6 +1,6 @@
 ###  -*-Makefile-*-
 
-# Copyright (c) 2020-2022 Bluespec, Inc.  All Rights Reserved
+# Copyright (c) 2020-2023 Bluespec, Inc.  All Rights Reserved
 
 # ================================================================
 
@@ -85,10 +85,10 @@ $(EXE): $(SRCS_H) $(SRCS_C)
 
 .PHONY: clean
 clean:
-	rm -f  *.*~  Makefile*~  *.o
+	rm -r -f  *.*~  Makefile*~  *.o
 
 .PHONY: full_clean
 full_clean:
-	rm -f  *.*~  Makefile*~  *.o  exe_*
+	rm -r -f  *.*~  Makefile*~  *.o  exe_*
 
 # ================================================================
