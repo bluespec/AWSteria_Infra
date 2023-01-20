@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <inttypes.h>
 #include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
@@ -133,7 +134,7 @@ int AWSteria_AXI4_write (void *opaque,
     AWSteria_Host_State *p_state = opaque;
 
     if (verbosity_AXI4_W != 0) {
-        fprintf (stdout, "%s (address 0x%0lx) size 0x%0lx\n",
+        fprintf (stdout, "%s (address 0x%0" PRIx64 ") size 0x%0lx\n",
 		 __FUNCTION__, address, size);
     }
 
@@ -144,14 +145,14 @@ int AWSteria_AXI4_write (void *opaque,
 	   pwrite takes an additional 'offset' arg, so seek() is not needed.
 	// Set address
 	if (verbosity_AXI4_W != 0) {
-	    fprintf (stdout, "    n_sent = 0x%0lx; seek()\n", n_sent);
+	    fprintf (stdout, "    n_sent = 0x%0" PRIx64 "; seek()\n", n_sent);
 	}
 	rc = lseek (p_state->pci_AXI4_w_fd, address + n_sent, SEEK_SET);
 	if (rc != (address + n_sent)) {
 	    perror("seek device");
-	    fprintf (stdout, "ERROR: %s (size 0x%lx address 0x%0lx)\n",
+	    fprintf (stdout, "ERROR: %s (size 0x%" PRIx64 " address 0x%0" PRIx64 ")\n",
 		     __FUNCTION__, size, address);
-	    fprintf (stdout, "    seek => rc 0x%lx != address + n_sent 0x%0lx\n",
+	    fprintf (stdout, "    seek => rc 0x%" PRIx64 " != address + n_sent 0x%0" PRIx64 "\n",
 		     rc, n_sent);
 	    return -1;
 	}
@@ -162,23 +163,27 @@ int AWSteria_AXI4_write (void *opaque,
 	if (count > RW_MAX_SIZE) count = RW_MAX_SIZE;
 
 	if (verbosity_AXI4_W != 0) {
-	    fprintf (stdout, "    pwrite (AXI4_w_fd, buf, count 0x%0lx, offset 0x%0lx)\n",
+	    fprintf (stdout,
+		     "    pwrite (AXI4_w_fd, buf, count 0x%lx, offset 0x%0" PRIx64 ")\n",
 		     count, address + n_sent);
 	}
 	// rc = write (p_state->pci_AXI4_w_fd, & (buffer [n_sent]), count);
 	rc = pwrite (p_state->pci_AXI4_w_fd, & (buffer [n_sent]), count, address + n_sent);
 	if (rc < 0) {
 	    perror("write device");
-	    fprintf (stdout, "ERROR: %s (size 0x%lx address 0x%0lx)\n",
+	    fprintf (stdout, "ERROR: %s (size 0x%0lx address 0x%0" PRIx64 ")\n",
 		     __FUNCTION__, size, address);
-	    fprintf (stdout, "    write => rc %0ld; n_sent 0x%lx, count 0x%lx\n",
+	    fprintf (stdout,
+		     "    write => rc %0" PRId64 "; n_sent 0x%" PRIx64 ", count 0x%lx\n",
 		     rc, n_sent, count);
 	    return -1;
 	}
 	if (rc != count) {
-	    fprintf (stdout, "NOTE: %s (size 0x%lx address 0x%0lx)\n",
+	    fprintf (stdout,
+		     "NOTE: %s (size 0x%lx address 0x%0" PRIx64 ")\n",
 		     __FUNCTION__, size, address);
-	    fprintf (stdout, "    write => rc %0lx; n_sent 0x%lx, count 0x%lx\n",
+	    fprintf (stdout,
+		     "    write => rc %0" PRId64 "; n_sent 0x%" PRIx64 ", count 0x%lx\n",
 		     rc, n_sent, count);
 	}
 	n_sent += rc;
@@ -194,7 +199,7 @@ int AWSteria_AXI4_read (void *opaque,
     AWSteria_Host_State *p_state = opaque;
 
     if (verbosity_AXI4_R != 0) {
-        fprintf (stdout, "%s (size 0x%lx address 0x%0lx)\n",
+        fprintf (stdout, "%s (size 0x%lx address 0x%0" PRIx64 ")\n",
 		 __FUNCTION__, size, address);
     }
 
@@ -205,14 +210,14 @@ int AWSteria_AXI4_read (void *opaque,
 	   pread takes an additional 'offset' arg, so seek() is not needed.
 	// Set address
 	if (verbosity_AXI4_R != 0) {
-	    fprintf (stdout, "    n_recd = 0x%0lx; seek()\n", n_recd);
+	    fprintf (stdout, "    n_recd = 0x%0" PRIx64 "; seek()\n", n_recd);
 	}
 	rc = lseek (p_state->pci_AXI4_r_fd, address + n_recd, SEEK_SET);
 	if (rc != (address + n_recd)) {
 	    perror("seek device");
-	    fprintf (stdout, "ERROR: %s (size 0x%lx address 0x%0lx)\n",
+	    fprintf (stdout, "ERROR: %s (size 0x%" PRIx64 " address 0x%0" PRIx64 ")\n",
 		     __FUNCTION__, size, address);
-	    fprintf (stdout, "    seek => rc 0x%lx != address + n_recd 0x%0lx\n",
+	    fprintf (stdout, "    seek => rc 0x%" PRIx64 " != address + n_recd 0x%0" PRIx64 "\n",
 		     rc, n_recd);
 	    return -1;
 	}
@@ -223,23 +228,26 @@ int AWSteria_AXI4_read (void *opaque,
 	if (count > RW_MAX_SIZE) count = RW_MAX_SIZE;
 
 	if (verbosity_AXI4_R != 0) {
-	    fprintf (stdout, "    pread (AXI4_w_fd, buf, count 0x%0lx, offset 0x%0lx)\n",
+	    fprintf (stdout,
+		     "    pread (AXI4_w_fd, buf, count 0x%0lx, offset 0x%0" PRIx64 ")\n",
 		     count, address + n_recd);
 	}
 	// rc = read (p_state->pci_AXI4_r_fd, & (buffer [n_recd]), count);
 	rc = pread (p_state->pci_AXI4_r_fd, & (buffer [n_recd]), count, address + n_recd);
 	if (rc < 0) {
 	    perror("read device");
-	    fprintf (stdout, "ERROR: %s (address 0x%0lx size 0x%lx)\n",
+	    fprintf (stdout, "ERROR: %s (address 0x%0" PRIx64 " size 0x%lx)\n",
 		     __FUNCTION__, address, size);
-	    fprintf (stdout, "    read => rc %0ld; n_recd 0x%lx, count 0x%lx\n",
+	    fprintf (stdout,
+		     "    read => rc %0" PRId64"; n_recd 0x%" PRIx64 ", count 0x%lx\n",
 		     rc, n_recd, count);
 	    return -1;
 	}
 	if (rc != count) {
-	    fprintf (stdout, "NOTE: %s (size 0x%lx address 0x%0lx)\n",
+	    fprintf (stdout, "NOTE: %s (size 0x%lx address 0x%0" PRIx64 ")\n",
 		     __FUNCTION__, size, address);
-	    fprintf (stdout, "    read => rc %0lx; n_recd 0x%lx, count 0x%lx\n",
+	    fprintf (stdout,
+		     "    read => rc %0" PRIx64 "; n_recd 0x%" PRIx64 ", count 0x%lx\n",
 		     rc, n_recd, count);
 	}
 	n_recd += rc;
@@ -259,7 +267,7 @@ int AWSteria_AXI4L_write (void *opaque, uint64_t addr, uint32_t data)
     assert (opaque != NULL);
 
     if (addr >= MAP_SIZE) {
-	fprintf (stdout, "ERROR: %s: addr %0lx beyond MAP_SIZE %0llx (data %0x)\n",
+	fprintf (stdout, "ERROR: %s: addr %0" PRIx64 " beyond MAP_SIZE %0" PRIx64 " (data %0x)\n",
 		 __FUNCTION__, addr, MAP_SIZE, data);
 	return 1;
     }
@@ -267,7 +275,7 @@ int AWSteria_AXI4L_write (void *opaque, uint64_t addr, uint32_t data)
     AWSteria_Host_State *p_state = opaque;
 
     if (verbosity_AXI4L_W != 0) {
-	fprintf (stdout, "%s: mem [0x%0lx] <= 0x%0x\n", __FUNCTION__, addr, data);
+	fprintf (stdout, "%s: mem [0x%0" PRIx64 "] <= 0x%0x\n", __FUNCTION__, addr, data);
     }
 
     uint32_t *p = (uint32_t *) (p_state->map_base + addr);
@@ -286,7 +294,7 @@ int AWSteria_AXI4L_read (void *opaque, uint64_t addr, uint32_t *p_data)
     assert (p_data != NULL);
 
     if (addr >= MAP_SIZE) {
-	fprintf (stdout, "ERROR: %s: addr %0lx beyond MAP_SIZE %0llx\n",
+	fprintf (stdout, "ERROR: %s: addr %0" PRIx64 " beyond MAP_SIZE %0" PRIx64 "\n",
 		 __FUNCTION__, addr, MAP_SIZE);
 	return 1;
     }
@@ -294,7 +302,7 @@ int AWSteria_AXI4L_read (void *opaque, uint64_t addr, uint32_t *p_data)
     AWSteria_Host_State *p_state = opaque;
 
     if (verbosity_AXI4L_R != 0) {
-	fprintf (stdout, "%s: map_base 0x%p  addr 0x%0lx\n",
+	fprintf (stdout, "%s: map_base 0x%p  addr 0x%0" PRIx64 "\n",
 		 __FUNCTION__, p_state->map_base, addr);
     }
 
