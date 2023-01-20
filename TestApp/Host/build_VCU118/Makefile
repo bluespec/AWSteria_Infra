@@ -1,6 +1,6 @@
 ###  -*-Makefile-*-
 
-# Copyright (c) 2020-2022 Bluespec, Inc.  All Rights Reserved
+# Copyright (c) 2020-2023 Bluespec, Inc.  All Rights Reserved
 
 # ================================================================
 
@@ -19,7 +19,9 @@ else
   $(info  INFO: AWSTERIA_INFRA_REPO = $(AWSTERIA_INFRA_REPO))
 endif
 
-$(info INFO: Making executable $(EXE) for AWSteria TestApp host side on VCU118)
+PLATFORM=VCU118
+
+$(info INFO: Making executable $(EXE) for AWSteria TestApp host side on $(PLATFORM))
 
 # ================================================================
 # Source files
@@ -33,31 +35,31 @@ SRCS_C = $(AWSTERIA_INFRA_REPO)/TestApp/Host/main.c
 # AWSteria infra
 
 SRCS_H += $(AWSTERIA_INFRA_REPO)/Include_API/AWSteria_Host_lib.h
-SRCS_H += $(AWSTERIA_INFRA_REPO)/Platform_VCU118/Host/AWSteria_Platform.h
+SRCS_H += $(AWSTERIA_INFRA_REPO)/Platform_$(PLATFORM)/Host/AWSteria_Platform.h
 
-SRCS_C += $(AWSTERIA_INFRA_REPO)/Platform_VCU118/Host/AWSteria_Host_lib.c
+SRCS_C += $(AWSTERIA_INFRA_REPO)/Platform_$(PLATFORM)/Host/AWSteria_Host_lib.c
 
 # ================================================================
 
-CFLAGS += -std=gnu11 -g -Wall -Werror 
-CFLAGS += -D PLATFORM_VCU118 -D SIM_FOR_VCU118
+CFLAGS += -std=gnu11 -g -Wall -Werror
+CFLAGS += -D PLATFORM_$(PLATFORM) -D SIM_FOR_$(PLATFORM)
 
 ifdef USE_DRM
 CFLAGS += -pthread -laccelize_drmc
 endif
 
 CFLAGS += -I $(AWSTERIA_INFRA_REPO)/Include_API
-CFLAGS += -I $(AWSTERIA_INFRA_REPO)/Platform_VCU118/Host
+CFLAGS += -I $(AWSTERIA_INFRA_REPO)/Platform_$(PLATFORM)/Host
 
 CC     = gcc $(CFLAGS)
 
-EXE    = exe_Host_VCU118
+EXE    = exe_Host_$(PLATFORM)
 
 # ================================================================
 # Top-level target: the executable
 
 $(EXE): $(SRCS_H) $(SRCS_C)
-	$(CC) -g  -o $(EXE) $(SRCS_C)
+	$(CC)  -o $(EXE) $(SRCS_C)
 	@echo "INFO: created '$(EXE)'"
 
 # ================================================================

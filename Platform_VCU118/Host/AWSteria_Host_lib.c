@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Bluespec, Inc.  All Rights Reserved
+// Copyright (c) 2020-2023 Bluespec, Inc.  All Rights Reserved
 
 // This library implements the AWSteria host-side API routines
 // for VCU118.
@@ -39,7 +39,7 @@ static char AXI4L_devname[]  = "/dev/xdma0_user";
 
 // mmap returns EINVAL for MAP_SIZE > 0x_400_0000    (64 MB)
 // on a Debian x86_64 machine
-#define MAP_SIZE     0x2000000llu    // 32 MB
+static const uint64_t MAP_SIZE = 0x2000000llu;    // 32 MB
 
 typedef struct {
     // For AXI4
@@ -267,7 +267,8 @@ int AWSteria_AXI4L_write (void *opaque, uint64_t addr, uint32_t data)
     assert (opaque != NULL);
 
     if (addr >= MAP_SIZE) {
-	fprintf (stdout, "ERROR: %s: addr %0" PRIx64 " beyond MAP_SIZE %0" PRIx64 " (data %0x)\n",
+	fprintf (stdout,
+		 "ERROR: %s: addr %0" PRIx64 " beyond MAP_SIZE %0" PRIx64 " (data %0x)\n",
 		 __FUNCTION__, addr, MAP_SIZE, data);
 	return 1;
     }

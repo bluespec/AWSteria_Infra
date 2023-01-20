@@ -1,6 +1,6 @@
 ###  -*-Makefile-*-
 
-# Copyright (c) 2020-2022 Bluespec, Inc.  All Rights Reserved
+# Copyright (c) 2020-2023 Bluespec, Inc.  All Rights Reserved
 
 # ================================================================
 
@@ -19,8 +19,9 @@ else
   $(info  INFO: AWSTERIA_INFRA_REPO = $(AWSTERIA_INFRA_REPO))
 endif
 
+PLATFORM=AWSF1
 
-$(info INFO: Making executable $(EXE) for AWSteria TestApp host side on AWS F1)
+$(info INFO: Making executable $(EXE) for AWSteria TestApp host side on $(PLATFORM))
 
 # ================================================================
 # Source files
@@ -34,35 +35,34 @@ SRCS_C = $(AWSTERIA_INFRA_REPO)/TestApp/Host/main.c
 # AWSteria infra
 
 SRCS_H += $(AWSTERIA_INFRA_REPO)/Include_API/AWSteria_Host_lib.h
-SRCS_H += $(AWSTERIA_INFRA_REPO)/Platform_AWSF1/Host/AWSteria_Platform.h
+SRCS_H += $(AWSTERIA_INFRA_REPO)/Platform_$(PLATFORM)/Host/AWSteria_Platform.h
 
-SRCS_C += $(AWSTERIA_INFRA_REPO)/Platform_VCU118/Host/AWSteria_Host_lib.c
+SRCS_C += $(AWSTERIA_INFRA_REPO)/Platform_$(PLATFORM)/Host/AWSteria_Host_lib.c
 
 # ================================================================
 
 CFLAGS += -std=gnu11 -g -Wall -Werror
-
-CFLAGS += -D PLATFORM_AWSF1
+CFLAGS += -D PLATFORM_$(PLATFORM) -D SIM_FOR_$(PLATFORM)
 
 CFLAGS += -I $(AWSTERIA_INFRA_REPO)/Include_API
-CFLAGS += -I $(AWSTERIA_INFRA_REPO)/Platform_AWSF1/Host
+CFLAGS += -I $(AWSTERIA_INFRA_REPO)/Platform_$(PLATFORM)/Host
 
 CC     = gcc $(CFLAGS)
 
-EXE    = exe_Host_AWSF1
+EXE    = exe_Host_$(PLATFORM)
 
 # ================================================================
 # Top-level target: the executable
 
 $(EXE): $(SRCS_H) $(SRCS_C)
-	$(CC)  -o $(EXE) $(SRCS_C) $(LDLIBS)
+	$(CC)  -o $(EXE) $(SRCS_C)
 	@echo "INFO: created '$(EXE)'"
 
 # ================================================================
 
 .PHONY: clean
 clean:
-	rm -f  *.*~  Makefile*~  *.o  exe_*
+	rm -f  *.*~  Makefile*~  *.o
 
 .PHONY: full_clean
 full_clean:

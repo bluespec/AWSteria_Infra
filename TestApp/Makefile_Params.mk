@@ -6,7 +6,7 @@
 AWSTERIA_INFRA_REPO ?= $(HOME)/Git/BlueCloudV_Infra
 AMBA_FABRICS        ?= $(HOME)/Git/AMBA_Fabrics
 BSV_ADDITIONAL_LIBS ?= $(HOME)/Git/BSV_Additional_Libs
-BSC_LIBS            ?= $(HOME)/NoBak/bsc/inst/lib/Verilog
+BSC_LIBS            ?= $(BLUESPEC_HOME)/lib/Verilog
 
 .PHONY: show_resource_paths
 show_resource_paths:

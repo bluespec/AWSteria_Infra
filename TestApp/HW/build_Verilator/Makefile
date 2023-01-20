@@ -9,7 +9,7 @@ help:  show_resource_paths
 	@echo ""
 	@echo "Available targets for 'make':"
 	@echo "  generate_verilog    Generate RTL (using bsc)"
-	@echo "  simulator           Create simulation executable (using Verilator)"
+	@echo "  simulator           Create $(SIM_EXE_FILE) using Verilator"
 	@echo ""
 	@echo "  clean               Remove intermediate files"
 	@echo "  full_clean          Restore to pristine state"
@@ -32,7 +32,7 @@ $(info INFO: Including Makefile_Params.mk which should define paths to external 
 include Makefile_Params.mk
 
 # Default target platform
-TARGET ?= PLATFORM_VCU118
+TARGET ?= PLATFORM_AWSF1
 
 # Top-level file and module
 TOPFILE   ?= $(AWSTERIA_INFRA_REPO)/Platform_Sim/HW/Top_HW_Side.bsv
@@ -194,6 +194,6 @@ clean:
 
 .PHONY: full_clean
 full_clean: clean
-	rm -r -f  $(SIM_EXE_FILE)
+	rm -r -f  exe_HW_*
 
 # ================================================================

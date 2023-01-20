@@ -1,6 +1,6 @@
 ###  -*-Makefile-*-
 
-# Copyright (c) 2020-2022 Bluespec, Inc.  All Rights Reserved
+# Copyright (c) 2020-2023 Bluespec, Inc.  All Rights Reserved
 
 # Makefile to create Host-side executable
 # for AWSteria_Infra's TestApp
@@ -31,7 +31,7 @@ $(info INFO: Including Makefile_Params.mk which should define paths to external 
 include Makefile_Params.mk
 
 # Default target platform
-TARGET ?= PLATFORM_VCU118
+TARGET ?= PLATFORM_AWSF1
 
 #================================================================
 # Target-specific defs
@@ -105,6 +105,6 @@ clean:
 
 .PHONY: full_clean
 full_clean:
-	rm -f  *.*~  Makefile*~  *.o  $(HOST_EXE_FILE)
+	rm -f  *.*~  Makefile*~  *.o  exe_Host_*
 
 # ================================================================

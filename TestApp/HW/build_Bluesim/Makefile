@@ -10,7 +10,7 @@
 help:  show_resource_paths
 	@echo "Available targets for 'make':"
 	@echo "  compile       Use bsc to compile for Bluesim"
-	@echo "  simulator     Use bsc create Bluesim executable"
+	@echo "  simulator     Create Bluesim executable $(SIM_EXE_FILE)"
 	@echo ""
 	@echo "  clean         Remove intermediate files."
 	@echo "  full_clean    Restore to pristine state."
@@ -31,7 +31,7 @@ $(info INFO: Including Makefile_Params.mk which should define paths to external 
 include Makefile_Params.mk
 
 # Default target platform
-TARGET ?= PLATFORM_VCU118
+TARGET ?= PLATFORM_AWSF1
 
 # Top-level file and module
 TOPFILE   ?= $(AWSTERIA_INFRA_REPO)/Platform_Sim/HW/Top_HW_Side.bsv
