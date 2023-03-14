@@ -2,6 +2,9 @@
 *.o
 exe_*
 
+# MacOS folder-info file
+.DS_Store
+
 # Log files
 *log_*
 
@@ -25,4 +28,3 @@ vivado.*
 *.i*86
 *.x86_64
 *.hex
-
