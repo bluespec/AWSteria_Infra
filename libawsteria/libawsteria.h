@@ -14,6 +14,8 @@ typedef uint64_t awst_addr_t;
 enum {
 	AWST_PLATFORM_SIM,
 	AWST_PLATFORM_XDMA,
+	AWST_PLATFORM_BWPCI,
+	AWST_PLATFORM_ACXPCIE,
 
 	AWST_PLATFORM_COUNT,  // this must be last
 };
@@ -47,12 +49,23 @@ struct AWSteria_desc_XDMA {
 	void *state;
 };
 
+struct AWSteria_desc_BWPCI;
+struct AWSteria_desc_ACXPCIE;
+
 struct AWSteria_params_Sim {
 	char hostname[PATH_MAX];
 	unsigned int port;
 };
 
 struct AWSteria_params_XDMA {
+	unsigned int card_id;
+};
+
+struct AWSteria_params_BWPCI {
+	unsigned int card_id;
+};
+
+struct AWSteria_params_ACXPCIE {
 	unsigned int card_id;
 };
 

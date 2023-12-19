@@ -12,6 +12,8 @@
 
 #include "libawsteria.h"
 #include "libawsteria_compat.h"
+#include "bwpci.h"
+#include "acxpcie.h"
 
 #ifndef EXCLUDE_SIM
 
@@ -254,6 +256,24 @@ static struct AWSteria_ops platform_ops[] = {
 		.get_interrupt_fd = xdma_get_interrupt_fd,
 	},
 #endif
+	[AWST_PLATFORM_BWPCI] = {
+		.open = bwpci_open,
+		.close = bwpci_close,
+		.axi4_read = bwpci_axi4_read,
+		.axi4_write = bwpci_axi4_write,
+		.axi4l_read = bwpci_axi4l_read,
+		.axi4l_write = bwpci_axi4l_write,
+		.get_interrupt_fd = bwpci_get_interrupt_fd,
+	},
+	[AWST_PLATFORM_ACXPCIE] = {
+		.open = acxpcie_open,
+		.close = acxpcie_close,
+		.axi4_read = acxpcie_axi4_read,
+		.axi4_write = acxpcie_axi4_write,
+		.axi4l_read = acxpcie_axi4l_read,
+		.axi4l_write = acxpcie_axi4l_write,
+		.get_interrupt_fd = acxpcie_get_interrupt_fd,
+	},
 };
 
 struct AWSteria_desc *AWSteria_Host_open(unsigned int platform, void *param, size_t size)
